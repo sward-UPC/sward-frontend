@@ -1,0 +1,158 @@
+import { lazy, Suspense } from 'react';
+import { createBrowserRouter, Navigate } from 'react-router';
+import { AuthLayout } from '@shared/components/layout/AuthLayout';
+import { AppLayout } from '@shared/components/layout/AppLayout';
+import { ProtectedRoute } from '@core/auth/ProtectedRoute';
+import { LoadingSpinner } from '@shared/components/feedback/LoadingSpinner';
+import { UserRole } from '@core/types';
+
+// Lazy loading para reducir el bundle inicial
+const LoginPage = lazy(() =>
+  import('../app/pages/Login').then((m) => ({ default: m.LoginPage }))
+);
+const RegisterPage = lazy(() =>
+  import('../app/pages/Register').then((m) => ({ default: m.RegisterPage }))
+);
+const StudentDashboard = lazy(() =>
+  import('../app/pages/StudentDashboard').then((m) => ({ default: m.StudentDashboard }))
+);
+const TeacherDashboard = lazy(() =>
+  import('../app/pages/TeacherDashboard').then((m) => ({ default: m.TeacherDashboard }))
+);
+const AdminDashboard = lazy(() =>
+  import('../app/pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
+);
+
+function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <LoadingSpinner size="w-10 h-10" label="Cargando página..." />
+        </div>
+      }
+    >
+      {children}
+    </Suspense>
+  );
+}
+
+/**
+ * Enrutador principal de SWARD usando React Router v7 createBrowserRouter.
+ * Las rutas protegidas validan sesión y rol antes de renderizar.
+ */
+export const router = createBrowserRouter([
+  // Raíz → redirige a login
+  {
+    path: '/',
+    element: <Navigate to="/login" replace />,
+  },
+
+  // Rutas de autenticación (no requieren sesión)
+  {
+    element: <AuthLayout />,
+    children: [
+      {
+        path: '/login',
+        element: (
+          <SuspenseWrapper>
+            {/* LoginPage legacy aún usa prop onLogin; se reemplazará cuando se integre AuthContext */}
+            <LoginPage onLogin={() => {}} />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: '/register',
+        element: (
+          <SuspenseWrapper>
+            <RegisterPage />
+          </SuspenseWrapper>
+        ),
+      },
+    ],
+  },
+
+  // Rutas de estudiante
+  {
+    element: <ProtectedRoute allowedRoles={[UserRole.Student]} />,
+    children: [
+      {
+        element: <AppLayout />,
+        children: [
+          {
+            path: '/student',
+            element: (
+              <SuspenseWrapper>
+                <StudentDashboard onLogout={() => {}} />
+              </SuspenseWrapper>
+            ),
+          },
+          {
+            path: '/student/*',
+            element: (
+              <SuspenseWrapper>
+                <StudentDashboard onLogout={() => {}} />
+              </SuspenseWrapper>
+            ),
+          },
+        ],
+      },
+    ],
+  },
+
+  // Rutas de docente
+  {
+    element: <ProtectedRoute allowedRoles={[UserRole.Teacher]} />,
+    children: [
+      {
+        element: <AppLayout />,
+        children: [
+          {
+            path: '/teacher',
+            element: (
+              <SuspenseWrapper>
+                <TeacherDashboard onLogout={() => {}} />
+              </SuspenseWrapper>
+            ),
+          },
+          {
+            path: '/teacher/*',
+            element: (
+              <SuspenseWrapper>
+                <TeacherDashboard onLogout={() => {}} />
+              </SuspenseWrapper>
+            ),
+          },
+        ],
+      },
+    ],
+  },
+
+  // Rutas de administrador
+  {
+    element: <ProtectedRoute allowedRoles={[UserRole.Admin]} />,
+    children: [
+      {
+        element: <AppLayout />,
+        children: [
+          {
+            path: '/admin',
+            element: (
+              <SuspenseWrapper>
+                <AdminDashboard onLogout={() => {}} />
+              </SuspenseWrapper>
+            ),
+          },
+          {
+            path: '/admin/*',
+            element: (
+              <SuspenseWrapper>
+                <AdminDashboard onLogout={() => {}} />
+              </SuspenseWrapper>
+            ),
+          },
+        ],
+      },
+    ],
+  },
+]);
