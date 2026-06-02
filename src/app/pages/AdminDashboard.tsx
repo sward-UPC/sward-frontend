@@ -36,6 +36,7 @@ export function AdminDashboard() {
           activeTab={dash.activeTab}
           sidebarOpen={dash.sidebarOpen}
           onTabChange={dash.setActiveTab}
+          onClose={() => dash.setSidebarOpen(false)}
         />
 
         <main className="flex-1 overflow-y-auto">

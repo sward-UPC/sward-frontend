@@ -3,11 +3,11 @@ import { Sidebar } from '@shared/components/layout/Sidebar';
 import type { NavItem } from '@core/types';
 
 const NAV = [
-  { id: 'hoy',        label: 'Inicio',          icon: <LayoutDashboard className="w-4 h-4" /> },
-  { id: 'aprendizaje',label: 'Mi Aprendizaje',  icon: <Brain className="w-4 h-4" /> },
-  { id: 'atencion',   label: 'Mapa de Atención',icon: <Sparkles className="w-4 h-4" /> },
-  { id: 'progreso',   label: 'Progreso',         icon: <BarChart2 className="w-4 h-4" /> },
-  { id: 'recursos',   label: 'Recursos',         icon: <Library className="w-4 h-4" /> },
+  { id: 'hoy',         label: 'Inicio',           icon: <LayoutDashboard className="w-4 h-4" /> },
+  { id: 'aprendizaje', label: 'Mi Aprendizaje',   icon: <Brain className="w-4 h-4" /> },
+  { id: 'atencion',    label: 'Mapa de Atención', icon: <Sparkles className="w-4 h-4" /> },
+  { id: 'progreso',    label: 'Progreso',          icon: <BarChart2 className="w-4 h-4" /> },
+  { id: 'recursos',    label: 'Recursos',          icon: <Library className="w-4 h-4" /> },
 ];
 
 interface StudentSidebarProps {
@@ -15,10 +15,11 @@ interface StudentSidebarProps {
   sidebarOpen: boolean;
   streak: number;
   onNavChange: (nav: NavItem) => void;
+  onClose: () => void;
 }
 
-export function StudentSidebar({ activeNav, sidebarOpen, streak, onNavChange }: StudentSidebarProps) {
-  const footer = sidebarOpen ? (
+export function StudentSidebar({ activeNav, sidebarOpen, streak, onNavChange, onClose }: StudentSidebarProps) {
+  const footer = (
     <div className="p-3 space-y-2.5">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Flame className="w-3.5 h-3.5 text-warning shrink-0" />
@@ -34,7 +35,9 @@ export function StudentSidebar({ activeNav, sidebarOpen, streak, onNavChange }: 
         </div>
       </div>
     </div>
-  ) : (
+  );
+
+  const footerCollapsed = (
     <div className="flex flex-col items-center gap-0.5 py-3">
       <Flame className="w-4 h-4 text-warning" />
       <span className="text-[11px] font-bold text-warning leading-none">{streak}</span>
@@ -47,7 +50,9 @@ export function StudentSidebar({ activeNav, sidebarOpen, streak, onNavChange }: 
       activeId={activeNav}
       open={sidebarOpen}
       onNavigate={(id) => onNavChange(id as NavItem)}
+      onClose={onClose}
       footer={footer}
+      footerCollapsed={footerCollapsed}
     />
   );
 }
