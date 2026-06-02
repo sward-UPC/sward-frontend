@@ -8,14 +8,12 @@ import {
 } from 'recharts';
 import { ChevronLeft, ChevronRight, FileText, BarChart2, Users, BookOpen, Clock, Download } from 'lucide-react';
 import { useTeacherDashboard } from './useTeacherDashboard';
+import { useLogout } from '../../../core/auth/useLogout';
 import { TeacherTopbar } from './components/TeacherTopbar';
 import { TeacherMetricsCards } from './components/TeacherMetricsCards';
 import { AlertsPanel } from './components/AlertsPanel';
 import { StudentRiskTable } from './components/StudentRiskTable';
 
-interface TeacherDashboardProps {
-  onLogout: () => void;
-}
 
 function getRiskColor(level: string) {
   switch (level) {
@@ -30,8 +28,9 @@ function getMasteryColor(v: number) {
   return v >= 80 ? 'text-success' : v >= 60 ? 'text-warning' : 'text-destructive';
 }
 
-export function TeacherDashboard({ onLogout }: TeacherDashboardProps) {
+export function TeacherDashboard() {
   const dash = useTeacherDashboard();
+  const logout = useLogout();
 
   return (
     <div className="min-h-screen w-full bg-background flex flex-col">
@@ -51,7 +50,7 @@ export function TeacherDashboard({ onLogout }: TeacherDashboardProps) {
         setShowProfilePopup={dash.setShowProfilePopup}
         profileRef={dash.profileRef}
         openProfile={dash.openProfile}
-        onLogout={onLogout}
+        onLogout={logout}
         selectedStudent={dash.selectedStudent}
         currentStudentName={dash.currentStudent?.name}
         activeTab={dash.activeTab}

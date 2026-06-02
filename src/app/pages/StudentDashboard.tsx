@@ -11,6 +11,7 @@ import { StudentProgresoTab } from './student/components/StudentProgresoTab';
 import { StudentAprendizajeTab } from './student/components/StudentAprendizajeTab';
 import { StudentAtencionTab } from './student/components/StudentAtencionTab';
 import { useStudentDashboard } from './student/useStudentDashboard';
+import { useLogout } from '../../core/auth/useLogout';
 
 import {
   mockInteractions,
@@ -23,8 +24,6 @@ import {
   mockLearningPath,
 } from '@mocks/data/student.mock';
 
-interface StudentDashboardProps { onLogout: () => void; }
-
 function getResourceIcon(type: string) {
   switch (type) {
     case 'video': return <Video className="w-3.5 h-3.5" />;
@@ -33,8 +32,9 @@ function getResourceIcon(type: string) {
   }
 }
 
-export function StudentDashboard({ onLogout }: StudentDashboardProps) {
+export function StudentDashboard() {
   const dash = useStudentDashboard();
+  const logout = useLogout();
   const currentSideResource = mockSideRecommendations.find((r) => r.id === dash.selectedSideResource);
 
   return (
@@ -60,7 +60,7 @@ export function StudentDashboard({ onLogout }: StudentDashboardProps) {
         onDismissNotification={dash.dismissNotification}
         onClearNotifications={dash.clearNotifications}
         onOpenProfile={dash.openProfile}
-        onLogout={onLogout}
+        onLogout={logout}
       />
 
       <div className="flex flex-1 overflow-hidden">
