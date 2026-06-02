@@ -1,7 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 import { AuthLayout } from '@shared/components/layout/AuthLayout';
-import { AppLayout } from '@shared/components/layout/AppLayout';
 import { ProtectedRoute } from '@core/auth/ProtectedRoute';
 import { LoadingSpinner } from '@shared/components/feedback/LoadingSpinner';
 import { UserRole } from '@core/types';
@@ -70,50 +69,34 @@ export const router = createBrowserRouter(
       ],
     },
 
-    // Rutas de estudiante
+    // Dashboards: cada uno tiene su propio layout (topbar + sidebar)
+    // AppLayout no se usa porque causaría doble sidebar/topbar
     {
       element: <ProtectedRoute allowedRoles={[UserRole.Student]} />,
       children: [
         {
-          element: <AppLayout />,
-          children: [
-            {
-              path: '/student/*',
-              element: <SuspenseWrapper><StudentDashboard /></SuspenseWrapper>,
-            },
-          ],
+          path: '/student/*',
+          element: <SuspenseWrapper><StudentDashboard /></SuspenseWrapper>,
         },
       ],
     },
 
-    // Rutas de docente
     {
       element: <ProtectedRoute allowedRoles={[UserRole.Teacher]} />,
       children: [
         {
-          element: <AppLayout />,
-          children: [
-            {
-              path: '/teacher/*',
-              element: <SuspenseWrapper><TeacherDashboard /></SuspenseWrapper>,
-            },
-          ],
+          path: '/teacher/*',
+          element: <SuspenseWrapper><TeacherDashboard /></SuspenseWrapper>,
         },
       ],
     },
 
-    // Rutas de administrador
     {
       element: <ProtectedRoute allowedRoles={[UserRole.Admin]} />,
       children: [
         {
-          element: <AppLayout />,
-          children: [
-            {
-              path: '/admin/*',
-              element: <SuspenseWrapper><AdminDashboard /></SuspenseWrapper>,
-            },
-          ],
+          path: '/admin/*',
+          element: <SuspenseWrapper><AdminDashboard /></SuspenseWrapper>,
         },
       ],
     },
