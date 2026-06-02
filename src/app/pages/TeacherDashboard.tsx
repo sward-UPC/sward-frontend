@@ -2,15 +2,15 @@ import { useState, useRef, useEffect } from "react";
 import { StudentDetailView } from "../components/teacher/StudentDetailView";
 import { FeedbackDialog } from "../components/teacher/FeedbackDialog";
 import { ProfileDialog } from "../components/ui/ProfileDialog";
-import { Button } from "../components/ui/Button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
-import { Badge } from "../components/ui/Badge";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "../components/ui/Table";
+} from "../components/ui/table";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "../components/ui/Select";
+} from "../components/ui/select";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend,

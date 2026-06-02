@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/Card";
-import { Button } from "../ui/Button";
-import { Progress } from "../ui/Progress";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Progress } from "../ui/progress";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "../ui/Dialog";
+} from "../ui/dialog";
 import { CheckCircle2, Play, BookOpen, Video, FileText, Clock, X } from "lucide-react";
 
 interface Resource {
