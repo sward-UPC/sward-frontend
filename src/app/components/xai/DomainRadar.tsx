@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import {
   Radar,
   RadarChart,

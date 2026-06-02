@@ -5,10 +5,10 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "../ui/Dialog";
-import { Button } from "../ui/Button";
-import { Label } from "../ui/Label";
-import { Badge } from "../ui/Badge";
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
+import { Badge } from "../ui/badge";
 import { CheckCircle2, Send } from "lucide-react";
 
 interface FeedbackDialogProps {

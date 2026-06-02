@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/Card";
-import { Button } from "../ui/Button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
 import { Info } from "lucide-react";
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/Dialog";
+} from "../ui/dialog";
 
 interface InteractionData {
   id: number;

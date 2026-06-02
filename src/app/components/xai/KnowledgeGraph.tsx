@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/Card";
-import { Progress } from "../ui/Progress";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Progress } from "../ui/progress";
 import {
   LineChart,
   Line,

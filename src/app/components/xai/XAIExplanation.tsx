@@ -1,6 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/Card";
-import { Button } from "../ui/Button";
-import { Badge } from "../ui/Badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/Dialog";
+} from "../ui/dialog";
 import { Brain, TrendingUp, AlertTriangle, Lightbulb, Eye } from "lucide-react";
 
 interface XAIExplanationProps {

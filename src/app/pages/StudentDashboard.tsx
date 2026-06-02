@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Button } from "../components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
-import { Badge } from "../components/ui/Badge";
-import { Progress } from "../components/ui/Progress";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Progress } from "../components/ui/progress";
 import { AttentionHeatmap } from "../components/xai/AttentionHeatmap";
 import { KnowledgeGraph } from "../components/xai/KnowledgeGraph";
 import { XAIExplanation } from "../components/xai/XAIExplanation";
