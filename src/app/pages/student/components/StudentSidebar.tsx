@@ -31,7 +31,7 @@ export function StudentSidebar({ activeNav, sidebarOpen, streak, onNavChange }: 
       }`}
     >
       {/* Nav items — scrollable si hay muchos */}
-      <nav className="flex flex-col gap-1 p-2 flex-1 pt-3 overflow-y-auto">
+      <nav className="flex flex-col gap-1 p-2 flex-1 pt-3 overflow-hidden">
         {NAV.map((item) => (
           <button
             key={item.id}
