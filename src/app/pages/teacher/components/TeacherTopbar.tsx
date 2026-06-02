@@ -1,16 +1,14 @@
 import { Button } from '../../../components/ui/button';
 import {
   Bell, X, AlertTriangle, CheckCircle, Info,
-  User, Settings, ChevronRight, Moon, Sun, LogOut,
-  LayoutDashboard, Users, BarChart2, FileText,
+  User, Settings, ChevronRight, Moon, Sun, LogOut, ChevronLeft, Menu,
 } from 'lucide-react';
-import type { Alert, TeacherProfile, TeacherTab } from '@core/types';
+import type { Alert, TeacherProfile } from '@core/types';
 
 interface TeacherTopbarProps {
   teacher: TeacherProfile;
   notifications: Alert[];
   unreadCount: number;
-  highRiskCount: number;
   darkMode: boolean;
   setDarkMode: (v: boolean) => void;
   showNotifPopup: boolean;
@@ -23,19 +21,10 @@ interface TeacherTopbarProps {
   profileRef: React.RefObject<HTMLDivElement>;
   openProfile: (tab: 'profile' | 'settings') => void;
   onLogout: () => void;
-  selectedStudent: number | null;
-  currentStudentName?: string;
-  activeTab: TeacherTab;
-  setActiveTab: (tab: TeacherTab) => void;
   clearNotifications: () => void;
+  sidebarOpen: boolean;
+  onToggleSidebar: () => void;
 }
-
-const TABS: { id: TeacherTab; label: string; icon: React.ReactNode }[] = [
-  { id: 'resumen', label: 'Resumen', icon: <LayoutDashboard className="w-4 h-4" /> },
-  { id: 'estudiantes', label: 'Estudiantes', icon: <Users className="w-4 h-4" /> },
-  { id: 'analisis', label: 'Análisis', icon: <BarChart2 className="w-4 h-4" /> },
-  { id: 'reportes', label: 'Reportes', icon: <FileText className="w-4 h-4" /> },
-];
 
 function getNotifIcon(type: string) {
   switch (type) {
@@ -49,7 +38,6 @@ export function TeacherTopbar({
   teacher,
   notifications,
   unreadCount,
-  highRiskCount,
   darkMode,
   setDarkMode,
   showNotifPopup,
@@ -62,33 +50,32 @@ export function TeacherTopbar({
   profileRef,
   openProfile,
   onLogout,
-  selectedStudent,
-  currentStudentName,
-  activeTab,
-  setActiveTab,
   clearNotifications,
+  sidebarOpen,
+  onToggleSidebar,
 }: TeacherTopbarProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
-      <div className="container mx-auto flex h-14 items-center justify-between px-4">
-        {/* Logo + breadcrumb */}
+      <div className="flex h-14 items-center justify-between px-4 gap-3">
+
+        {/* Left: sidebar toggle + logo */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-sm font-bold text-primary-foreground">S</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm">
-            <span className="font-semibold text-foreground">SWARD</span>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-muted-foreground">Docente</span>
-            {selectedStudent && currentStudentName && (
-              <>
-                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground truncate max-w-[140px]">{currentStudentName.split(' ')[0]}</span>
-              </>
-            )}
+          <button
+            onClick={onToggleSidebar}
+            className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            aria-label="Toggle sidebar"
+          >
+            {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-xs font-bold text-white">S</span>
+            </div>
+            <span className="font-semibold text-sm hidden sm:block">SWARD</span>
           </div>
         </div>
 
+        {/* Right: dark mode + notifications + profile */}
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" onClick={() => setDarkMode(!darkMode)}>
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -144,10 +131,7 @@ export function TeacherTopbar({
                 </div>
                 {notifications.length > 0 && (
                   <div className="px-4 py-2 border-t">
-                    <button
-                      onClick={clearNotifications}
-                      className="text-xs text-muted-foreground hover:text-foreground"
-                    >
+                    <button onClick={clearNotifications} className="text-xs text-muted-foreground hover:text-foreground">
                       Limpiar todas
                     </button>
                   </div>
@@ -165,7 +149,7 @@ export function TeacherTopbar({
               <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-white">
                 {teacher.avatar}
               </div>
-              <span className="text-sm font-medium hidden md:block">{teacher.name.split(' ')[1]}</span>
+              <span className="text-sm font-medium hidden md:block">{teacher.name.split(' ')[0]}</span>
             </button>
             {showProfilePopup && (
               <div className="absolute right-0 top-11 w-64 bg-card border border-border rounded-[12px] shadow-xl z-50 overflow-hidden">
@@ -209,32 +193,6 @@ export function TeacherTopbar({
           </div>
         </div>
       </div>
-
-      {/* Tab bar */}
-      {!selectedStudent && (
-        <div className="container mx-auto px-4 border-t">
-          <div className="flex gap-0">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm border-b-2 transition-colors -mb-px ${
-                  activeTab === tab.id
-                    ? 'border-primary text-primary font-medium'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {tab.icon}{tab.label}
-                {tab.id === 'estudiantes' && highRiskCount > 0 && (
-                  <span className="w-4 h-4 bg-destructive text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                    {highRiskCount}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </header>
   );
 }
