@@ -38,7 +38,7 @@ export function StudentDashboard() {
   const currentSideResource = mockSideRecommendations.find((r) => r.id === dash.selectedSideResource);
 
   return (
-    <div className="min-h-screen w-full bg-background flex flex-col">
+    <div className="h-screen w-full bg-background flex flex-col overflow-hidden">
 
       <StudentTopbar
         user={mockUser}
