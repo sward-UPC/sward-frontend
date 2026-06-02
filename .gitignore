@@ -142,3 +142,11 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
+# docs internos — solo locales
+ACCESIBILIDAD.md
+ATTRIBUTIONS.md
+FUNCIONALIDAD-XAI.md
+README copy.md
+guidelines/
+docs/
+src/imports/
