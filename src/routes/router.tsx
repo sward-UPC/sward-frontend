@@ -37,85 +37,84 @@ function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
-/**
- * Enrutador principal de SWARD usando React Router v7 createBrowserRouter.
- * Las rutas protegidas validan sesión y rol antes de renderizar.
- */
-export const router = createBrowserRouter([
-  // Raíz → redirige a login
-  {
-    path: '/',
-    element: <Navigate to="/login" replace />,
-  },
+export const router = createBrowserRouter(
+  [
+    // Raíz → redirige a login
+    {
+      path: '/',
+      element: <Navigate to="/login" replace />,
+    },
 
-  // Rutas de autenticación (no requieren sesión)
-  {
-    element: <AuthLayout />,
-    children: [
-      {
-        path: '/login',
-        element: (
-          <SuspenseWrapper>
-            <LoginPage onLogin={() => {}} />
-          </SuspenseWrapper>
-        ),
-      },
-      {
-        path: '/register',
-        element: (
-          <SuspenseWrapper>
-            <RegisterPage />
-          </SuspenseWrapper>
-        ),
-      },
-    ],
-  },
+    // Rutas de autenticación (no requieren sesión)
+    {
+      element: <AuthLayout />,
+      children: [
+        {
+          path: '/login',
+          element: (
+            <SuspenseWrapper>
+              <LoginPage onLogin={() => {}} />
+            </SuspenseWrapper>
+          ),
+        },
+        {
+          path: '/register',
+          element: (
+            <SuspenseWrapper>
+              <RegisterPage />
+            </SuspenseWrapper>
+          ),
+        },
+      ],
+    },
 
-  // Rutas de estudiante
-  {
-    element: <ProtectedRoute allowedRoles={[UserRole.Student]} />,
-    children: [
-      {
-        element: <AppLayout />,
-        children: [
-          {
-            path: '/student/*',
-            element: <SuspenseWrapper><StudentDashboard /></SuspenseWrapper>,
-          },
-        ],
-      },
-    ],
-  },
+    // Rutas de estudiante
+    {
+      element: <ProtectedRoute allowedRoles={[UserRole.Student]} />,
+      children: [
+        {
+          element: <AppLayout />,
+          children: [
+            {
+              path: '/student/*',
+              element: <SuspenseWrapper><StudentDashboard /></SuspenseWrapper>,
+            },
+          ],
+        },
+      ],
+    },
 
-  // Rutas de docente
-  {
-    element: <ProtectedRoute allowedRoles={[UserRole.Teacher]} />,
-    children: [
-      {
-        element: <AppLayout />,
-        children: [
-          {
-            path: '/teacher/*',
-            element: <SuspenseWrapper><TeacherDashboard /></SuspenseWrapper>,
-          },
-        ],
-      },
-    ],
-  },
+    // Rutas de docente
+    {
+      element: <ProtectedRoute allowedRoles={[UserRole.Teacher]} />,
+      children: [
+        {
+          element: <AppLayout />,
+          children: [
+            {
+              path: '/teacher/*',
+              element: <SuspenseWrapper><TeacherDashboard /></SuspenseWrapper>,
+            },
+          ],
+        },
+      ],
+    },
 
-  // Rutas de administrador
-  {
-    element: <ProtectedRoute allowedRoles={[UserRole.Admin]} />,
-    children: [
-      {
-        element: <AppLayout />,
-        children: [
-          {
-            path: '/admin/*',
-            element: <SuspenseWrapper><AdminDashboard /></SuspenseWrapper>,
-          },
-        ],
-      },
-    ],
-  },
-]);
+    // Rutas de administrador
+    {
+      element: <ProtectedRoute allowedRoles={[UserRole.Admin]} />,
+      children: [
+        {
+          element: <AppLayout />,
+          children: [
+            {
+              path: '/admin/*',
+              element: <SuspenseWrapper><AdminDashboard /></SuspenseWrapper>,
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  { basename: import.meta.env.BASE_URL }
+);
