@@ -45,18 +45,20 @@ export const router = createBrowserRouter(
       element: <Navigate to="/login" replace />,
     },
 
-    // Rutas de autenticación (no requieren sesión)
+    // Login maneja su propio layout full-screen (panel lateral + card)
+    {
+      path: '/login',
+      element: (
+        <SuspenseWrapper>
+          <LoginPage onLogin={() => {}} />
+        </SuspenseWrapper>
+      ),
+    },
+
+    // Registro usa AuthLayout centrado
     {
       element: <AuthLayout />,
       children: [
-        {
-          path: '/login',
-          element: (
-            <SuspenseWrapper>
-              <LoginPage onLogin={() => {}} />
-            </SuspenseWrapper>
-          ),
-        },
         {
           path: '/register',
           element: (
