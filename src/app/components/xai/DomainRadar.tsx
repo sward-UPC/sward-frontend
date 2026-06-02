@@ -7,7 +7,9 @@ import {
   PolarRadiusAxis,
   ResponsiveContainer,
   Tooltip,
+  type TooltipProps,
 } from "recharts";
+import type { ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 
 interface DomainRadarProps {
   data?: Array<{ subject: string; value: number; fullMark: number }>;
@@ -22,7 +24,7 @@ const defaultData = [
   { subject: "Redes", value: 45, fullMark: 100 },
 ];
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) => {
   if (active && payload && payload.length) {
     const d = payload[0].payload;
     return (

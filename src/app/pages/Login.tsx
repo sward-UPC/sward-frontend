@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowLeft, CheckCircle2, GraduationCap, BookOpen, ChevronRight, AlertCircle, Mail, Lock, Eye, EyeOff, User, Building2 } from "lucide-react";
 import { LoginBranding, LoginFormFields, useLoginForm } from "./auth";
+import { FormField as Field } from "./auth/components/FormField";
 
 interface LoginPageProps {
   onLogin: (role: "student" | "teacher" | "admin") => void;
@@ -10,17 +11,6 @@ interface LoginPageProps {
 /* Register form is part of the flip card — kept inline to share flip/animation state */
 function Spinner() {
   return <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />;
-}
-
-function Field({ id, type = "text", value, onChange, placeholder, icon: Icon, right }: any) {
-  return (
-    <div className="relative">
-      {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />}
-      <input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} autoComplete="off"
-        className={`w-full py-2.5 rounded-[12px] border border-input bg-card/80 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary transition-all ${Icon ? "pl-9" : "pl-3"} ${right ? "pr-10" : "pr-3"}`} />
-      {right}
-    </div>
-  );
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
