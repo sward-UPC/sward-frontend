@@ -17,10 +17,10 @@ function figmaAssetResolver() {
 }
 
 export default defineConfig({
+  // En GitHub Pages el repo se sirve en /sward-frontend/
+  base: process.env.VITE_BASE_URL ?? '/',
   plugins: [
     figmaAssetResolver(),
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
   ],
