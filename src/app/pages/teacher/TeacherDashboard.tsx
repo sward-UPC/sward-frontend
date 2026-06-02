@@ -62,6 +62,7 @@ export function TeacherDashboard() {
           sidebarOpen={dash.sidebarOpen}
           highRiskCount={dash.highRiskCount}
           onTabChange={dash.setActiveTab}
+          onClose={() => dash.setSidebarOpen(false)}
         />
 
         <main className="flex-1 overflow-y-auto">

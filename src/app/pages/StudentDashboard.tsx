@@ -69,6 +69,7 @@ export function StudentDashboard() {
           sidebarOpen={dash.sidebarOpen}
           streak={dash.streak}
           onNavChange={dash.setActiveNav}
+          onClose={() => dash.setSidebarOpen(false)}
         />
 
         <main className="flex-1 overflow-y-auto">
