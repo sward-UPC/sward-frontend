@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { ArrowLeft, CheckCircle2, GraduationCap, BookOpen, ChevronRight, AlertCircle, Mail, Lock, Eye, EyeOff, User, Building2 } from "lucide-react";
 import { LoginBranding, LoginFormFields, useLoginForm } from "./auth";
 import { FormField as Field } from "./auth/components/FormField";
+import { useAuth } from "@core/auth/useAuth";
+import { UserRole } from "@core/types";
 
 interface LoginPageProps {
-  onLogin: (role: "student" | "teacher" | "admin") => void;
+  onLogin?: (role: "student" | "teacher" | "admin") => void;
   onNavigateToRegister?: () => void;
 }
 
@@ -14,6 +17,27 @@ function Spinner() {
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleLoginSuccess = (role: "student" | "teacher" | "admin") => {
+    login({
+      access: "mock-access-token",
+      refresh: "mock-refresh-token",
+      user: {
+        id: "demo-1",
+        email: "demo@sward.edu.pe",
+        firstName: "Demo",
+        lastName: "User",
+        role: role as UserRole,
+        institution: "UPC",
+        createdAt: new Date().toISOString(),
+      },
+    });
+    navigate(`/${role}`);
+    onLogin?.(role);
+  };
+
   const [isFlipped, setIsFlipped] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [regStep, setRegStep] = useState(1);
@@ -96,7 +120,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 onRecEmail={form.setRecEmail} onRecEmailErr={form.setRecEmailErr} onOtp={form.setOtp}
                 onNewPw={form.setNewPw} onConfirmPw={form.setConfirmPw} onShowNewPw={form.setShowNewPw}
                 onNewPwErr={form.setNewPwErr} onResendTimer={form.setResendTimer}
-                onSubmitLogin={(e) => form.handleLogin(e, onLogin)}
+                onSubmitLogin={(e) => form.handleLogin(e, handleLoginSuccess)}
                 onSendCode={form.handleSendCode} onVerifyCode={form.handleVerifyCode}
                 onSetNewPw={form.handleSetNewPw} onResetRecovery={form.resetRecovery} onFlip={flip}
               />
