@@ -1,3 +1,38 @@
+/** Secciones de navegación del dashboard del estudiante. */
+export type NavItem = 'hoy' | 'aprendizaje' | 'atencion' | 'progreso' | 'recursos';
+
+/** Tipo de notificación. */
+export type NotificationType = 'warning' | 'info' | 'success';
+
+/** Notificación del sistema para el estudiante. */
+export interface StudentNotification {
+  id: number;
+  type: NotificationType;
+  title: string;
+  message: string;
+  time: string;
+  read: boolean;
+}
+
+/** Datos del usuario estudiante mostrados en el dashboard. */
+export interface StudentUser {
+  name: string;
+  email: string;
+  role: string;
+  institution: string;
+  avatar: string;
+  memberSince: string;
+}
+
+/** Análisis XAI generado por SAKT para el estudiante. */
+export interface XAIAnalysis {
+  strongConcepts: string[];
+  weakConcepts: string[];
+  recommendation: string;
+  reasoning: string;
+  confidence: number;
+}
+
 /** Tipos de recurso de aprendizaje (EP003). */
 export type ResourceType = 'video' | 'reading' | 'exercise' | 'quiz';
 

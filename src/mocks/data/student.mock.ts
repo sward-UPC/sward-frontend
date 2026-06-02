@@ -10,6 +10,9 @@ import type {
   DomainRadarData,
   Recommendation,
   LearningPathStep,
+  StudentNotification,
+  StudentUser,
+  XAIAnalysis,
 } from '@core/types';
 
 export const mockInteractions: Interaction[] = [
@@ -91,3 +94,26 @@ export const mockLearningPath: LearningPathStep[] = [
   { id: 4, label: 'Deep Learning', done: false },
   { id: 5, label: 'Know. Tracing', done: false },
 ];
+
+export const mockNotifications: StudentNotification[] = [
+  { id: 1, type: 'warning', title: 'Alerta de Aprendizaje', message: 'Bajo rendimiento detectado en Redes Neuronales (45%). Revisa los recursos recomendados.', time: 'Hace 5 min', read: false },
+  { id: 2, type: 'info', title: 'Nueva Recomendación', message: 'Se añadió un nuevo recurso personalizado para reforzar Deep Learning.', time: 'Hace 1 hora', read: false },
+  { id: 3, type: 'success', title: 'Logro Desbloqueado', message: '¡Completaste 12 recursos! Estás en el top 20% de tu clase.', time: 'Hace 2 horas', read: true },
+];
+
+export const mockUser: StudentUser = {
+  name: 'Estudiante Demo',
+  email: 'demo@sward.edu.pe',
+  role: 'Estudiante',
+  institution: 'Universidad Nacional Mayor',
+  avatar: 'E',
+  memberSince: 'Enero 2026',
+};
+
+export const mockXAIAnalysis: XAIAnalysis = {
+  strongConcepts: ['Knowledge Tracing', 'Introducción a IA'],
+  weakConcepts: ['Redes Neuronales', 'Deep Learning'],
+  recommendation: 'Te sugerimos reforzar los conceptos fundamentales de Redes Neuronales antes de avanzar a temas más complejos.',
+  reasoning: `El análisis de tus últimas 50 interacciones muestra:\n\n• Excelente desempeño en Knowledge Tracing (90% de dominio)\n• Solidez en conceptos introductorios de IA (85% de dominio)\n• Dificultades consistentes en Redes Neuronales (3 intentos incorrectos consecutivos)\n• El peso de atención más alto (92%) corresponde a tu última interacción correcta en Knowledge Tracing\n\nEl modelo SAKT identifica que tu comprensión de conceptos avanzados se ve limitada por las brechas en fundamentos de redes neuronales.`,
+  confidence: 87,
+};
