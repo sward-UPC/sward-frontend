@@ -67,6 +67,7 @@ export function StudentDashboard() {
         <StudentSidebar
           activeNav={dash.activeNav}
           sidebarOpen={dash.sidebarOpen}
+          streak={dash.streak}
           onNavChange={dash.setActiveNav}
         />
 
