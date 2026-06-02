@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Button } from "./Button";
-import { Label } from "./Label";
-import { Progress } from "./Progress";
-import { Badge } from "./Badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./Dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./Tabs";
+import { Button } from "./button";
+import { Label } from "./label";
+import { Progress } from "./progress";
+import { Badge } from "./badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 import { useTheme } from "../../context/ThemeContext";
 import {
   User, Mail, Building2, BookOpen, Camera, Save, Bell,
