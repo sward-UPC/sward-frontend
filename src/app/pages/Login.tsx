@@ -61,7 +61,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     }, 1500);
   };
 
-  const faceBase = "absolute inset-0 overflow-y-auto rounded-2xl bg-card/95 backdrop-blur-sm shadow-2xl border border-border/50 p-8 flex flex-col";
+  const faceBase = "absolute inset-0 overflow-y-auto rounded-2xl bg-card/95 backdrop-blur-sm shadow-2xl border border-border/50 p-6 sm:p-8 flex flex-col";
   const mobileLogo = (
     <div className="flex lg:hidden items-center gap-2.5 mb-5">
       <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
@@ -75,11 +75,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     <div className="min-h-screen w-full flex">
       <LoginBranding />
 
-      <div className="flex-1 flex items-center justify-center p-6 relative bg-[#f5f3ff] dark:bg-[#0f1117]">
+      <div className="flex-1 flex items-center justify-center p-3 sm:p-6 relative bg-[#f5f3ff] dark:bg-[#0f1117] overflow-hidden">
         <div className="absolute top-10 right-10 w-64 h-64 rounded-full opacity-20 blur-3xl pointer-events-none" style={{ background: "radial-gradient(circle, #818cf8, transparent)" }} />
         <div className="absolute bottom-10 left-10 w-56 h-56 rounded-full opacity-10 blur-3xl pointer-events-none" style={{ background: "radial-gradient(circle, #6366f1, transparent)" }} />
 
-        <div style={{ width: 420, height: 640, perspective: "1200px", position: "relative", zIndex: 1 }}>
+        <div className="w-full" style={{ maxWidth: 420, height: "min(640px, calc(100dvh - 64px))", perspective: "1200px", position: "relative", zIndex: 1 }}>
           <div style={{ width: "100%", height: "100%", position: "relative", transformStyle: "preserve-3d", transition: "transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)", transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)" }}>
 
             {/* FRONT — LOGIN */}
