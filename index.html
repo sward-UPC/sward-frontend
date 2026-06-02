@@ -9,7 +9,15 @@
       <meta name="description" content="This web application offers tailored dashboards for students and teachers, providing interactive learning resources, academic tracking, and feedback tools to enhance educational outcomes." />
       <meta name="robots" content="noindex, nofollow" />
       <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>
-      
+      <script>
+        // Restore path redirected from 404.html on GitHub Pages
+        (function () {
+          var p = new URLSearchParams(window.location.search).get('p');
+          if (p) {
+            window.history.replaceState(null, '', '/' + decodeURIComponent(p));
+          }
+        })();
+      </script>
     </head>
 
     <body>
