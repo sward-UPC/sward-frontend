@@ -50,7 +50,7 @@ export const router = createBrowserRouter(
       path: '/login',
       element: (
         <SuspenseWrapper>
-          <LoginPage onLogin={() => {}} />
+          <LoginPage />
         </SuspenseWrapper>
       ),
     },
