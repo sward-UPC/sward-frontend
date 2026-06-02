@@ -1,18 +1,15 @@
-import { AttentionHeatmap } from '../components/xai/AttentionHeatmap';
-import { XAIExplanation } from '../components/xai/XAIExplanation';
-import { DomainRadar } from '../components/xai/DomainRadar';
 import { ResourcesTab } from '../components/resources/ResourcesTab';
 import { ResourceViewer } from '../components/resources/ResourceViewer';
 import { ProfileDialog } from '../components/ui/ProfileDialog';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
-import { PlayCircle, AlertTriangle, Info, BookOpen, Video, FileText, Clock, CheckCircle, Star, Target } from 'lucide-react';
+import { Card, CardContent } from '../components/ui/card';
+import { CheckCircle, Star, Target } from 'lucide-react';
 
 import { StudentTopbar } from './student/components/StudentTopbar';
 import { StudentSidebar } from './student/components/StudentSidebar';
 import { StudentHoyTab } from './student/components/StudentHoyTab';
 import { StudentProgresoTab } from './student/components/StudentProgresoTab';
+import { StudentAprendizajeTab } from './student/components/StudentAprendizajeTab';
+import { StudentAtencionTab } from './student/components/StudentAtencionTab';
 import { useStudentDashboard } from './student/useStudentDashboard';
 
 import {
@@ -94,101 +91,22 @@ export function StudentDashboard({ onLogout }: StudentDashboardProps) {
 
             {/* ════ MI APRENDIZAJE ════ */}
             {dash.activeNav === 'aprendizaje' && (
-              <div className="space-y-4">
-                <XAIExplanation analysis={mockXAIAnalysis} />
-                <DomainRadar data={mockDomainData} title="Vista Rápida de Dominio" />
-
-                <div>
-                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                    <span className="w-4 h-4 text-primary">✦</span> Recursos recomendados por SAKT
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {mockSideRecommendations.map((r) => {
-                      const isCompleted = dash.completedResources.includes(r.id);
-                      return (
-                        <Card
-                          key={r.id}
-                          className={`transition-all ${isCompleted ? 'opacity-60 border-success/40 bg-success/5' : 'hover:border-primary/40 cursor-pointer'}`}
-                          onClick={() => !isCompleted && dash.setSelectedSideResource(r.id)}
-                        >
-                          <CardContent className="pt-4 pb-4 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className={`p-1.5 rounded-lg ${r.type === 'video' ? 'bg-blue-500/10 text-blue-500' : r.type === 'exercise' ? 'bg-orange-500/10 text-orange-500' : 'bg-purple-500/10 text-purple-500'}`}>
-                                {getResourceIcon(r.type)}
-                              </span>
-                              <Badge variant="outline" className="text-xs">{r.concept}</Badge>
-                            </div>
-                            <p className="text-sm font-medium leading-tight">{r.title}</p>
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{r.duration}</span>
-                              <span className="text-success font-medium">+{r.improvement}%</span>
-                            </div>
-                            {isCompleted
-                              ? <p className="text-xs text-success font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" />Completado</p>
-                              : <Button size="sm" className="w-full text-xs gap-1"><PlayCircle className="w-3.5 h-3.5" />Comenzar</Button>
-                            }
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
+              <StudentAprendizajeTab
+                xaiAnalysis={mockXAIAnalysis}
+                domainData={mockDomainData}
+                recommendations={mockSideRecommendations}
+                completedResources={dash.completedResources}
+                onSelectResource={dash.setSelectedSideResource}
+              />
             )}
 
             {/* ════ MAPA DE ATENCIÓN ════ */}
             {dash.activeNav === 'atencion' && (
-              <div className="space-y-4">
-                <Card className="border-primary/20 bg-primary/5">
-                  <CardContent className="pt-4 pb-4">
-                    <div className="flex items-start gap-3">
-                      <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">¿Qué muestra este mapa?</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          Cada burbuja representa tu nivel de atención en un concepto a lo largo de las sesiones. Las burbujas más grandes y oscuras indican mayor atención. Los conceptos con burbujas pequeñas o claras son donde tu enfoque cayó — y donde el sistema prioriza recursos para ti.
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <AttentionHeatmap
-                  interactions={mockInteractions}
-                  currentPrediction="Es probable que tengas dificultades con el próximo ejercicio de Redes Neuronales (probabilidad de éxito: 48%). Se recomienda revisar los fundamentos antes de continuar."
-                />
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-warning" />
-                      Conceptos con atención baja — acción recomendada
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {[
-                      { concept: 'Redes Neuronales', attention: 38, resource: mockSideRecommendations[1], sessions: 'últimas 3 sesiones' },
-                      { concept: 'Deep Learning', attention: 65, resource: mockSideRecommendations[1], sessions: 'última sesión' },
-                    ].map((item) => (
-                      <div key={item.concept} className="flex items-center justify-between p-3 bg-warning/5 border border-warning/20 rounded-[10px] gap-3">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
-                            <AlertTriangle className="w-4 h-4 text-warning" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium">{item.concept}</p>
-                            <p className="text-xs text-muted-foreground">Atención: {item.attention}% · Bajó en {item.sessions}</p>
-                          </div>
-                        </div>
-                        <Button size="sm" variant="outline" className="shrink-0 gap-1.5 text-xs"
-                          onClick={() => dash.setSelectedSideResource(item.resource.id)}>
-                          <PlayCircle className="w-3.5 h-3.5" /> Ver recurso
-                        </Button>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </div>
+              <StudentAtencionTab
+                interactions={mockInteractions}
+                recommendations={mockSideRecommendations}
+                onSelectResource={dash.setSelectedSideResource}
+              />
             )}
 
             {/* ════ PROGRESO ════ */}
