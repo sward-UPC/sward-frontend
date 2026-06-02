@@ -1,15 +1,12 @@
-import { useRef } from "react";
 import { Button } from "../../../components/ui/button";
 import {
   LogOut, Bell, X, Info, AlertTriangle, Settings,
-  ChevronRight, Moon, Sun, User, XCircle,
+  ChevronRight, Moon, Sun, User, XCircle, ChevronLeft, Menu,
 } from "lucide-react";
-import type { AdminTab, AdminNotification } from "../../../../core/types/admin.types";
+import type { AdminNotification } from "../../../../core/types/admin.types";
 import { mockAdmin } from "../../../../mocks/data/admin.mock";
 
 interface AdminTopbarProps {
-  activeTab: AdminTab;
-  tabs: { id: AdminTab; label: string; icon: React.ReactNode }[];
   notifs: AdminNotification[];
   unread: number;
   showNotifPopup: boolean;
@@ -17,7 +14,8 @@ interface AdminTopbarProps {
   darkMode: boolean;
   notifRef: React.RefObject<HTMLDivElement>;
   profileRef: React.RefObject<HTMLDivElement>;
-  onTabChange: (tab: AdminTab) => void;
+  sidebarOpen: boolean;
+  onToggleSidebar: () => void;
   onToggleDark: () => void;
   onToggleNotif: () => void;
   onToggleProfile: () => void;
@@ -30,44 +28,39 @@ interface AdminTopbarProps {
 function getNotifIcon(type: string) {
   switch (type) {
     case "warning": return <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />;
-    case "error": return <XCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />;
-    default: return <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />;
+    case "error":   return <XCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />;
+    default:        return <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />;
   }
 }
 
 export function AdminTopbar({
-  activeTab,
-  tabs,
-  notifs,
-  unread,
-  showNotifPopup,
-  showProfilePopup,
-  darkMode,
-  notifRef,
-  profileRef,
-  onTabChange,
-  onToggleDark,
-  onToggleNotif,
-  onToggleProfile,
-  onMarkAllRead,
-  onDismissNotif,
-  onOpenProfile,
-  onLogout,
+  notifs, unread, showNotifPopup, showProfilePopup, darkMode,
+  notifRef, profileRef, sidebarOpen,
+  onToggleSidebar, onToggleDark, onToggleNotif, onToggleProfile,
+  onMarkAllRead, onDismissNotif, onOpenProfile, onLogout,
 }: AdminTopbarProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
-      <div className="container mx-auto flex h-14 items-center justify-between px-4">
+      <div className="flex h-14 items-center justify-between px-4 gap-3">
+
+        {/* Left: sidebar toggle + logo */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}>
-            <span className="text-sm font-bold text-white">A</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm">
-            <span className="font-semibold">SWARD</span>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-muted-foreground">Administración</span>
+          <button
+            onClick={onToggleSidebar}
+            className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            aria-label="Toggle sidebar"
+          >
+            {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}>
+              <span className="text-xs font-bold text-white">A</span>
+            </div>
+            <span className="font-semibold text-sm hidden sm:block">SWARD</span>
           </div>
         </div>
 
+        {/* Right */}
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" onClick={onToggleDark}>
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -86,9 +79,7 @@ export function AdminTopbar({
                 <div className="flex items-center justify-between px-4 py-3 border-b">
                   <span className="font-semibold text-sm">Notificaciones</span>
                   {unread > 0 && (
-                    <button onClick={onMarkAllRead} className="text-xs text-primary hover:underline">
-                      Marcar leídas
-                    </button>
+                    <button onClick={onMarkAllRead} className="text-xs text-primary hover:underline">Marcar leídas</button>
                   )}
                 </div>
                 <div className="max-h-64 overflow-y-auto">
@@ -118,10 +109,7 @@ export function AdminTopbar({
               onClick={onToggleProfile}
               className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-muted transition-colors"
             >
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-                style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}
-              >
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}>
                 A
               </div>
               <span className="text-sm font-medium hidden md:block">Admin</span>
@@ -130,12 +118,7 @@ export function AdminTopbar({
               <div className="absolute right-0 top-11 w-60 bg-card border border-border rounded-[12px] shadow-xl z-50 overflow-hidden">
                 <div className="px-4 py-3 border-b bg-warning/5">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                      style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}
-                    >
-                      A
-                    </div>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ background: "linear-gradient(135deg, #f59e0b, #ef4444)" }}>A</div>
                     <div>
                       <p className="font-semibold text-sm">{mockAdmin.name}</p>
                       <p className="text-xs text-muted-foreground">{mockAdmin.email}</p>
@@ -160,25 +143,6 @@ export function AdminTopbar({
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Tab bar */}
-      <div className="container mx-auto px-4 border-t">
-        <div className="flex gap-0">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm border-b-2 transition-colors -mb-px ${
-                activeTab === tab.id
-                  ? "border-warning text-warning font-medium"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tab.icon}{tab.label}
-            </button>
-          ))}
         </div>
       </div>
     </header>

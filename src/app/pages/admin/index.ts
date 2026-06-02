@@ -1,5 +1,6 @@
 export { useAdminDashboard } from "./useAdminDashboard";
 export { AdminTopbar } from "./components/AdminTopbar";
+export { AdminSidebar } from "./components/AdminSidebar";
 export { AdminMetricsCards } from "./components/AdminMetricsCards";
 export { SystemStatusPanel } from "./components/SystemStatusPanel";
 export { UsersTable } from "./components/UsersTable";
