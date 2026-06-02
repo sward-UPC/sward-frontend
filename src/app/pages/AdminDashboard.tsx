@@ -1,30 +1,18 @@
-import { LayoutDashboard, Users, BookOpen, Server, Activity } from "lucide-react";
 import { ProfileDialog } from "../components/ui/ProfileDialog";
 import { mockAdmin } from "../../mocks/data/admin.mock";
 import {
-  useAdminDashboard, AdminTopbar, UsersTable,
-  ResumenTab, CursosTab, SistemaTab, LogsTab,
+  useAdminDashboard, AdminTopbar, AdminSidebar,
+  UsersTable, ResumenTab, CursosTab, SistemaTab, LogsTab,
 } from "./admin";
 import { useLogout } from "../../core/auth/useLogout";
-import type { AdminTab } from "../../core/types/admin.types";
-
-const TABS: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
-  { id: "resumen", label: "Resumen", icon: <LayoutDashboard className="w-4 h-4" /> },
-  { id: "usuarios", label: "Usuarios", icon: <Users className="w-4 h-4" /> },
-  { id: "cursos", label: "Cursos", icon: <BookOpen className="w-4 h-4" /> },
-  { id: "sistema", label: "Sistema", icon: <Server className="w-4 h-4" /> },
-  { id: "logs", label: "Logs", icon: <Activity className="w-4 h-4" /> },
-];
 
 export function AdminDashboard() {
   const dash = useAdminDashboard();
   const logout = useLogout();
 
   return (
-    <div className="min-h-screen w-full bg-background flex flex-col">
+    <div className="h-screen w-full bg-background flex flex-col overflow-hidden">
       <AdminTopbar
-        activeTab={dash.activeTab}
-        tabs={TABS}
         notifs={dash.notifs}
         unread={dash.unread}
         showNotifPopup={dash.showNotifPopup}
@@ -32,7 +20,8 @@ export function AdminDashboard() {
         darkMode={dash.darkMode}
         notifRef={dash.notifRef}
         profileRef={dash.profileRef}
-        onTabChange={dash.setActiveTab}
+        sidebarOpen={dash.sidebarOpen}
+        onToggleSidebar={() => dash.setSidebarOpen((p) => !p)}
         onToggleDark={() => dash.setDarkMode(!dash.darkMode)}
         onToggleNotif={() => { dash.setShowNotifPopup(!dash.showNotifPopup); dash.setShowProfilePopup(false); }}
         onToggleProfile={() => { dash.setShowProfilePopup(!dash.showProfilePopup); dash.setShowNotifPopup(false); }}
@@ -42,31 +31,41 @@ export function AdminDashboard() {
         onLogout={logout}
       />
 
-      <div className="flex-1 container mx-auto p-4 space-y-4 max-w-7xl">
-        {dash.activeTab === "resumen" && (
-          <ResumenTab onViewLogs={() => dash.setActiveTab("logs")} />
-        )}
-        {dash.activeTab === "usuarios" && (
-          <UsersTable
-            users={dash.filteredUsers}
-            userSearch={dash.userSearch}
-            roleFilter={dash.roleFilter}
-            statusFilter={dash.statusFilter}
-            onSearchChange={dash.setUserSearch}
-            onRoleFilterChange={dash.setRoleFilter}
-            onStatusFilterChange={dash.setStatusFilter}
-            onToggleStatus={dash.toggleUserStatus}
-          />
-        )}
-        {dash.activeTab === "cursos" && <CursosTab />}
-        {dash.activeTab === "sistema" && (
-          <SistemaTab
-            modelRetrain={dash.modelRetrain}
-            retrainDone={dash.retrainDone}
-            onRetrain={dash.handleRetrain}
-          />
-        )}
-        {dash.activeTab === "logs" && <LogsTab />}
+      <div className="flex flex-1 overflow-hidden">
+        <AdminSidebar
+          activeTab={dash.activeTab}
+          sidebarOpen={dash.sidebarOpen}
+          onTabChange={dash.setActiveTab}
+        />
+
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-5xl mx-auto p-4 space-y-4">
+            {dash.activeTab === "resumen" && (
+              <ResumenTab onViewLogs={() => dash.setActiveTab("logs")} />
+            )}
+            {dash.activeTab === "usuarios" && (
+              <UsersTable
+                users={dash.filteredUsers}
+                userSearch={dash.userSearch}
+                roleFilter={dash.roleFilter}
+                statusFilter={dash.statusFilter}
+                onSearchChange={dash.setUserSearch}
+                onRoleFilterChange={dash.setRoleFilter}
+                onStatusFilterChange={dash.setStatusFilter}
+                onToggleStatus={dash.toggleUserStatus}
+              />
+            )}
+            {dash.activeTab === "cursos"  && <CursosTab />}
+            {dash.activeTab === "sistema" && (
+              <SistemaTab
+                modelRetrain={dash.modelRetrain}
+                retrainDone={dash.retrainDone}
+                onRetrain={dash.handleRetrain}
+              />
+            )}
+            {dash.activeTab === "logs" && <LogsTab />}
+          </div>
+        </main>
       </div>
 
       <ProfileDialog

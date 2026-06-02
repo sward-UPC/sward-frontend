@@ -8,6 +8,8 @@ import type { AdminTab, AdminUser, AdminNotification } from "../../../core/types
 
 export interface UseAdminDashboardReturn {
   // State
+  sidebarOpen: boolean;
+  setSidebarOpen: (v: boolean | ((p: boolean) => boolean)) => void;
   activeTab: AdminTab;
   userSearch: string;
   roleFilter: string;
@@ -42,6 +44,7 @@ export interface UseAdminDashboardReturn {
 }
 
 export function useAdminDashboard(): UseAdminDashboardReturn {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<AdminTab>("resumen");
   const [userSearch, setUserSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -106,6 +109,8 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
   });
 
   return {
+    sidebarOpen,
+    setSidebarOpen,
     activeTab,
     userSearch,
     roleFilter,
