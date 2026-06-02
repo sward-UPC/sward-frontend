@@ -145,3 +145,11 @@ vite.config.ts.timestamp-*
 # Claude Code
 .claude/
 CLAUDE.md
+# docs internos — solo locales
+ACCESIBILIDAD.md
+ATTRIBUTIONS.md
+FUNCIONALIDAD-XAI.md
+README copy.md
+guidelines/
+docs/
+src/imports/
