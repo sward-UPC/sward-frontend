@@ -26,7 +26,7 @@ interface StudentSidebarProps {
 export function StudentSidebar({ activeNav, sidebarOpen, streak, onNavChange }: StudentSidebarProps) {
   return (
     <aside
-      className={`hidden md:flex flex-col border-r bg-card transition-all duration-300 shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] ${
+      className={`hidden md:flex flex-col border-r bg-card transition-all duration-300 shrink-0 h-full ${
         sidebarOpen ? 'w-52' : 'w-14'
       }`}
     >
