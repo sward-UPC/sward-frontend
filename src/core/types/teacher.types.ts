@@ -51,3 +51,54 @@ export interface EngagementDataPoint {
   engagement: number;
   dominio: number;
 }
+
+/** Punto de progreso semanal de un estudiante individual (EP005). */
+export interface StudentProgressPoint {
+  week: string;
+  mastery: number;
+}
+
+/** Dominio de un concepto individual para la vista detalle (EP005). */
+export interface ConceptMasteryPoint {
+  concept: string;
+  mastery: number;
+}
+
+/** Interacción reciente del estudiante visible para el docente (EP005). */
+export interface StudentInteractionRecord {
+  id: number;
+  date: string;
+  resource: string;
+  concept: string;
+  result: 'Completado' | 'Incorrecto';
+  time: string;
+}
+
+/** Interacción con atención para el heatmap SAKT (EP005). */
+export interface AttentionInteractionRecord {
+  id: number;
+  concept: string;
+  timestamp: string;
+  isCorrect: boolean;
+  attention: number;
+}
+
+/** Dato para el radar de dominio del estudiante (EP005). */
+export interface StudentDomainPoint {
+  subject: string;
+  value: number;
+  fullMark: number;
+}
+
+/** Perfil del docente mostrado en el dashboard (EP005). */
+export interface TeacherProfile {
+  name: string;
+  email: string;
+  role: string;
+  department: string;
+  avatar: string;
+  courses: string;
+}
+
+/** Tabs disponibles en el dashboard docente. */
+export type TeacherTab = 'resumen' | 'estudiantes' | 'analisis' | 'reportes';

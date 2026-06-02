@@ -12,9 +12,17 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { X, MessageSquare, TrendingUp, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
+import { X, MessageSquare, TrendingUp, AlertTriangle } from "lucide-react";
 import { DomainRadar } from "../xai/DomainRadar";
 import { AttentionHeatmap } from "../xai/AttentionHeatmap";
+import { StudentInteractionsList } from "./StudentInteractionsList";
+import {
+  mockStudentProgressPoints,
+  mockConceptMasteryPoints,
+  mockStudentInteractions,
+  mockAttentionInteractions,
+  mockStudentDomainPoints,
+} from "@mocks/data/teacher.mock";
 
 interface StudentData {
   id: number;
@@ -33,100 +41,30 @@ interface StudentDetailViewProps {
   onSendFeedback: () => void;
 }
 
-const mockProgressData = [
-  { week: "S1", mastery: 45 },
-  { week: "S2", mastery: 48 },
-  { week: "S3", mastery: 42 },
-  { week: "S4", mastery: 50 },
-  { week: "S5", mastery: 52 },
-];
-
-const mockConceptMastery = [
-  { concept: "Intro IA", mastery: 75 },
-  { concept: "Redes N.", mastery: 35 },
-  { concept: "Deep L.", mastery: 40 },
-  { concept: "KT", mastery: 60 },
-  { concept: "Python", mastery: 55 },
-];
-
-const mockInteractions = [
-  {
-    id: 1,
-    date: "15/05/26 10:30",
-    resource: "Video: Fundamentos de Redes Neuronales",
-    concept: "Redes Neuronales",
-    result: "Completado",
-    time: "15 min",
-  },
-  {
-    id: 2,
-    date: "14/05/26 16:45",
-    resource: "Ejercicio: Deep Learning Básico",
-    concept: "Deep Learning",
-    result: "Incorrecto",
-    time: "25 min",
-  },
-  {
-    id: 3,
-    date: "14/05/26 14:20",
-    resource: "Lectura: Introducción a Knowledge Tracing",
-    concept: "Knowledge Tracing",
-    result: "Completado",
-    time: "18 min",
-  },
-  {
-    id: 4,
-    date: "13/05/26 11:00",
-    resource: "Ejercicio: Perceptrón Simple",
-    concept: "Redes Neuronales",
-    result: "Incorrecto",
-    time: "30 min",
-  },
-];
-
-const mockAttentionInteractions = [
-  { id: 1, concept: "Intro a IA", timestamp: "15/05/26 10:30", isCorrect: true, attention: 75 },
-  { id: 2, concept: "Deep Learning", timestamp: "14/05/26 16:45", isCorrect: false, attention: 40 },
-  { id: 3, concept: "Redes Neuronales", timestamp: "14/05/26 14:20", isCorrect: false, attention: 35 },
-  { id: 4, concept: "Knowledge Tracing", timestamp: "13/05/26 11:00", isCorrect: true, attention: 60 },
-];
-
-const mockDomainData = [
-  { subject: "Intro IA", value: 75, fullMark: 100 },
-  { subject: "Deep Learning", value: 40, fullMark: 100 },
-  { subject: "Redes Neur.", value: 35, fullMark: 100 },
-  { subject: "Python", value: 55, fullMark: 100 },
-  { subject: "Know. Tracing", value: 60, fullMark: 100 },
-];
+function getRiskBadge(level: string) {
+  switch (level) {
+    case "high":
+      return (
+        <Badge variant="destructive" className="gap-1">
+          <AlertTriangle className="w-3 h-3" />
+          Riesgo Alto
+        </Badge>
+      );
+    case "medium":
+      return <Badge variant="warning" className="gap-1">Riesgo Medio</Badge>;
+    case "low":
+      return (
+        <Badge variant="success" className="gap-1">
+          <TrendingUp className="w-3 h-3" />
+          Bajo Riesgo
+        </Badge>
+      );
+    default:
+      return null;
+  }
+}
 
 export function StudentDetailView({ student, onClose, onSendFeedback }: StudentDetailViewProps) {
-  const getRiskBadge = (level: string) => {
-    switch (level) {
-      case "high":
-        return (
-          <Badge variant="destructive" className="gap-1">
-            <AlertTriangle className="w-3 h-3" />
-            Riesgo Alto
-          </Badge>
-        );
-      case "medium":
-        return (
-          <Badge variant="warning" className="gap-1">
-            Riesgo Medio
-          </Badge>
-        );
-      case "low":
-        return (
-          <Badge variant="success" className="gap-1">
-            <TrendingUp className="w-3 h-3" />
-            Bajo Riesgo
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <Card className="border-primary">
       <CardHeader>
@@ -189,7 +127,7 @@ export function StudentDetailView({ student, onClose, onSendFeedback }: StudentD
           <CardContent>
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockProgressData}>
+                <LineChart data={mockStudentProgressPoints}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                   <XAxis dataKey="week" stroke="#6B7280" style={{ fontSize: "12px" }} />
                   <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
@@ -200,13 +138,7 @@ export function StudentDetailView({ student, onClose, onSendFeedback }: StudentD
                       borderRadius: "12px",
                     }}
                   />
-                  <Line
-                    type="monotone"
-                    dataKey="mastery"
-                    stroke="#DC2626"
-                    strokeWidth={2}
-                    name="Dominio %"
-                  />
+                  <Line type="monotone" dataKey="mastery" stroke="#DC2626" strokeWidth={2} name="Dominio %" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -221,10 +153,10 @@ export function StudentDetailView({ student, onClose, onSendFeedback }: StudentD
 
         {/* Vista Rápida de Dominio - Radar */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DomainRadar data={mockDomainData} title="Vista Rápida de Dominio" />
+          <DomainRadar data={mockStudentDomainPoints} title="Vista Rápida de Dominio" />
           <AttentionHeatmap
             interactions={mockAttentionInteractions}
-            currentPrediction={`Probabilidad de éxito en próximo ejercicio de Redes Neuronales: 38%. Se recomienda intervención docente.`}
+            currentPrediction="Probabilidad de éxito en próximo ejercicio de Redes Neuronales: 38%. Se recomienda intervención docente."
           />
         </div>
 
@@ -237,7 +169,7 @@ export function StudentDetailView({ student, onClose, onSendFeedback }: StudentD
           <CardContent>
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockConceptMastery}>
+                <BarChart data={mockConceptMasteryPoints}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                   <XAxis dataKey="concept" stroke="#6B7280" style={{ fontSize: "12px" }} />
                   <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
@@ -256,43 +188,7 @@ export function StudentDetailView({ student, onClose, onSendFeedback }: StudentD
         </Card>
 
         {/* Historial de Interacciones */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Historial de Interacciones Recientes</CardTitle>
-            <CardDescription>Últimas 10 actividades del estudiante</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {mockInteractions.map((interaction) => (
-                <div
-                  key={interaction.id}
-                  className="flex items-start gap-3 p-3 border rounded-[12px] hover:bg-muted/50 transition-colors"
-                >
-                  <div className="mt-1">
-                    {interaction.result === "Completado" ? (
-                      <CheckCircle2 className="w-5 h-5 text-success" />
-                    ) : (
-                      <AlertTriangle className="w-5 h-5 text-destructive" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{interaction.resource}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs">
-                        {interaction.concept}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {interaction.time}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-xs text-muted-foreground shrink-0">{interaction.date}</div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <StudentInteractionsList interactions={mockStudentInteractions} />
 
         {/* Recomendaciones para el Docente */}
         <Card className="bg-warning/5 border-warning/20">

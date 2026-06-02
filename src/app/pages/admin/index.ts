@@ -1,0 +1,9 @@
+export { useAdminDashboard } from "./useAdminDashboard";
+export { AdminTopbar } from "./components/AdminTopbar";
+export { AdminMetricsCards } from "./components/AdminMetricsCards";
+export { SystemStatusPanel } from "./components/SystemStatusPanel";
+export { UsersTable } from "./components/UsersTable";
+export { ResumenTab } from "./components/ResumenTab";
+export { CursosTab } from "./components/CursosTab";
+export { SistemaTab } from "./components/SistemaTab";
+export { LogsTab } from "./components/LogsTab";

@@ -1,104 +1,17 @@
-import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
+import { useRegisterForm } from "./auth";
 
 interface RegisterPageProps {
   onNavigateToLogin: () => void;
 }
 
 export function RegisterPage({ onNavigateToLogin }: RegisterPageProps) {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    role: "student" as "student" | "teacher",
-    institution: "",
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "El nombre completo es requerido";
-    }
-
-    if (!formData.email) {
-      newErrors.email = "El correo electrónico es requerido";
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        newErrors.email = "Por favor ingrese un correo válido";
-      }
-    }
-
-    if (!formData.password) {
-      newErrors.password = "La contraseña es requerida";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "La contraseña debe tener al menos 8 caracteres";
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Las contraseñas no coinciden";
-    }
-
-    if (!formData.institution.trim()) {
-      newErrors.institution = "La institución es requerida";
-    }
-
-    return newErrors;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const validationErrors = validateForm();
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    setErrors({});
-    setIsLoading(true);
-
-    // Simular registro
-    setTimeout(() => {
-      // Simular email ya registrado
-      if (formData.email === "existing@sward.edu.pe") {
-        setErrors({ email: "El correo ya se encuentra registrado. Intente iniciar sesión." });
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(false);
-      setSuccess(true);
-
-      setTimeout(() => {
-        onNavigateToLogin();
-      }, 2000);
-    }, 1500);
-  };
-
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    // Limpiar error del campo cuando el usuario empieza a escribir
-    if (errors[field]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
-  };
+  const { formData, errors, isLoading, success, handleChange, handleSubmit } = useRegisterForm();
 
   if (success) {
     return (
@@ -115,9 +28,7 @@ export function RegisterPage({ onNavigateToLogin }: RegisterPageProps) {
               <p className="text-sm text-muted-foreground">
                 Tu cuenta ha sido creada. Se ha enviado un correo de confirmación a {formData.email}
               </p>
-              <p className="text-sm text-muted-foreground">
-                Redirigiendo al inicio de sesión...
-              </p>
+              <p className="text-sm text-muted-foreground">Redirigiendo al inicio de sesión...</p>
             </div>
           </CardContent>
         </Card>
@@ -135,125 +46,56 @@ export function RegisterPage({ onNavigateToLogin }: RegisterPageProps) {
             </div>
           </div>
           <CardTitle className="text-center">Crear Cuenta en SWARD</CardTitle>
-          <CardDescription className="text-center">
-            Complete el formulario para registrarse
-          </CardDescription>
+          <CardDescription className="text-center">Complete el formulario para registrarse</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={(e) => handleSubmit(e, onNavigateToLogin)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName" required>
-                Nombre Completo
-              </Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="Juan Pérez López"
-                value={formData.fullName}
+              <Label htmlFor="fullName" required>Nombre Completo</Label>
+              <Input id="fullName" type="text" placeholder="Juan Pérez López" value={formData.fullName}
                 onChange={(e) => handleChange("fullName", e.target.value)}
-                error={!!errors.fullName}
-                helperText={errors.fullName}
-                disabled={isLoading}
-                aria-required="true"
-              />
+                error={!!errors.fullName} helperText={errors.fullName} disabled={isLoading} aria-required="true" />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="email" required>
-                Correo Institucional
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu-correo@universidad.edu.pe"
-                value={formData.email}
+              <Label htmlFor="email" required>Correo Institucional</Label>
+              <Input id="email" type="email" placeholder="tu-correo@universidad.edu.pe" value={formData.email}
                 onChange={(e) => handleChange("email", e.target.value)}
-                error={!!errors.email}
-                helperText={errors.email}
-                disabled={isLoading}
-                aria-required="true"
-              />
+                error={!!errors.email} helperText={errors.email} disabled={isLoading} aria-required="true" />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="institution" required>
-                Institución
-              </Label>
-              <Input
-                id="institution"
-                type="text"
-                placeholder="Universidad Peruana de Ciencias Aplicadas"
-                value={formData.institution}
+              <Label htmlFor="institution" required>Institución</Label>
+              <Input id="institution" type="text" placeholder="Universidad Peruana de Ciencias Aplicadas" value={formData.institution}
                 onChange={(e) => handleChange("institution", e.target.value)}
-                error={!!errors.institution}
-                helperText={errors.institution}
-                disabled={isLoading}
-                aria-required="true"
-              />
+                error={!!errors.institution} helperText={errors.institution} disabled={isLoading} aria-required="true" />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="role">Tipo de Usuario</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(value: any) => handleChange("role", value)}
-                disabled={isLoading}
-              >
-                <SelectTrigger id="role" aria-label="Seleccionar tipo de usuario">
-                  <SelectValue />
-                </SelectTrigger>
+              <Select value={formData.role} onValueChange={(value: any) => handleChange("role", value)} disabled={isLoading}>
+                <SelectTrigger id="role" aria-label="Seleccionar tipo de usuario"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="student">Estudiante</SelectItem>
                   <SelectItem value="teacher">Docente</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="password" required>
-                Contraseña
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Mínimo 8 caracteres"
-                value={formData.password}
+              <Label htmlFor="password" required>Contraseña</Label>
+              <Input id="password" type="password" placeholder="Mínimo 8 caracteres" value={formData.password}
                 onChange={(e) => handleChange("password", e.target.value)}
-                error={!!errors.password}
-                helperText={errors.password}
-                disabled={isLoading}
-                aria-required="true"
-              />
+                error={!!errors.password} helperText={errors.password} disabled={isLoading} aria-required="true" />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" required>
-                Confirmar Contraseña
-              </Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Repita su contraseña"
-                value={formData.confirmPassword}
+              <Label htmlFor="confirmPassword" required>Confirmar Contraseña</Label>
+              <Input id="confirmPassword" type="password" placeholder="Repita su contraseña" value={formData.confirmPassword}
                 onChange={(e) => handleChange("confirmPassword", e.target.value)}
-                error={!!errors.confirmPassword}
-                helperText={errors.confirmPassword}
-                disabled={isLoading}
-                aria-required="true"
-              />
+                error={!!errors.confirmPassword} helperText={errors.confirmPassword} disabled={isLoading} aria-required="true" />
             </div>
-
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Creando cuenta..." : "Registrarse"}
             </Button>
-
             <div className="text-center text-sm text-muted-foreground">
               ¿Ya tienes cuenta?{" "}
-              <button
-                type="button"
-                className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring rounded"
-                onClick={onNavigateToLogin}
-              >
+              <button type="button" className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring rounded" onClick={onNavigateToLogin}>
                 Inicia sesión aquí
               </button>
             </div>
