@@ -56,7 +56,6 @@ export const router = createBrowserRouter([
         path: '/login',
         element: (
           <SuspenseWrapper>
-            {/* LoginPage legacy aún usa prop onLogin; se reemplazará cuando se integre AuthContext */}
             <LoginPage onLogin={() => {}} />
           </SuspenseWrapper>
         ),
@@ -80,20 +79,8 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           {
-            path: '/student',
-            element: (
-              <SuspenseWrapper>
-                <StudentDashboard onLogout={() => {}} />
-              </SuspenseWrapper>
-            ),
-          },
-          {
             path: '/student/*',
-            element: (
-              <SuspenseWrapper>
-                <StudentDashboard onLogout={() => {}} />
-              </SuspenseWrapper>
-            ),
+            element: <SuspenseWrapper><StudentDashboard /></SuspenseWrapper>,
           },
         ],
       },
@@ -108,20 +95,8 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           {
-            path: '/teacher',
-            element: (
-              <SuspenseWrapper>
-                <TeacherDashboard onLogout={() => {}} />
-              </SuspenseWrapper>
-            ),
-          },
-          {
             path: '/teacher/*',
-            element: (
-              <SuspenseWrapper>
-                <TeacherDashboard onLogout={() => {}} />
-              </SuspenseWrapper>
-            ),
+            element: <SuspenseWrapper><TeacherDashboard /></SuspenseWrapper>,
           },
         ],
       },
@@ -136,20 +111,8 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           {
-            path: '/admin',
-            element: (
-              <SuspenseWrapper>
-                <AdminDashboard onLogout={() => {}} />
-              </SuspenseWrapper>
-            ),
-          },
-          {
             path: '/admin/*',
-            element: (
-              <SuspenseWrapper>
-                <AdminDashboard onLogout={() => {}} />
-              </SuspenseWrapper>
-            ),
+            element: <SuspenseWrapper><AdminDashboard /></SuspenseWrapper>,
           },
         ],
       },

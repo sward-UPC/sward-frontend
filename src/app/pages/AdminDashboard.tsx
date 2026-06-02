@@ -5,9 +5,8 @@ import {
   useAdminDashboard, AdminTopbar, UsersTable,
   ResumenTab, CursosTab, SistemaTab, LogsTab,
 } from "./admin";
+import { useLogout } from "../../core/auth/useLogout";
 import type { AdminTab } from "../../core/types/admin.types";
-
-interface AdminDashboardProps { onLogout: () => void; }
 
 const TABS: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
   { id: "resumen", label: "Resumen", icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -17,8 +16,9 @@ const TABS: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
   { id: "logs", label: "Logs", icon: <Activity className="w-4 h-4" /> },
 ];
 
-export function AdminDashboard({ onLogout }: AdminDashboardProps) {
+export function AdminDashboard() {
   const dash = useAdminDashboard();
+  const logout = useLogout();
 
   return (
     <div className="min-h-screen w-full bg-background flex flex-col">
@@ -39,7 +39,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
         onMarkAllRead={() => dash.setNotifs((p) => p.map((n) => ({ ...n, read: true })))}
         onDismissNotif={(id) => dash.setNotifs((p) => p.filter((x) => x.id !== id))}
         onOpenProfile={dash.openProfile}
-        onLogout={onLogout}
+        onLogout={logout}
       />
 
       <div className="flex-1 container mx-auto p-4 space-y-4 max-w-7xl">
