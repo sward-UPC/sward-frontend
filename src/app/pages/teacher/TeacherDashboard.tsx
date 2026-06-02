@@ -34,7 +34,7 @@ export function TeacherDashboard() {
   const logout = useLogout();
 
   return (
-    <div className="min-h-screen w-full bg-background flex flex-col">
+    <div className="h-screen w-full bg-background flex flex-col overflow-hidden">
       <TeacherTopbar
         teacher={dash.teacher}
         notifications={dash.notifications}
