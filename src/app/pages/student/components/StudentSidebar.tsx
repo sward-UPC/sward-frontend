@@ -1,4 +1,4 @@
-import { Flame, LayoutDashboard, Brain, BarChart2, Library, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Brain, BarChart2, Library, Sparkles } from 'lucide-react';
 import type { NavItem } from '@core/types';
 
 interface NavItemDef {
@@ -19,11 +19,10 @@ const NAV: NavItemDef[] = [
 interface StudentSidebarProps {
   activeNav: NavItem;
   sidebarOpen: boolean;
-  streak: number;
   onNavChange: (nav: NavItem) => void;
 }
 
-export function StudentSidebar({ activeNav, sidebarOpen, streak, onNavChange }: StudentSidebarProps) {
+export function StudentSidebar({ activeNav, sidebarOpen, onNavChange }: StudentSidebarProps) {
   return (
     <aside className={`hidden md:flex flex-col border-r bg-card transition-all duration-300 shrink-0 ${sidebarOpen ? 'w-52' : 'w-14'}`}>
       <nav className="flex flex-col gap-1 p-2 flex-1 pt-3">
@@ -48,23 +47,6 @@ export function StudentSidebar({ activeNav, sidebarOpen, streak, onNavChange }: 
         ))}
       </nav>
 
-      {sidebarOpen && (
-        <div className="p-3 border-t space-y-2.5">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Flame className="w-3.5 h-3.5 text-warning" />
-            <span>{streak} días de racha</span>
-          </div>
-          <div>
-            <div className="flex justify-between text-xs text-muted-foreground mb-1">
-              <span>Ruta de aprendizaje</span>
-              <span className="font-medium text-foreground">2/5</span>
-            </div>
-            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full" style={{ width: '40%' }} />
-            </div>
-          </div>
-        </div>
-      )}
     </aside>
   );
 }
