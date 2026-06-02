@@ -25,13 +25,18 @@ interface StudentSidebarProps {
 
 export function StudentSidebar({ activeNav, sidebarOpen, streak, onNavChange }: StudentSidebarProps) {
   return (
-    <aside className={`hidden md:flex flex-col border-r bg-card transition-all duration-300 shrink-0 ${sidebarOpen ? 'w-52' : 'w-14'}`}>
-      <nav className="flex flex-col gap-1 p-2 flex-1 pt-3">
+    <aside
+      className={`hidden md:flex flex-col border-r bg-card transition-all duration-300 shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] ${
+        sidebarOpen ? 'w-52' : 'w-14'
+      }`}
+    >
+      {/* Nav items — scrollable si hay muchos */}
+      <nav className="flex flex-col gap-1 p-2 flex-1 pt-3 overflow-y-auto">
         {NAV.map((item) => (
           <button
             key={item.id}
             onClick={() => onNavChange(item.id)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-[10px] transition-all text-left w-full group ${
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-[10px] transition-all text-left w-full group relative ${
               activeNav === item.id
                 ? 'bg-primary/10 text-primary font-medium'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -48,23 +53,31 @@ export function StudentSidebar({ activeNav, sidebarOpen, streak, onNavChange }: 
         ))}
       </nav>
 
-      {sidebarOpen && (
-        <div className="p-3 border-t space-y-2.5">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Flame className="w-3.5 h-3.5 text-warning" />
-            <span>{streak} días de racha</span>
-          </div>
-          <div>
-            <div className="flex justify-between text-xs text-muted-foreground mb-1">
-              <span>Ruta de aprendizaje</span>
-              <span className="font-medium text-foreground">2/5</span>
+      {/* Footer — siempre visible, sticky al fondo */}
+      <div className="border-t shrink-0">
+        {sidebarOpen ? (
+          <div className="p-3 space-y-2.5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Flame className="w-3.5 h-3.5 text-warning shrink-0" />
+              <span>{streak} días de racha</span>
             </div>
-            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full" style={{ width: '40%' }} />
+            <div>
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                <span>Ruta de aprendizaje</span>
+                <span className="font-medium text-foreground">2/5</span>
+              </div>
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full" style={{ width: '40%' }} />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-col items-center gap-0.5 py-3">
+            <Flame className="w-4 h-4 text-warning" />
+            <span className="text-[11px] font-bold text-warning leading-none">{streak}</span>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }
