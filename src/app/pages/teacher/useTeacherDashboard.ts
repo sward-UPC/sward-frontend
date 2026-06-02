@@ -65,12 +65,17 @@ export interface UseTeacherDashboardReturn {
   profileDialogTab: 'profile' | 'settings';
   openProfile: (tab: 'profile' | 'settings') => void;
 
+  /* sidebar */
+  sidebarOpen: boolean;
+  setSidebarOpen: (v: boolean | ((p: boolean) => boolean)) => void;
+
   /* theme */
   darkMode: boolean;
   setDarkMode: (v: boolean) => void;
 }
 
 export function useTeacherDashboard(): UseTeacherDashboardReturn {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<TeacherTab>('resumen');
   const [courseFilter, setCourseFilter] = useState('all');
   const [weekFilter, setWeekFilter] = useState('all');
@@ -170,6 +175,9 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
     setShowProfileDialog,
     profileDialogTab,
     openProfile,
+
+    sidebarOpen,
+    setSidebarOpen,
 
     darkMode,
     setDarkMode,
