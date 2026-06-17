@@ -39,7 +39,7 @@ export interface UseLoginFormReturn {
   setNewPwErr: (v: string) => void;
   setResendTimer: (v: number | ((p: number) => number)) => void;
   // Handlers
-  handleLogin: (e: React.FormEvent, onLogin: (role: "student" | "teacher" | "admin") => void) => void;
+  handleLogin: (e: React.FormEvent, onLogin: (correo: string, password: string) => Promise<void>) => void;
   handleSendCode: () => void;
   handleVerifyCode: () => void;
   handleSetNewPw: () => void;
@@ -73,21 +73,18 @@ export function useLoginForm(): UseLoginFormReturn {
     }
   }, [resendTimer]);
 
-  const handleLogin = (e: React.FormEvent, onLogin: (role: "student" | "teacher" | "admin") => void) => {
+  const handleLogin = (e: React.FormEvent, onLogin: (correo: string, password: string) => Promise<void>) => {
     e.preventDefault();
     setLoginError("");
     if (!loginEmail) { setLoginError("Ingresa tu correo."); return; }
     if (!loginPassword) { setLoginError("Ingresa tu contraseña."); return; }
     setLoginLoading(true);
-    setTimeout(() => {
-      if (loginEmail !== "demo@sward.edu.pe" || loginPassword !== "demo123") {
-        setLoginError("Credenciales incorrectas. Usa demo@sward.edu.pe / demo123");
-        setLoginLoading(false);
-        return;
-      }
-      setLoginLoading(false);
-      onLogin(loginRole);
-    }, 1000);
+    onLogin(loginEmail, loginPassword)
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Credenciales incorrectas. Por favor verifica tu correo y contraseña.";
+        setLoginError(msg);
+      })
+      .finally(() => setLoginLoading(false));
   };
 
   const handleSendCode = () => {

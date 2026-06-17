@@ -17,33 +17,31 @@ export interface User {
   createdAt: string;
 }
 
-/** Payload de login. */
+/** Payload de login (contrato real del backend). */
 export interface LoginRequest {
-  email: string;
+  correo: string;
   password: string;
 }
 
-/** Respuesta del endpoint /auth/login. */
+/** Respuesta del endpoint /auth/login (contrato real del backend). */
 export interface LoginResponse {
-  access: string;
-  refresh: string;
-  user: User;
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
 }
 
-/** Payload de registro. */
+/** Payload de registro (contrato real del backend). */
 export interface RegisterRequest {
-  email: string;
+  correo: string;
   password: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  institution: string;
 }
 
-/** Respuesta del endpoint /auth/register. */
+/** Respuesta del endpoint /auth/register (contrato real del backend). */
 export interface RegisterResponse {
-  user: User;
-  message: string;
+  id: string;
+  correo: string;
+  estado: string;
 }
 
 /** Payload de recuperación de contraseña. */

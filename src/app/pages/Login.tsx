@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, CheckCircle2, GraduationCap, BookOpen, ChevronRight, AlertCircle, Mail, Lock, Eye, EyeOff, User, Building2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, GraduationCap, BookOpen, ChevronRight, AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { LoginBranding, LoginFormFields, useLoginForm } from "./auth";
 import { FormField as Field } from "./auth/components/FormField";
 import { useAuth } from "@core/auth/useAuth";
-import { UserRole } from "@core/types";
+import { login as loginService, register as registerService } from "@features/auth/services/auth.service";
 
 interface LoginPageProps {
   onLogin?: (role: "student" | "teacher" | "admin") => void;
@@ -20,20 +20,13 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleLoginSuccess = (role: "student" | "teacher" | "admin") => {
-    login({
-      access: "mock-access-token",
-      refresh: "mock-refresh-token",
-      user: {
-        id: "demo-1",
-        email: "demo@sward.edu.pe",
-        firstName: "Demo",
-        lastName: "User",
-        role: role as UserRole,
-        institution: "UPC",
-        createdAt: new Date().toISOString(),
-      },
-    });
+  const handleLoginSuccess = async (correo: string, password: string) => {
+    const response = await loginService({ correo, password });
+    await login(response);
+    // Navegar al dashboard según el rol del perfil cargado
+    const storedUser = localStorage.getItem('sward_user');
+    const parsedUser = storedUser ? (JSON.parse(storedUser) as { role?: string }) : null;
+    const role = (parsedUser?.role ?? "student") as "student" | "teacher" | "admin";
     navigate(`/${role}`);
     onLogin?.(role);
   };
@@ -41,9 +34,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [regStep, setRegStep] = useState(1);
-  const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
-  const [regInstitution, setRegInstitution] = useState("");
   const [regRole, setRegRole] = useState<"student" | "teacher">("student");
   const [regPw, setRegPw] = useState("");
   const [regConfirmPw, setRegConfirmPw] = useState("");
@@ -51,6 +42,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [regErrors, setRegErrors] = useState<Record<string, string>>({});
   const [regLoading, setRegLoading] = useState(false);
   const [regSuccess, setRegSuccess] = useState(false);
+  const [regApiError, setRegApiError] = useState("");
 
   const form = useLoginForm();
 
@@ -63,26 +55,30 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
   const handleRegStep1 = () => {
     const errs: Record<string, string> = {};
-    if (!regName.trim()) errs.name = "Nombre requerido.";
     if (!regEmail) errs.email = "Correo requerido.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail)) errs.email = "Correo inválido.";
-    if (!regInstitution.trim()) errs.institution = "Institución requerida.";
     if (Object.keys(errs).length) { setRegErrors(errs); return; }
     setRegErrors({}); setRegStep(2);
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (!regPw) errs.pw = "Contraseña requerida.";
     else if (regPw.length < 8) errs.pw = "Mínimo 8 caracteres.";
     if (regPw !== regConfirmPw) errs.confirmPw = "Las contraseñas no coinciden.";
     if (Object.keys(errs).length) { setRegErrors(errs); return; }
-    setRegErrors({}); setRegLoading(true);
-    setTimeout(() => {
-      setRegLoading(false); setRegSuccess(true);
-      setTimeout(() => { setRegSuccess(false); setRegStep(1); flip(); }, 2000);
-    }, 1500);
+    setRegErrors({}); setRegApiError(""); setRegLoading(true);
+    try {
+      await registerService({ correo: regEmail, password: regPw });
+      setRegLoading(false);
+      setRegSuccess(true);
+      setTimeout(() => { setRegSuccess(false); setRegStep(1); setRegEmail(""); setRegPw(""); setRegConfirmPw(""); flip(); }, 2000);
+    } catch (err: unknown) {
+      setRegLoading(false);
+      const message = err instanceof Error ? err.message : "Error al crear la cuenta. Intenta nuevamente.";
+      setRegApiError(message);
+    }
   };
 
   const faceBase = "absolute inset-0 overflow-y-auto rounded-2xl bg-card/95 backdrop-blur-sm shadow-2xl border border-border/50 p-6 sm:p-8 flex flex-col";
@@ -151,19 +147,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                     <div className="flex flex-col gap-4 flex-1">
                       <div className="space-y-3.5">
                         <div className="space-y-1.5">
-                          <label className="text-sm font-medium">Nombre completo</label>
-                          <Field value={regName} onChange={(v: string) => { setRegName(v); setRegErrors((e) => ({ ...e, name: "" })); }} placeholder="María López Suárez" icon={User} />
-                          {regErrors.name && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.name}</p>}
-                        </div>
-                        <div className="space-y-1.5">
                           <label className="text-sm font-medium">Correo institucional</label>
                           <Field type="email" value={regEmail} onChange={(v: string) => { setRegEmail(v); setRegErrors((e) => ({ ...e, email: "" })); }} placeholder="tu@universidad.edu.pe" icon={Mail} />
                           {regErrors.email && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.email}</p>}
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-sm font-medium">Institución</label>
-                          <Field value={regInstitution} onChange={(v: string) => { setRegInstitution(v); setRegErrors((e) => ({ ...e, institution: "" })); }} placeholder="Universidad Mayor de San Marcos" icon={Building2} />
-                          {regErrors.institution && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.institution}</p>}
                         </div>
                       </div>
                       <button type="button" onClick={handleRegStep1} className="w-full h-10 rounded-[12px] text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[.98] mt-auto" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
@@ -199,9 +185,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                           <Field type="password" value={regConfirmPw} onChange={(v: string) => { setRegConfirmPw(v); setRegErrors((e) => ({ ...e, confirmPw: "" })); }} placeholder="Repite tu contraseña" icon={Lock} />
                           {regErrors.confirmPw && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.confirmPw}</p>}
                         </div>
+                        {regApiError && (
+                          <div className="flex items-center gap-2 p-2.5 rounded-[10px] bg-destructive/8 border border-destructive/20">
+                            <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0" />
+                            <p className="text-xs text-destructive">{regApiError}</p>
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-2 mt-auto">
-                        <button type="button" onClick={() => { setRegStep(1); setRegErrors({}); }} className="h-10 px-4 rounded-[12px] text-sm font-medium border border-border text-foreground hover:bg-muted/50 transition-all flex items-center gap-1.5">
+                        <button type="button" onClick={() => { setRegStep(1); setRegErrors({}); setRegApiError(""); }} className="h-10 px-4 rounded-[12px] text-sm font-medium border border-border text-foreground hover:bg-muted/50 transition-all flex items-center gap-1.5">
                           <ArrowLeft className="w-4 h-4" /> Atrás
                         </button>
                         <button type="submit" disabled={regLoading} className="flex-1 h-10 rounded-[12px] text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[.98] disabled:opacity-70" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>

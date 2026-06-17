@@ -139,12 +139,6 @@ export function LoginFormFields({
         ¿No tienes cuenta?{" "}
         <button onClick={onFlip} className="text-primary font-semibold hover:text-primary/70 transition-colors">Regístrate</button>
       </div>
-
-      <div className="p-2.5 bg-muted/50 rounded-[10px] border border-border/40 text-center">
-        <p className="text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">Demo:</span> demo@sward.edu.pe · demo123
-        </p>
-      </div>
     </div>
   );
 }
