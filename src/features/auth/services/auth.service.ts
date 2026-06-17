@@ -9,10 +9,21 @@ import type {
   UserRole,
 } from '@core/types';
 
-/** Extrae el UUID del campo sub del JWT sin dependencias externas. */
-function getUuidFromToken(token: string): string {
-  const payload = JSON.parse(atob(token.split('.')[1]));
-  return payload.sub as string;
+const ROLE_MAP: Record<string, UserRole> = {
+  estudiante: 'student' as UserRole,
+  docente: 'teacher' as UserRole,
+  administrador: 'admin' as UserRole,
+};
+
+interface MeResponse {
+  id: string;
+  correo: string;
+  estado: string;
+  nombre: string | null;
+  apellido: string | null;
+  moodle_user_id: number | null;
+  rol: string | null;
+  permisos: string[];
 }
 
 /** Autentica al usuario y persiste los tokens JWT en localStorage. */
@@ -35,22 +46,16 @@ export async function logout(): Promise<void> {
   await apiClient.post(ENDPOINTS.auth.logout, { token: refreshToken });
 }
 
-/** Retorna el perfil del usuario autenticado usando GET /users/{uuid}. */
+/** Retorna el perfil completo del usuario autenticado usando GET /users/me. */
 export async function me(): Promise<User> {
-  const accessToken = localStorage.getItem('sward_access_token');
-  if (!accessToken) throw new Error('No hay token de acceso');
-
-  const uuid = getUuidFromToken(accessToken);
-  const { data } = await apiClient.get<{ id: string; correo: string; estado: string; role?: UserRole }>(
-    `/users/${uuid}`
-  );
-
+  const { data } = await apiClient.get<MeResponse>(ENDPOINTS.users.profile);
+  const backendRol = data.rol ?? 'estudiante';
   return {
     id: data.id,
     email: data.correo,
-    firstName: data.correo.split('@')[0],
-    lastName: '',
-    role: data.role ?? ('student' as UserRole),
+    firstName: data.nombre ?? data.correo.split('@')[0],
+    lastName: data.apellido ?? '',
+    role: ROLE_MAP[backendRol] ?? ('student' as UserRole),
     institution: '',
     createdAt: new Date().toISOString(),
   };
