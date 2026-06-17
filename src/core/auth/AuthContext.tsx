@@ -1,14 +1,15 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { User, UserRole, LoginResponse } from '@core/types';
+import { me } from '@features/auth/services/auth.service';
 
 interface AuthContextValue {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   role: UserRole | null;
-  /** Persiste tokens y usuario tras login exitoso. */
-  login: (response: LoginResponse) => void;
+  /** Persiste tokens y carga el perfil del usuario tras login exitoso. */
+  login: (response: LoginResponse) => Promise<void>;
   /** Limpia sesión de localStorage y estado. */
   logout: () => void;
 }
@@ -38,11 +39,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [user]);
 
-  const login = useCallback((response: LoginResponse) => {
-    localStorage.setItem('sward_access_token', response.access);
-    localStorage.setItem('sward_refresh_token', response.refresh);
-    setToken(response.access);
-    setUser(response.user);
+  const login = useCallback(async (response: LoginResponse) => {
+    localStorage.setItem('sward_access_token', response.access_token);
+    localStorage.setItem('sward_refresh_token', response.refresh_token);
+    setToken(response.access_token);
+    try {
+      const profile = await me();
+      setUser(profile);
+    } catch {
+      // Si falla la carga del perfil, seguimos autenticados con token pero sin perfil
+    }
   }, []);
 
   const logout = useCallback(() => {
@@ -57,7 +63,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     () => ({
       user,
       token,
-      isAuthenticated: !!token && !!user,
+      isAuthenticated: !!token,
       role: user?.role ?? null,
       login,
       logout,
