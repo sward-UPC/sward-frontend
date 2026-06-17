@@ -9,8 +9,8 @@ export function useLogin() {
 
   return useMutation({
     mutationFn: (payload: LoginRequest) => login(payload),
-    onSuccess: (data) => {
-      setAuth(data);
+    onSuccess: async (data) => {
+      await setAuth(data);
     },
   });
 }
