@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useSystemMetrics } from "../../../../features/admin/hooks/useSystemMetrics";
 import { useModelConfig, useTriggerRetrain } from "../../../../features/admin/hooks/useModelConfig";
+import { useDatabasesStatus } from "../../../../features/admin/hooks/useDatabasesStatus";
 
 interface SistemaTabProps {
   modelRetrain: boolean;
@@ -79,6 +80,7 @@ function MetricCard({
 export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabProps) {
   const { data: metrics, isLoading: metricsLoading } = useSystemMetrics();
   const { data: modelConfig, isLoading: configLoading } = useModelConfig();
+  const { data: databases, isLoading: dbLoading } = useDatabasesStatus();
   const retrain = useTriggerRetrain();
 
   const handleRetrain = () => {
@@ -136,6 +138,55 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
           <MetricCard key={m.label} {...m} loading={metricsLoading} />
         ))}
       </div>
+
+      {/* Estado de las bases de datos de todos los microservicios */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Database className="w-4 h-4 text-muted-foreground" /> Bases de Datos
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Estado de la base de datos de cada microservicio
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {dbLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-16 rounded-[10px] bg-muted/40 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {(databases ?? []).map((db) => {
+                const ok = db.estado === "operativo";
+                return (
+                  <div
+                    key={db.servicio}
+                    className={`p-3 rounded-[10px] border ${
+                      ok ? "border-success/20 bg-success/5" : "border-destructive/20 bg-destructive/5"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <Database className={`w-4 h-4 ${ok ? "text-success" : "text-destructive"}`} />
+                      <span
+                        className={`w-2 h-2 rounded-full animate-pulse ${ok ? "bg-success" : "bg-destructive"}`}
+                      />
+                    </div>
+                    <p className="text-sm font-semibold capitalize">{db.servicio}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{db.estado}</p>
+                    {db.latencia_ms != null ? (
+                      <p className="text-xs text-muted-foreground">{db.latencia_ms} ms</p>
+                    ) : (
+                      db.detalle && <p className="text-xs text-muted-foreground truncate">{db.detalle}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-2">
