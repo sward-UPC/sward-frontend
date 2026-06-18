@@ -71,7 +71,10 @@ function getRiskBadge(level: string) {
 
 export function StudentDetailView({ student, courseId, onClose, onSendFeedback }: StudentDetailViewProps) {
   // Datos REALES (ms-trazabilidad) cuando hay UUID + curso; si no, cae al mock.
-  const { enabled, progress, interactions } = useStudentDetail(student.estudianteId, courseId);
+  const { enabled, progress, interactions, attention } = useStudentDetail(
+    student.estudianteId,
+    courseId,
+  );
 
   const realProgress = progress.data;
   // Dominio promedio: usa el puntaje real cuando está disponible.
@@ -83,6 +86,16 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
       ? interactions.data
       : mockStudentInteractions;
   const interactionsAreReal = enabled && !!interactions.data && interactions.data.length > 0;
+
+  // Heatmap de atención SAKT: pesos reales (ms-recomendacion) o mock como fallback.
+  const attentionIsReal =
+    enabled && !!attention.data && attention.data.interactions.length > 0;
+  const attentionInteractions = attentionIsReal
+    ? attention.data!.interactions
+    : mockAttentionInteractions;
+  const attentionPrediction = attentionIsReal
+    ? attention.data!.prediction
+    : 'Probabilidad de éxito en próximo ejercicio de Redes Neuronales: 38%. Se recomienda intervención docente.';
 
   return (
     <Card className="border-primary">
@@ -172,14 +185,24 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
         </Card>
 
         {/* Vista Rápida de Dominio - Radar */}
-        {/* TODO backend: dominio por concepto y heatmap de atención (XAI) sin endpoint; usa mock. */}
+        {/* TODO backend: dominio por concepto (radar) sin endpoint; usa mock. */}
+        {/* El heatmap de atención SÍ es real (SAKT vía ms-recomendacion) cuando hay datos. */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DomainRadar data={mockStudentDomainPoints} title="Vista Rápida de Dominio" />
           <AttentionHeatmap
-            interactions={mockAttentionInteractions}
-            currentPrediction="Probabilidad de éxito en próximo ejercicio de Redes Neuronales: 38%. Se recomienda intervención docente."
+            interactions={attentionInteractions}
+            currentPrediction={attentionPrediction}
           />
         </div>
+        {enabled && attention.isLoading && (
+          <p className="text-xs text-muted-foreground -mt-3">Cargando atención del modelo...</p>
+        )}
+        {!attentionIsReal && (
+          <p className="text-xs text-muted-foreground -mt-3">
+            {/* TODO backend: sin pesos de atención reales para este estudiante/curso; mostrando ejemplo. */}
+            Mapa de atención con datos de ejemplo (sin secuencia real disponible).
+          </p>
+        )}
 
         {/* Dominio por Concepto */}
         {/* TODO backend: indicadores existen (/indicators) pero no dominio por concepto; usa mock. */}
