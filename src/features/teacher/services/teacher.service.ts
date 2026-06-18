@@ -32,6 +32,24 @@ function mapNivelRiesgo(nivel: ApiEstudianteProgress['nivel_riesgo']): RiskLevel
   return 'low';
 }
 
+/** Tipo de feedback aceptado por el backend (ms-trazabilidad). */
+export type FeedbackTipo = 'encouragement' | 'correction' | 'resource' | 'general';
+
+/** Envía retroalimentación del docente a un estudiante (ms-trazabilidad). */
+export async function enviarFeedbackReal(payload: {
+  estudianteId: string;
+  cursoId: string;
+  mensaje: string;
+  tipo: FeedbackTipo;
+}): Promise<void> {
+  await apiClient.post(ENDPOINTS.teacher.feedbackReal, {
+    estudiante_id: payload.estudianteId,
+    curso_id: payload.cursoId,
+    mensaje: payload.mensaje,
+    tipo: payload.tipo,
+  });
+}
+
 /**
  * Progreso real de los estudiantes de un curso, mapeado al modelo del UI.
  *
