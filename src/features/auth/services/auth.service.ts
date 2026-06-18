@@ -40,10 +40,28 @@ export async function register(payload: RegisterRequest): Promise<RegisterRespon
   return data;
 }
 
-/** Invalida el refresh token en el servidor. */
-export async function logout(): Promise<void> {
+/**
+ * Renueva el access token usando el refresh token guardado.
+ * El backend devuelve solo un nuevo access_token (el refresh no rota).
+ */
+export async function refresh(): Promise<string> {
   const refreshToken = localStorage.getItem('sward_refresh_token');
-  await apiClient.post(ENDPOINTS.auth.logout, { token: refreshToken });
+  if (!refreshToken) throw new Error('Sin refresh token');
+  const { data } = await apiClient.post<{ access_token: string }>(
+    ENDPOINTS.auth.refresh,
+    { refresh_token: refreshToken },
+  );
+  localStorage.setItem('sward_access_token', data.access_token);
+  return data.access_token;
+}
+
+/**
+ * Revoca la sesión en el servidor: blacklistea el access token actual en Redis.
+ * Usa el Bearer del header (el backend toma el jti del JWT); el endpoint no
+ * recibe body. Best-effort: si el token ya venció, igual limpiamos local.
+ */
+export async function logout(): Promise<void> {
+  await apiClient.post(ENDPOINTS.auth.logout);
 }
 
 /** Retorna el perfil completo del usuario autenticado usando GET /users/me. */
