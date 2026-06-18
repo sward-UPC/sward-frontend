@@ -19,11 +19,14 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Normaliza errores: extrae detail del backend y redirige en 401.
+// Normaliza errores: extrae detail del backend y redirige en 401 (excepto en login/register).
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const url: string = error.config?.url ?? '';
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('sward_access_token');
       localStorage.removeItem('sward_refresh_token');
       localStorage.removeItem('sward_user');
