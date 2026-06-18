@@ -7,6 +7,9 @@ import type {
   AdminUser,
   UserStatus,
   UserRole2,
+  ApiSystemStatus,
+  ApiSystemMetrics,
+  ApiModelConfig,
 } from '@core/types/admin.types';
 
 // ---------------------------------------------------------------------------
@@ -122,5 +125,29 @@ export interface ApiCurso {
 
 export async function getCursos(): Promise<ApiCurso[]> {
   const { data } = await apiClient.get<ApiCurso[]>(ENDPOINTS.admin.courses);
+  return data;
+}
+
+// ---------------------------------------------------------------------------
+// Sistema
+// ---------------------------------------------------------------------------
+
+export async function getSystemStatus(): Promise<ApiSystemStatus> {
+  const { data } = await apiClient.get<ApiSystemStatus>(ENDPOINTS.admin.systemStatus);
+  return data;
+}
+
+export async function getSystemMetrics(): Promise<ApiSystemMetrics> {
+  const { data } = await apiClient.get<ApiSystemMetrics>(ENDPOINTS.admin.systemMetrics);
+  return data;
+}
+
+export async function getModelConfig(): Promise<ApiModelConfig> {
+  const { data } = await apiClient.get<ApiModelConfig>(ENDPOINTS.admin.modelConfig);
+  return data;
+}
+
+export async function triggerRetrain(): Promise<{ mensaje: string; tarea_id: string }> {
+  const { data } = await apiClient.post<{ mensaje: string; tarea_id: string }>(ENDPOINTS.admin.modelRetrain);
   return data;
 }

@@ -106,3 +106,41 @@ export interface AdminProfile {
   institution: string;
   avatar: string;
 }
+
+// ---------------------------------------------------------------------------
+// Sistema — health, métricas y modelo SAKT
+// ---------------------------------------------------------------------------
+
+export interface ApiServiceHealth {
+  nombre: string;
+  estado: 'operativo' | 'degradado' | 'caido';
+  latencia_ms: number | null;
+  detalle: string | null;
+}
+
+export interface ApiSystemStatus {
+  api: ApiServiceHealth;
+  base_de_datos: ApiServiceHealth;
+  redis: ApiServiceHealth;
+  uptime_segundos: number;
+}
+
+export interface ApiSystemMetrics {
+  cpu_pct: number;
+  ram_pct: number;
+  ram_usado_mb: number;
+  ram_total_mb: number;
+  disco_pct: number;
+  disco_usado_gb: number;
+  disco_total_gb: number;
+  uptime_segundos: number;
+}
+
+export interface ApiModelConfig {
+  version: string;
+  tasa_aprendizaje: number;
+  umbral_confianza_xai: number;
+  ventana_contexto: number;
+  dimension_embedding: number;
+  ultimo_reentrenamiento: string | null;
+}
