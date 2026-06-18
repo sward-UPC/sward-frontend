@@ -58,18 +58,18 @@ export function AdminMetricsCards() {
       sub: `${cursos.length} cursos en total`,
     },
     {
-      label: "Sesiones Hoy",
-      value: "—",
+      label: "Sesiones Activas",
+      value: metrics.sesiones_activas ?? 0,
       icon: <Activity className="w-5 h-5 text-warning" />,
       color: "bg-warning/10",
-      sub: "pendiente de implementar",
+      sub: "sesiones con token vigente",
     },
     {
       label: "Dominio Plataforma",
-      value: "—",
+      value: metrics.dominio_plataforma != null ? `${metrics.dominio_plataforma}%` : "—",
       icon: <TrendingUp className="w-5 h-5 text-info" />,
       color: "bg-info/10",
-      sub: "requiere módulo SAKT",
+      sub: metrics.dominio_plataforma != null ? "promedio SAKT de la plataforma" : "sin datos aún",
     },
   ];
 

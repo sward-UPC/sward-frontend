@@ -10,6 +10,7 @@ import type {
   ApiSystemStatus,
   ApiSystemMetrics,
   ApiModelConfig,
+  ApiDatabaseHealth,
 } from '@core/types/admin.types';
 
 // ---------------------------------------------------------------------------
@@ -139,6 +140,12 @@ export async function getSystemStatus(): Promise<ApiSystemStatus> {
 
 export async function getSystemMetrics(): Promise<ApiSystemMetrics> {
   const { data } = await apiClient.get<ApiSystemMetrics>(ENDPOINTS.admin.systemMetrics);
+  return data;
+}
+
+/** Estado de las bases de datos de todos los microservicios (panel admin). */
+export async function getDatabasesStatus(): Promise<ApiDatabaseHealth[]> {
+  const { data } = await apiClient.get<ApiDatabaseHealth[]>(ENDPOINTS.admin.systemDatabases);
   return data;
 }
 

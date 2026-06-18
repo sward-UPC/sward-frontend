@@ -104,6 +104,7 @@ export const ENDPOINTS = {
     courseById: (id: string) => `/courses/${id}`,
     systemStatus: '/admin/system/status',
     systemMetrics: '/admin/system/metrics',
+    systemDatabases: '/admin/system/databases',
     modelConfig: '/admin/model/config',
     modelRetrain: '/admin/model/retrain',
   },
