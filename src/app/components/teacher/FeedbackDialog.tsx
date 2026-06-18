@@ -10,14 +10,26 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Badge } from "../ui/badge";
 import { CheckCircle2, Send } from "lucide-react";
+import { enviarFeedbackReal, type FeedbackTipo } from "@features/teacher/services/teacher.service";
 
 interface FeedbackDialogProps {
   studentName: string;
   open: boolean;
   onClose: () => void;
+  /** UUID del estudiante y curso activo (si están, el envío es real). */
+  estudianteId?: string;
+  courseId?: string;
 }
 
-export function FeedbackDialog({ studentName, open, onClose }: FeedbackDialogProps) {
+// Mapea las categorías del UI al tipo aceptado por el backend.
+const CATEGORY_TO_TIPO: Record<string, FeedbackTipo> = {
+  encouragement: "encouragement",
+  concern: "correction",
+  resource: "resource",
+  meeting: "general",
+};
+
+export function FeedbackDialog({ studentName, open, onClose, estudianteId, courseId }: FeedbackDialogProps) {
   const [message, setMessage] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -60,20 +72,36 @@ Me gustaría agendar una reunión contigo para revisar tu progreso y ver cómo p
     setMessage(templates[categoryId as keyof typeof templates] || "");
   };
 
-  const handleSend = () => {
-    setIsSending(true);
-
+  const finalizarConExito = () => {
+    setIsSending(false);
+    setSuccess(true);
     setTimeout(() => {
-      setIsSending(false);
-      setSuccess(true);
+      setSuccess(false);
+      setMessage("");
+      setCategory(null);
+      onClose();
+    }, 2000);
+  };
 
-      setTimeout(() => {
-        setSuccess(false);
-        setMessage("");
-        setCategory(null);
-        onClose();
-      }, 2000);
-    }, 1500);
+  const handleSend = async () => {
+    setIsSending(true);
+    // Envío real cuando hay estudiante + curso; si no, se simula (sin romper la UI).
+    if (estudianteId && courseId) {
+      try {
+        await enviarFeedbackReal({
+          estudianteId,
+          cursoId: courseId,
+          mensaje: message,
+          tipo: CATEGORY_TO_TIPO[category ?? "general"] ?? "general",
+        });
+        finalizarConExito();
+      } catch {
+        setIsSending(false);
+        alert("No se pudo enviar la retroalimentación. Inténtalo de nuevo.");
+      }
+      return;
+    }
+    setTimeout(finalizarConExito, 1200);
   };
 
   const handleClose = () => {
