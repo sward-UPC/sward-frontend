@@ -61,6 +61,12 @@ export const ENDPOINTS = {
       `/students/${studentId}/progress?courseId=${courseId}`,
     studentInteractions: (studentId: string, courseId: string) =>
       `/students/${studentId}/interactions?courseId=${courseId}`,
+    studentIndicators: (studentId: string, courseId: string) =>
+      `/students/${studentId}/indicators?courseId=${courseId}`,
+    // Reporte PDF de la clase (ms-trazabilidad, descarga binaria).
+    report: (courseId: string) => `/dashboard/teacher/${courseId}/report`,
+    // Retroalimentación docente→estudiante (ms-trazabilidad).
+    feedbackReal: '/dashboard/teacher/feedback',
     // --- Pendientes de backend (ver PENDIENTES-PANEL-DOCENTE.md) ---
     // Estos endpoints aún NO existen en ms-trazabilidad; el frontend usa mock.
     students: '/teacher/students',
