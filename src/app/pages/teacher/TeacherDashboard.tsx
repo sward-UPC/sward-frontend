@@ -83,12 +83,34 @@ export function TeacherDashboard() {
                   courseId={dash.activeCourseId}
                   onClose={() => dash.setSelectedStudent(null)}
                   onSendFeedback={() =>
-                    dash.setFeedbackStudent({ id: dash.currentStudent!.id, name: dash.currentStudent!.name })
+                    dash.setFeedbackStudent({
+                      id: dash.currentStudent!.id,
+                      name: dash.currentStudent!.name,
+                      estudianteId: dash.currentStudent!.estudianteId,
+                    })
                   }
                 />
               </div>
             ) : (
               <>
+                {/* SELECTOR DE CURSO (datos reales por curso) */}
+                {dash.courses.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-muted-foreground" />
+                    <label htmlFor="curso-sel" className="text-sm text-muted-foreground">Curso:</label>
+                    <select
+                      id="curso-sel"
+                      value={dash.activeCourseId ?? ''}
+                      onChange={(e) => dash.setActiveCourseId(e.target.value || undefined)}
+                      className="text-sm border border-border rounded-md bg-background px-2 py-1"
+                    >
+                      {dash.courses.map((c) => (
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 {/* TAB: RESUMEN */}
                 {dash.activeTab === 'resumen' && (
                   <div className="space-y-4">
@@ -347,6 +369,8 @@ export function TeacherDashboard() {
       {dash.feedbackStudent && (
         <FeedbackDialog
           studentName={dash.feedbackStudent.name}
+          estudianteId={dash.feedbackStudent.estudianteId}
+          courseId={dash.activeCourseId}
           open={true}
           onClose={() => dash.setFeedbackStudent(null)}
         />

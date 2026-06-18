@@ -54,8 +54,8 @@ export interface UseTeacherDashboardReturn {
   currentStudent: StudentProgress | undefined;
 
   /* feedback dialog */
-  feedbackStudent: { id: number; name: string } | null;
-  setFeedbackStudent: (s: { id: number; name: string } | null) => void;
+  feedbackStudent: { id: number; name: string; estudianteId?: string } | null;
+  setFeedbackStudent: (s: { id: number; name: string; estudianteId?: string } | null) => void;
 
   /* notification popup */
   showNotifPopup: boolean;
@@ -92,7 +92,7 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
   const [weekFilter, setWeekFilter] = useState('all');
   const [riskFilter, setRiskFilter] = useState('all');
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
-  const [feedbackStudent, setFeedbackStudent] = useState<{ id: number; name: string } | null>(null);
+  const [feedbackStudent, setFeedbackStudent] = useState<{ id: number; name: string; estudianteId?: string } | null>(null);
   const [showNotifPopup, setShowNotifPopup] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);

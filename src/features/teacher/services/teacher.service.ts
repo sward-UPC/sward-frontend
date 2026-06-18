@@ -23,6 +23,23 @@ interface ApiEstudianteProgress {
   puntaje_promedio: number;
   total_interacciones: number;
   recursos_completados: number;
+  engagement?: number;
+  conceptos_en_riesgo?: number;
+  ultima_actividad?: string;
+}
+
+/** "Hace 2 días", "Hace 3 h", etc. desde una fecha ISO. '' si no hay. */
+function tiempoRelativo(iso?: string): string {
+  if (!iso) return '';
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return '';
+  const min = Math.floor((Date.now() - t) / 60000);
+  if (min < 1) return 'Hace un momento';
+  if (min < 60) return `Hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `Hace ${h} h`;
+  const d = Math.floor(h / 24);
+  return `Hace ${d} día${d === 1 ? '' : 's'}`;
 }
 
 /** Mapea los 4 niveles del backend a los 3 del UI (crítico y alto → high). */
@@ -32,13 +49,29 @@ function mapNivelRiesgo(nivel: ApiEstudianteProgress['nivel_riesgo']): RiskLevel
   return 'low';
 }
 
+/** Tipo de feedback aceptado por el backend (ms-trazabilidad). */
+export type FeedbackTipo = 'encouragement' | 'correction' | 'resource' | 'general';
+
+/** Envía retroalimentación del docente a un estudiante (ms-trazabilidad). */
+export async function enviarFeedbackReal(payload: {
+  estudianteId: string;
+  cursoId: string;
+  mensaje: string;
+  tipo: FeedbackTipo;
+}): Promise<void> {
+  await apiClient.post(ENDPOINTS.teacher.feedbackReal, {
+    estudiante_id: payload.estudianteId,
+    curso_id: payload.cursoId,
+    mensaje: payload.mensaje,
+    tipo: payload.tipo,
+  });
+}
+
 /**
  * Progreso real de los estudiantes de un curso, mapeado al modelo del UI.
  *
  * `id` numérico es un índice sintético para la selección en el UI; el UUID real
- * viaja en `estudianteId`. Campos no provistos aún por el backend
- * (conceptsAtRisk, lastActivity, engagement) usan valores por defecto — ver
- * PENDIENTES-PANEL-DOCENTE.md.
+ * viaja en `estudianteId`.
  */
 export async function getCourseStudentsProgress(courseId: string): Promise<StudentProgress[]> {
   const { data } = await apiClient.get<ApiEstudianteProgress[]>(
@@ -51,9 +84,9 @@ export async function getCourseStudentsProgress(courseId: string): Promise<Stude
     email: e.correo,
     riskLevel: mapNivelRiesgo(e.nivel_riesgo),
     avgMastery: Math.round(e.puntaje_promedio),
-    conceptsAtRisk: 0, // TODO backend no lo expone aún
-    lastActivity: '', // TODO backend no lo expone en este endpoint aún
-    engagement: 0, // TODO backend no lo expone aún
+    conceptsAtRisk: e.conceptos_en_riesgo ?? 0,
+    lastActivity: tiempoRelativo(e.ultima_actividad),
+    engagement: e.engagement ?? 0,
   }));
 }
 
