@@ -42,13 +42,23 @@ function MetricCard({
   bar,
   icon,
   loading,
+  positive = false,
 }: {
   label: string;
   value: string;
   bar: number;
   icon: React.ReactNode;
   loading: boolean;
+  /** Si la métrica es "más es mejor" (p.ej. uptime): barra siempre verde. */
+  positive?: boolean;
 }) {
+  const barColor = positive
+    ? "bg-success"
+    : bar > 80
+      ? "bg-destructive"
+      : bar > 60
+        ? "bg-warning"
+        : "bg-success";
   return (
     <Card>
       <CardContent className="pt-4 pb-4">
@@ -66,9 +76,7 @@ function MetricCard({
         )}
         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${
-              bar > 80 ? "bg-destructive" : bar > 60 ? "bg-warning" : "bg-success"
-            }`}
+            className={`h-full rounded-full transition-all ${barColor}`}
             style={{ width: loading ? "0%" : `${bar}%` }}
           />
         </div>
@@ -113,6 +121,7 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
       value: metrics ? formatUptime(metrics.uptime_segundos) : "—",
       bar: 100,
       icon: <Activity className="w-5 h-5 text-success" />,
+      positive: true,
     },
   ];
 
