@@ -30,6 +30,16 @@ export const ENDPOINTS = {
     activities: (courseId: string) => `/moodle/courses/${courseId}/activities`,
   },
 
+  // EP003/EP004 — Recomendaciones (ms-recomendacion, ALB `/recommendations*`)
+  recommendations: {
+    generate: '/recommendations/generate',
+    list: '/recommendations',
+    complete: (id: string) => `/recommendations/${id}/complete`,
+    // Heatmap de atención REAL del SAKT (pesos de atención sobre interacciones).
+    attention: (studentId: string, courseId: string) =>
+      `/recommendations/attention?estudianteId=${studentId}&cursoId=${courseId}`,
+  },
+
   // EP003 — Recomendaciones y estado de conocimiento (SAKT)
   student: {
     recommendations: '/student/recommendations',

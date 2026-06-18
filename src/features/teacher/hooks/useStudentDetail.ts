@@ -3,6 +3,7 @@ import {
   getStudentDetailProgress,
   getStudentIndicators,
   getStudentInteractions,
+  getStudentAttention,
 } from '../services/teacher.service';
 
 /**
@@ -37,5 +38,13 @@ export function useStudentDetail(
     staleTime: 1000 * 60 * 2,
   });
 
-  return { enabled, progress, indicators, interactions };
+  // Heatmap de atención REAL del SAKT (ms-recomendacion).
+  const attention = useQuery({
+    queryKey: ['teacher', 'student-detail', 'attention', estudianteId, courseId],
+    queryFn: () => getStudentAttention(estudianteId as string, courseId as string),
+    enabled,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  return { enabled, progress, indicators, interactions, attention };
 }
