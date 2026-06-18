@@ -34,6 +34,31 @@ ya enriquecido con nombre/correo vía s2s a ms-usuarios).
    `/students/{id}/progress`, `/indicators`, `/interactions` (reales) → cablear
    usando `estudianteId` (UUID) que ya viaja en `StudentProgress`.
 
+## ✅ Detalle de estudiante (`StudentDetailView`) — parcialmente conectado
+Conectado a datos reales de ms-trazabilidad vía `useStudentDetail(estudianteId, courseId)`
+(hook nuevo en `src/features/teacher/hooks/useStudentDetail.ts`), con fallback a
+mock cuando falta `estudianteId` (UUID) o el curso activo. Endpoints usados:
+`/students/{id}/progress`, `/students/{id}/indicators`, `/students/{id}/interactions`.
+
+- **Real ahora:**
+  - *Dominio Promedio*: usa `puntaje_promedio` de `/progress` (cae a `student.avgMastery` si no hay).
+  - *Historial de Interacciones*: lista real desde `/interactions` (mock como fallback,
+    con aviso "datos de ejemplo" cuando no hay reales).
+- **Aún mock dentro del detalle (sin endpoint adecuado):**
+  - *Evolución del Dominio* (progreso semanal por estudiante): no existe endpoint → mock.
+  - *Dominio por Concepto* (barras): `/indicators` devuelve indicadores genéricos
+    (nombre/valor/unidad), no dominio por concepto → mock. El servicio ya expone
+    `getStudentIndicators` por si se quiere graficar los indicadores reales.
+  - *Vista Rápida de Dominio (radar)* y *Heatmap de Atención (XAI)*: sin endpoint → mock.
+  - *Recomendaciones de Intervención*: contenido fijo de ejemplo → mock.
+- **Gaps de mapeo en `/interactions`:**
+  - El endpoint NO expone la corrección de la respuesta; todas las interacciones se
+    marcan como "Completado" en el UI para no mostrar el ícono de error engañosamente.
+    → exponer si la respuesta fue correcta para diferenciar Completado/Incorrecto.
+  - `actividad_id` no está resuelto a nombre de recurso/concepto; el UI muestra
+    "Actividad {id-corto}". → resolver `actividad_id` → nombre vía ms-cursos-recursos.
+  - `tipo` (vista/respuesta/descarga/completado) se mapea a una etiqueta legible.
+
 ## ⏳ Pendiente — UX
 8. **Selector de curso**: hoy se toma automáticamente `courses[0]`. Falta un
    selector real en la UI y que `/courses` filtre por el docente autenticado

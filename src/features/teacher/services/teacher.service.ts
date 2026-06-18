@@ -1,6 +1,13 @@
 import { apiClient } from '@core/api/client';
 import { ENDPOINTS } from '@core/api/endpoints';
-import type { StudentProgress, Alert, TeacherFeedback, ClassTrendDataPoint, RiskLevel } from '@core/types';
+import type {
+  StudentProgress,
+  Alert,
+  TeacherFeedback,
+  ClassTrendDataPoint,
+  RiskLevel,
+  StudentInteractionRecord,
+} from '@core/types';
 
 // ───────────────────────────────────────────────────────────────────────────
 // Endpoint REAL del dashboard docente (ms-trazabilidad).
@@ -113,4 +120,146 @@ export async function getClassTrend(): Promise<ClassTrendDataPoint[]> {
 export async function exportClassReport(): Promise<{ url: string }> {
   const { data } = await apiClient.post<{ url: string }>(ENDPOINTS.teacher.exportReport);
   return data;
+}
+
+/**
+ * Descarga el reporte PDF real de la clase (ms-trazabilidad) y dispara la
+ * descarga en el navegador. El PDF se genera profesionalmente server-side.
+ */
+export async function downloadClassReport(courseId: string): Promise<void> {
+  const { data } = await apiClient.get(ENDPOINTS.teacher.report(courseId), {
+    responseType: 'blob',
+  });
+  const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `reporte_clase_${courseId}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Detalle de un estudiante (ms-trazabilidad) — endpoints REALES:
+//   GET /students/{id}/progress?courseId=...
+//   GET /students/{id}/indicators?courseId=...
+//   GET /students/{id}/interactions?courseId=...
+// ───────────────────────────────────────────────────────────────────────────
+
+/** Respuesta real de `GET /students/{id}/progress`. */
+interface ApiStudentProgressDetail {
+  id?: string;
+  porcentaje_avance: number;
+  nivel_riesgo: 'critico' | 'alto' | 'medio' | 'bajo';
+  total_interacciones: number;
+  puntaje_promedio: number;
+}
+
+/** Progreso del estudiante mapeado al modelo del UI (detalle). */
+export interface StudentDetailProgress {
+  porcentajeAvance: number; // 0-100
+  riskLevel: RiskLevel;
+  totalInteracciones: number;
+  puntajePromedio: number; // 0-100
+}
+
+/** Progreso real (detalle) de un estudiante en un curso. */
+export async function getStudentDetailProgress(
+  studentId: string,
+  courseId: string,
+): Promise<StudentDetailProgress> {
+  const { data } = await apiClient.get<ApiStudentProgressDetail>(
+    ENDPOINTS.teacher.studentProgress(studentId, courseId),
+  );
+  return {
+    porcentajeAvance: Math.round(data.porcentaje_avance),
+    riskLevel: mapNivelRiesgo(data.nivel_riesgo),
+    totalInteracciones: data.total_interacciones,
+    puntajePromedio: Math.round(data.puntaje_promedio),
+  };
+}
+
+/** Respuesta real de `GET /students/{id}/indicators`. */
+interface ApiIndicator {
+  nombre: string;
+  valor: number;
+  unidad: string;
+}
+
+/** Indicador de desempeño mapeado al modelo del UI. */
+export interface StudentIndicator {
+  nombre: string;
+  valor: number;
+  unidad: string;
+}
+
+/** Indicadores reales de desempeño de un estudiante en un curso. */
+export async function getStudentIndicators(
+  studentId: string,
+  courseId: string,
+): Promise<StudentIndicator[]> {
+  const { data } = await apiClient.get<ApiIndicator[]>(
+    ENDPOINTS.teacher.studentIndicators(studentId, courseId),
+  );
+  return data.map((i) => ({ nombre: i.nombre, valor: i.valor, unidad: i.unidad }));
+}
+
+/** Respuesta real de `GET /students/{id}/interactions`. */
+interface ApiInteraction {
+  id: string;
+  actividad_id: string | null;
+  tipo: 'respuesta' | 'vista' | 'descarga' | 'completado';
+  fecha: string; // ISO 8601
+  curso_id: string;
+}
+
+/** Etiqueta legible para el tipo de interacción del backend. */
+const TIPO_INTERACCION_LABEL: Record<ApiInteraction['tipo'], string> = {
+  respuesta: 'Respuesta a actividad',
+  vista: 'Visualización de recurso',
+  descarga: 'Descarga de recurso',
+  completado: 'Actividad completada',
+};
+
+/** Formatea una fecha ISO a `dd/mm/aa hh:mm` y `hh:mm` por separado. */
+function splitFecha(iso: string): { date: string; time: string } {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { date: iso, time: '' };
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yy = String(d.getFullYear()).slice(-2);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return { date: `${dd}/${mm}/${yy} ${hh}:${min}`, time: `${hh}:${min}` };
+}
+
+/**
+ * Historial real de interacciones de un estudiante mapeado al modelo del UI.
+ *
+ * El backend expone `tipo` (vista/respuesta/descarga/completado) pero NO la
+ * corrección de la respuesta en este endpoint. Como ninguno de los tipos indica
+ * fallo, `result` se marca siempre como "Completado" para no mostrar el ícono de
+ * error de forma engañosa (ver PENDIENTES-PANEL-DOCENTE.md: falta exponer la
+ * corrección y resolver `actividad_id` → nombre del recurso/concepto). El `id`
+ * numérico es un índice sintético (la lista del UI espera number).
+ */
+export async function getStudentInteractions(
+  studentId: string,
+  courseId: string,
+): Promise<StudentInteractionRecord[]> {
+  const { data } = await apiClient.get<ApiInteraction[]>(
+    ENDPOINTS.teacher.studentInteractions(studentId, courseId),
+  );
+  return data.map((it, i) => {
+    const { date, time } = splitFecha(it.fecha);
+    return {
+      id: i + 1,
+      date,
+      resource: TIPO_INTERACCION_LABEL[it.tipo] ?? it.tipo,
+      concept: it.actividad_id ? `Actividad ${it.actividad_id.slice(0, 8)}` : 'General',
+      result: 'Completado',
+      time,
+    };
+  });
 }
