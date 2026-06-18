@@ -1,5 +1,5 @@
 import { ProfileDialog } from "../components/ui/ProfileDialog";
-import { mockAdmin } from "../../mocks/data/admin.mock";
+import { useAuth } from "../../core/auth/useAuth";
 import {
   useAdminDashboard, AdminTopbar, AdminSidebar,
   UsersTable, ResumenTab, CursosTab, SistemaTab, LogsTab,
@@ -9,6 +9,7 @@ import { useLogout } from "../../core/auth/useLogout";
 export function AdminDashboard() {
   const dash = useAdminDashboard();
   const logout = useLogout();
+  const { user } = useAuth();
 
   return (
     <div className="h-screen w-full bg-background flex flex-col overflow-hidden">
@@ -21,6 +22,8 @@ export function AdminDashboard() {
         notifRef={dash.notifRef}
         profileRef={dash.profileRef}
         sidebarOpen={dash.sidebarOpen}
+        adminName={user ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email : "Administrador"}
+        adminEmail={user?.email ?? ""}
         onToggleSidebar={() => dash.setSidebarOpen((p) => !p)}
         onToggleDark={() => dash.setDarkMode(!dash.darkMode)}
         onToggleNotif={() => { dash.setShowNotifPopup(!dash.showNotifPopup); dash.setShowProfilePopup(false); }}
@@ -47,6 +50,9 @@ export function AdminDashboard() {
             {dash.activeTab === "usuarios" && (
               <UsersTable
                 users={dash.filteredUsers}
+                total={dash.usersTotal}
+                isLoading={dash.usersLoading}
+                isError={dash.usersError}
                 userSearch={dash.userSearch}
                 roleFilter={dash.roleFilter}
                 statusFilter={dash.statusFilter}
@@ -73,12 +79,12 @@ export function AdminDashboard() {
         open={dash.showProfileDialog}
         onClose={() => dash.setShowProfileDialog(false)}
         user={{
-          name: mockAdmin.name,
-          email: mockAdmin.email,
-          role: mockAdmin.role,
-          institution: mockAdmin.institution,
-          avatar: mockAdmin.avatar,
-          memberSince: "Enero 2025",
+          name: user ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email : "Administrador",
+          email: user?.email ?? "",
+          role: "Administrador",
+          institution: "SWARD Platform",
+          avatar: user ? (user.firstName ?? user.email).charAt(0).toUpperCase() : "A",
+          memberSince: "2025",
           bio: "Administrador de la plataforma SWARD.",
         }}
         initialTab={dash.profileDialogTab}

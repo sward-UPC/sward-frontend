@@ -65,10 +65,11 @@ export const ENDPOINTS = {
   // EP006 — Administración
   admin: {
     users: '/admin/users',
+    userStatus: (id: string) => `/admin/users/${id}/status`,
+    userRoles: (id: string) => `/admin/users/${id}/roles`,
     metrics: '/admin/metrics',
-    systemStatus: '/admin/system/status',
     logs: '/admin/logs',
-    courses: '/admin/courses',
-    courseById: (id: string) => `/admin/courses/${id}`,
+    courses: '/courses',
+    courseById: (id: string) => `/courses/${id}`,
   },
 } as const;
