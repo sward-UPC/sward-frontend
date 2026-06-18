@@ -67,6 +67,10 @@ export const ENDPOINTS = {
     report: (courseId: string) => `/dashboard/teacher/${courseId}/report`,
     // Retroalimentación docente→estudiante (ms-trazabilidad).
     feedbackReal: '/dashboard/teacher/feedback',
+    // Tendencia semanal histórica de la clase (ms-trazabilidad).
+    trend: (courseId: string) => `/dashboard/teacher/${courseId}/trend`,
+    // Alertas de riesgo del curso (ms-xai; las genera lambda-alertas).
+    alertsReal: (courseId: string) => `/xai/alerts?courseId=${courseId}`,
     // --- Pendientes de backend (ver PENDIENTES-PANEL-DOCENTE.md) ---
     // Estos endpoints aún NO existen en ms-trazabilidad; el frontend usa mock.
     students: '/teacher/students',

@@ -9,6 +9,8 @@ import {
 } from '@mocks/data/teacher.mock';
 import { useTeacherCourses } from '@features/teacher/hooks/useTeacherCourses';
 import { useTeacherStudents } from '@features/teacher/hooks/useTeacherStudents';
+import { useTeacherAlerts } from '@features/teacher/hooks/useTeacherAlerts';
+import { useClassTrend } from '@features/teacher/hooks/useClassTrend';
 import { useTheme } from '../../context/ThemeContext';
 
 export interface UseTeacherDashboardReturn {
@@ -114,6 +116,25 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
   const usingRealData = !!realStudents && realStudents.length > 0;
   const students: StudentProgress[] = usingRealData ? realStudents : mockStudents;
 
+  // Alertas (ms-xai) y tendencia (ms-trazabilidad) reales, con fallback a mock.
+  const { data: realAlerts } = useTeacherAlerts(effectiveCourseId);
+  const { data: realTrend } = useClassTrend(effectiveCourseId);
+
+  // Cuando llegan alertas reales, reemplazan a las notificaciones mock.
+  useEffect(() => {
+    if (realAlerts && realAlerts.length > 0) setNotifications(realAlerts);
+  }, [realAlerts]);
+
+  const trendData = realTrend && realTrend.length > 0 ? realTrend : mockTrendData;
+  // Engagement real: se deriva de los estudiantes reales; si no, mock.
+  const engagementData = usingRealData
+    ? students.map((s) => ({
+        name: s.name.split(' ')[0] || s.name,
+        engagement: s.engagement,
+        dominio: s.avgMastery,
+      }))
+    : mockEngagementData;
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
@@ -161,8 +182,8 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
     students,
     teacher: mockTeacher,
     notifications,
-    trendData: mockTrendData,
-    engagementData: mockEngagementData,
+    trendData,
+    engagementData,
 
     /* datos reales / curso activo */
     courses: courses ?? [],
