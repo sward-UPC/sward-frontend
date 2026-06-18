@@ -263,3 +263,41 @@ export async function getStudentInteractions(
     };
   });
 }
+
+// ───────────────────────────────────────────────────────────────────────────
+// Alertas (ms-xai) y tendencia de clase (ms-trazabilidad) — endpoints REALES.
+// ───────────────────────────────────────────────────────────────────────────
+
+interface ApiAlerta {
+  id: string;
+  estudiante_id: string;
+  curso_id: string;
+  nivel_riesgo: string;
+  mensaje: string;
+  creada_en: string;
+}
+
+/** Alertas de riesgo del curso (las genera lambda-alertas; las lee ms-xai). */
+export async function getCourseAlerts(courseId: string): Promise<Alert[]> {
+  const { data } = await apiClient.get<ApiAlerta[]>(ENDPOINTS.teacher.alertsReal(courseId));
+  return data.map((a, i) => ({
+    id: i + 1,
+    type: a.nivel_riesgo === 'critico' || a.nivel_riesgo === 'alto' ? 'warning' : 'info',
+    title: `Riesgo ${a.nivel_riesgo}`,
+    message: a.mensaje,
+    time: new Date(a.creada_en).toLocaleString('es-PE'),
+    read: false,
+  }));
+}
+
+interface ApiTendencia {
+  week: string;
+  promedio: number;
+  riesgoAlto: number;
+}
+
+/** Tendencia semanal histórica de la clase (ms-trazabilidad). */
+export async function getClassTrendReal(courseId: string): Promise<ClassTrendDataPoint[]> {
+  const { data } = await apiClient.get<ApiTendencia[]>(ENDPOINTS.teacher.trend(courseId));
+  return data.map((p) => ({ week: p.week, promedio: p.promedio, riesgoAlto: p.riesgoAlto }));
+}

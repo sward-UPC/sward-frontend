@@ -7,6 +7,14 @@ ya enriquecido con nombre/correo vía s2s a ms-usuarios).
 > Regla aplicada: **no se quitó ninguna funcionalidad**. Lo que el backend aún
 > no soporta sigue funcionando con datos mock y queda listado aquí.
 
+## ✅ Resuelto 2026-06-18 (antes mock, ahora real)
+- **Alertas docentes**: `GET /xai/alerts?courseId=` (ms-xai; las genera lambda-alertas
+  vía evento `RiesgoActualizado` de ms-trazabilidad). Reemplazan las notificaciones mock.
+- **Tendencia de clase**: `GET /dashboard/teacher/{curso}/trend` (histórico real desde
+  tabla `progress_history`, agregado por semana ISO).
+- **Engagement por estudiante**: viene en `students-progress` (interacciones últimos 30d × 5);
+  la gráfica Engagement vs Dominio se deriva de los estudiantes reales.
+
 ## ✅ Ya conectado a datos reales
 - **Lista de estudiantes** (tabs Resumen y Estudiantes): nombre, correo, nivel
   de riesgo, puntaje promedio, nº de interacciones y recursos completados.
