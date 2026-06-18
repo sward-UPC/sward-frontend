@@ -71,5 +71,9 @@ export const ENDPOINTS = {
     logs: '/admin/logs',
     courses: '/courses',
     courseById: (id: string) => `/courses/${id}`,
+    systemStatus: '/admin/system/status',
+    systemMetrics: '/admin/system/metrics',
+    modelConfig: '/admin/model/config',
+    modelRetrain: '/admin/model/retrain',
   },
 } as const;

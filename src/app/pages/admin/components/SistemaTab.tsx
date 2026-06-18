@@ -5,28 +5,14 @@ import {
   Cpu, Server, Database, Activity, Zap, Lock,
   CheckCircle2, RefreshCw, Download,
 } from "lucide-react";
+import { useSystemMetrics } from "../../../../features/admin/hooks/useSystemMetrics";
+import { useModelConfig, useTriggerRetrain } from "../../../../features/admin/hooks/useModelConfig";
 
 interface SistemaTabProps {
   modelRetrain: boolean;
   retrainDone: boolean;
   onRetrain: () => void;
 }
-
-const SYSTEM_METRICS = [
-  { label: "CPU", value: "42%", icon: <Cpu className="w-5 h-5 text-primary" />, ok: true, bar: 42 },
-  { label: "Memoria RAM", value: "58%", icon: <Server className="w-5 h-5 text-warning" />, ok: true, bar: 58 },
-  { label: "Almacenamiento", value: "68%", icon: <Database className="w-5 h-5 text-warning" />, ok: true, bar: 68 },
-  { label: "Uptime", value: "99.9%", icon: <Activity className="w-5 h-5 text-success" />, ok: true, bar: 99 },
-];
-
-const MODEL_PARAMS = [
-  { label: "Versión del modelo", value: "SAKT v2.1.3", tag: "Producción" },
-  { label: "Último reentrenamiento", value: "Hoy 09:14", tag: "Exitoso" },
-  { label: "Tasa de aprendizaje", value: "0.001", tag: "Optimizado" },
-  { label: "Umbral de confianza XAI", value: "75%", tag: "Configurable" },
-  { label: "Ventana de contexto", value: "50 interacciones", tag: "Fijo" },
-  { label: "Dimensión de embedding", value: "128", tag: "Fijo" },
-];
 
 const SECURITY_SETTINGS = [
   { label: "Autenticación de dos factores (2FA)", desc: "Requerido para todos los administradores", enabled: true },
@@ -35,24 +21,119 @@ const SECURITY_SETTINGS = [
   { label: "Acceso API externo", desc: "Permite integración con sistemas institucionales", enabled: false },
 ];
 
+function formatUptime(segundos: number): string {
+  if (segundos < 60) return `${Math.round(segundos)}s`;
+  if (segundos < 3600) return `${Math.round(segundos / 60)} min`;
+  const d = Math.floor(segundos / 86400);
+  const h = Math.floor((segundos % 86400) / 3600);
+  return d > 0 ? `${d}d ${h}h` : `${h}h ${Math.floor((segundos % 3600) / 60)}m`;
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "Nunca";
+  const d = new Date(iso);
+  return d.toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" });
+}
+
+function MetricCard({
+  label,
+  value,
+  bar,
+  icon,
+  loading,
+}: {
+  label: string;
+  value: string;
+  bar: number;
+  icon: React.ReactNode;
+  loading: boolean;
+}) {
+  return (
+    <Card>
+      <CardContent className="pt-4 pb-4">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-muted-foreground">{icon}</span>
+          <span
+            className={`w-2 h-2 rounded-full ${loading ? "bg-muted animate-pulse" : "bg-success animate-pulse"}`}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        {loading ? (
+          <div className="h-7 w-16 bg-muted/50 rounded animate-pulse mb-2" />
+        ) : (
+          <p className="text-xl font-bold mb-2">{value}</p>
+        )}
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${
+              bar > 80 ? "bg-destructive" : bar > 60 ? "bg-warning" : "bg-success"
+            }`}
+            style={{ width: loading ? "0%" : `${bar}%` }}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabProps) {
+  const { data: metrics, isLoading: metricsLoading } = useSystemMetrics();
+  const { data: modelConfig, isLoading: configLoading } = useModelConfig();
+  const retrain = useTriggerRetrain();
+
+  const handleRetrain = () => {
+    retrain.mutate(undefined, {
+      onSuccess: () => onRetrain(),
+    });
+  };
+
+  const systemMetrics = [
+    {
+      label: "CPU",
+      value: metrics ? `${metrics.cpu_pct}%` : "—",
+      bar: metrics?.cpu_pct ?? 0,
+      icon: <Cpu className="w-5 h-5 text-primary" />,
+    },
+    {
+      label: "Memoria RAM",
+      value: metrics ? `${metrics.ram_pct}%` : "—",
+      bar: metrics?.ram_pct ?? 0,
+      icon: <Server className="w-5 h-5 text-warning" />,
+    },
+    {
+      label: "Almacenamiento",
+      value: metrics ? `${metrics.disco_pct}%` : "—",
+      bar: metrics?.disco_pct ?? 0,
+      icon: <Database className="w-5 h-5 text-warning" />,
+    },
+    {
+      label: "Uptime",
+      value: metrics ? formatUptime(metrics.uptime_segundos) : "—",
+      bar: 100,
+      icon: <Activity className="w-5 h-5 text-success" />,
+    },
+  ];
+
+  const modelParams = modelConfig
+    ? [
+        { label: "Versión del modelo", value: modelConfig.version, tag: "Producción" },
+        { label: "Último reentrenamiento", value: formatDate(modelConfig.ultimo_reentrenamiento), tag: "Exitoso" },
+        { label: "Tasa de aprendizaje", value: String(modelConfig.tasa_aprendizaje), tag: "Optimizado" },
+        {
+          label: "Umbral de confianza XAI",
+          value: `${Math.round(modelConfig.umbral_confianza_xai * 100)}%`,
+          tag: "Configurable",
+        },
+        { label: "Ventana de contexto", value: `${modelConfig.ventana_contexto} interacciones`, tag: "Fijo" },
+        { label: "Dimensión de embedding", value: String(modelConfig.dimension_embedding), tag: "Fijo" },
+      ]
+    : [];
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {SYSTEM_METRICS.map((m) => (
-          <Card key={m.label}>
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-muted-foreground">{m.icon}</span>
-                <span className={`w-2 h-2 rounded-full ${m.ok ? "bg-success" : "bg-destructive"} animate-pulse`} />
-              </div>
-              <p className="text-xs text-muted-foreground">{m.label}</p>
-              <p className="text-xl font-bold mb-2">{m.value}</p>
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <div className={`h-full rounded-full ${m.bar > 80 ? "bg-destructive" : m.bar > 60 ? "bg-warning" : "bg-success"}`} style={{ width: `${m.bar}%` }} />
-              </div>
-            </CardContent>
-          </Card>
+        {systemMetrics.map((m) => (
+          <MetricCard key={m.label} {...m} loading={metricsLoading} />
         ))}
       </div>
 
@@ -61,29 +142,73 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
           <CardTitle className="text-sm flex items-center gap-2">
             <Zap className="w-4 h-4 text-warning" /> Configuración del Modelo XAI (SAKT)
           </CardTitle>
-          <CardDescription className="text-xs">Parámetros del modelo de Knowledge Tracing con Explicabilidad</CardDescription>
+          <CardDescription className="text-xs">
+            Parámetros del modelo de Knowledge Tracing con Explicabilidad
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {MODEL_PARAMS.map((p) => (
-              <div key={p.label} className="flex items-center justify-between p-3 bg-muted/40 rounded-[10px]">
-                <div>
-                  <p className="text-xs text-muted-foreground">{p.label}</p>
-                  <p className="text-sm font-semibold font-mono">{p.value}</p>
+          {configLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-14 rounded-[10px] bg-muted/40 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {modelParams.map((p) => (
+                <div key={p.label} className="flex items-center justify-between p-3 bg-muted/40 rounded-[10px]">
+                  <div>
+                    <p className="text-xs text-muted-foreground">{p.label}</p>
+                    <p className="text-sm font-semibold font-mono">{p.value}</p>
+                  </div>
+                  <Badge variant="outline" className="text-xs">{p.tag}</Badge>
                 </div>
-                <Badge variant="outline" className="text-xs">{p.tag}</Badge>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
           <div className="flex gap-3 pt-2">
-            <Button onClick={onRetrain} disabled={modelRetrain} className="gap-2" variant={retrainDone ? "outline" : "default"}>
-              {modelRetrain
+            <Button
+              onClick={handleRetrain}
+              disabled={modelRetrain || retrain.isPending}
+              className="gap-2"
+              variant={retrainDone ? "outline" : "default"}
+            >
+              {modelRetrain || retrain.isPending
                 ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Reentrenando...</>
                 : retrainDone
-                ? <><CheckCircle2 className="w-4 h-4 text-success" /> Completado</>
-                : <><RefreshCw className="w-4 h-4" /> Reentrenar Modelo</>}
+                  ? <><CheckCircle2 className="w-4 h-4 text-success" /> Completado</>
+                  : <><RefreshCw className="w-4 h-4" /> Reentrenar Modelo</>}
             </Button>
-            <Button variant="outline" className="gap-2" onClick={() => alert("Descargando métricas del modelo...")}>
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => {
+                if (!metrics) return;
+                const csv = [
+                  "metrica,valor",
+                  `cpu_pct,${metrics.cpu_pct}`,
+                  `ram_pct,${metrics.ram_pct}`,
+                  `ram_usado_mb,${metrics.ram_usado_mb}`,
+                  `ram_total_mb,${metrics.ram_total_mb}`,
+                  `disco_pct,${metrics.disco_pct}`,
+                  `disco_usado_gb,${metrics.disco_usado_gb}`,
+                  `disco_total_gb,${metrics.disco_total_gb}`,
+                  `uptime_segundos,${metrics.uptime_segundos}`,
+                  modelConfig ? `modelo_version,${modelConfig.version}` : "",
+                  modelConfig ? `tasa_aprendizaje,${modelConfig.tasa_aprendizaje}` : "",
+                  modelConfig ? `umbral_xai,${modelConfig.umbral_confianza_xai}` : "",
+                ]
+                  .filter(Boolean)
+                  .join("\n");
+                const blob = new Blob([csv], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `sward-metricas-${new Date().toISOString().slice(0, 10)}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
               <Download className="w-4 h-4" /> Exportar Métricas
             </Button>
           </div>
@@ -107,7 +232,9 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
                 className={`w-10 rounded-full transition-colors flex items-center px-0.5 cursor-pointer ${s.enabled ? "bg-primary" : "bg-muted"}`}
                 style={{ height: 22 }}
               >
-                <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${s.enabled ? "translate-x-4" : "translate-x-0"}`} />
+                <div
+                  className={`w-4 h-4 rounded-full bg-white shadow transition-transform ${s.enabled ? "translate-x-4" : "translate-x-0"}`}
+                />
               </div>
             </div>
           ))}
