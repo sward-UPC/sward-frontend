@@ -27,7 +27,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('sward_access_token');
       localStorage.removeItem('sward_refresh_token');
       localStorage.removeItem('sward_user');
-      window.location.href = '/login';
+      window.location.href = `${import.meta.env.BASE_URL}login`;
     }
 
     return Promise.reject(error);
