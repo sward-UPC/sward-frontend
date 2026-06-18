@@ -34,6 +34,19 @@ export interface ApiMetrics {
     docente: number;
     administrador: number;
   };
+  /** Sesiones activas (refresh tokens vigentes en Redis). */
+  sesiones_activas?: number;
+  /** Dominio promedio de la plataforma (0-100); null si no disponible. */
+  dominio_plataforma?: number | null;
+}
+
+/** Estado de la base de datos de un microservicio (GET /admin/system/databases). */
+export interface ApiDatabaseHealth {
+  servicio: string;
+  base_de_datos: string;
+  estado: 'operativo' | 'caido';
+  latencia_ms: number | null;
+  detalle: string | null;
 }
 
 export interface ApiAuditLog {
