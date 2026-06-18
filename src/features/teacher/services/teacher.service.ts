@@ -7,6 +7,7 @@ import type {
   ClassTrendDataPoint,
   RiskLevel,
   StudentInteractionRecord,
+  AttentionInteractionRecord,
 } from '@core/types';
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -333,4 +334,65 @@ interface ApiTendencia {
 export async function getClassTrendReal(courseId: string): Promise<ClassTrendDataPoint[]> {
   const { data } = await apiClient.get<ApiTendencia[]>(ENDPOINTS.teacher.trend(courseId));
   return data.map((p) => ({ week: p.week, promedio: p.promedio, riesgoAlto: p.riesgoAlto }));
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Heatmap de atención del SAKT (ms-recomendacion) — endpoint REAL:
+//   GET /recommendations/attention?estudianteId=...&cursoId=...
+// Pesos de atención reales que el modelo asignó a cada interacción pasada.
+// ───────────────────────────────────────────────────────────────────────────
+
+/** Respuesta real de `GET /recommendations/attention`. */
+interface ApiPuntoAtencion {
+  concepto: string;
+  acierto: boolean;
+  peso: number; // [0, 1]
+}
+
+interface ApiAtencion {
+  probabilidad_dominio: number; // [0, 1]
+  puntos: ApiPuntoAtencion[];
+}
+
+/** Heatmap de atención del estudiante listo para `AttentionHeatmap`. */
+export interface StudentAttention {
+  interactions: AttentionInteractionRecord[];
+  prediction: string;
+}
+
+/** Construye el texto de "Predicción Actual" a partir del dominio estimado. */
+function buildPrediction(probabilidad: number): string {
+  const pct = Math.round(probabilidad * 100);
+  const cierre =
+    pct < 50
+      ? ' Se recomienda intervención docente.'
+      : ' El estudiante muestra un dominio adecuado.';
+  return `Probabilidad de éxito en el próximo ejercicio estimada por SAKT: ${pct}%.${cierre}`;
+}
+
+/**
+ * Pesos de atención REALES del SAKT sobre las interacciones del estudiante.
+ *
+ * El backend devuelve los puntos en orden de secuencia; aquí se ordenan por
+ * mayor atención para alimentar "Interacciones Recientes con Mayor Atención".
+ * `peso` (0-1) se escala a porcentaje y `timestamp` queda vacío porque el
+ * endpoint de atención no expone fechas (la corrección y el concepto sí).
+ */
+export async function getStudentAttention(
+  studentId: string,
+  courseId: string,
+): Promise<StudentAttention> {
+  const { data } = await apiClient.get<ApiAtencion>(
+    ENDPOINTS.recommendations.attention(studentId, courseId),
+  );
+  const interactions = data.puntos
+    .map((p, i) => ({
+      id: i + 1,
+      concept: p.concepto,
+      timestamp: '',
+      isCorrect: p.acierto,
+      attention: Math.round(p.peso * 100),
+    }))
+    .sort((a, b) => b.attention - a.attention);
+  return { interactions, prediction: buildPrediction(data.probabilidad_dominio) };
 }
