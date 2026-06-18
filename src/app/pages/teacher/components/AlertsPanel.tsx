@@ -6,7 +6,7 @@ import type { StudentProgress } from '@core/types';
 interface AlertsPanelProps {
   highRiskStudents: StudentProgress[];
   onViewStudent: (id: number) => void;
-  onFeedback: (student: { id: number; name: string }) => void;
+  onFeedback: (student: { id: number; name: string; estudianteId?: string }) => void;
 }
 
 export function AlertsPanel({ highRiskStudents, onViewStudent, onFeedback }: AlertsPanelProps) {
@@ -40,7 +40,7 @@ export function AlertsPanel({ highRiskStudents, onViewStudent, onFeedback }: Ale
               <Button size="sm" variant="outline" onClick={() => onViewStudent(s.id)}>
                 <Eye className="w-3.5 h-3.5 mr-1" /> Ver
               </Button>
-              <Button size="sm" variant="outline" onClick={() => onFeedback({ id: s.id, name: s.name })}>
+              <Button size="sm" variant="outline" onClick={() => onFeedback({ id: s.id, name: s.name, estudianteId: s.estudianteId })}>
                 <MessageSquare className="w-3.5 h-3.5 mr-1" /> Mensaje
               </Button>
             </div>
