@@ -52,6 +52,17 @@ export const ENDPOINTS = {
 
   // EP005 — Docente
   teacher: {
+    // Endpoint REAL (ms-trazabilidad): progreso de estudiantes por curso, ya
+    // enriquecido con nombre/correo vía s2s a ms-usuarios.
+    studentsProgress: (courseId: string) =>
+      `/dashboard/teacher/${courseId}/students-progress`,
+    // Detalle de un estudiante (ms-trazabilidad).
+    studentProgress: (studentId: string, courseId: string) =>
+      `/students/${studentId}/progress?courseId=${courseId}`,
+    studentInteractions: (studentId: string, courseId: string) =>
+      `/students/${studentId}/interactions?courseId=${courseId}`,
+    // --- Pendientes de backend (ver PENDIENTES-PANEL-DOCENTE.md) ---
+    // Estos endpoints aún NO existen en ms-trazabilidad; el frontend usa mock.
     students: '/teacher/students',
     studentById: (id: string) => `/teacher/students/${id}`,
     studentKnowledgeState: (id: string) => `/teacher/students/${id}/knowledge-state`,

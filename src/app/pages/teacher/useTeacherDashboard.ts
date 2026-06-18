@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import type { Alert, StudentProgress, TeacherTab } from '@core/types';
 import {
   mockStudents,
@@ -7,6 +7,8 @@ import {
   mockTrendData,
   mockEngagementData,
 } from '@mocks/data/teacher.mock';
+import { useTeacherCourses } from '@features/teacher/hooks/useTeacherCourses';
+import { useTeacherStudents } from '@features/teacher/hooks/useTeacherStudents';
 import { useTheme } from '../../context/ThemeContext';
 
 export interface UseTeacherDashboardReturn {
@@ -16,6 +18,13 @@ export interface UseTeacherDashboardReturn {
   notifications: Alert[];
   trendData: typeof mockTrendData;
   engagementData: typeof mockEngagementData;
+
+  /* datos reales / curso activo */
+  courses: { id: string; nombre: string; moodleCourseId: string }[];
+  activeCourseId: string | undefined;
+  setActiveCourseId: (id: string | undefined) => void;
+  isLoadingStudents: boolean;
+  usingRealData: boolean;
 
   /* derived counts */
   unreadCount: number;
@@ -92,6 +101,19 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
+  // ── Datos reales (con fallback a mock si no hay curso/datos) ──────────────
+  const { data: courses } = useTeacherCourses();
+  const [activeCourseId, setActiveCourseId] = useState<string | undefined>(undefined);
+  // Selecciona el primer curso disponible mientras no haya selección explícita.
+  const effectiveCourseId = activeCourseId ?? courses?.[0]?.id;
+  const { data: realStudents, isLoading: isLoadingStudents } =
+    useTeacherStudents(effectiveCourseId);
+
+  // Si el backend devuelve estudiantes, se usan; si no, se conserva el mock
+  // para no perder la vista (ver PENDIENTES-PANEL-DOCENTE.md).
+  const usingRealData = !!realStudents && realStudents.length > 0;
+  const students: StudentProgress[] = usingRealData ? realStudents : mockStudents;
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
@@ -115,26 +137,39 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
-  const highRiskCount = mockStudents.filter((s) => s.riskLevel === 'high').length;
-  const mediumRiskCount = mockStudents.filter((s) => s.riskLevel === 'medium').length;
-  const lowRiskCount = mockStudents.filter((s) => s.riskLevel === 'low').length;
-  const avgMastery = Math.round(mockStudents.reduce((a, s) => a + s.avgMastery, 0) / mockStudents.length);
+  const highRiskCount = students.filter((s) => s.riskLevel === 'high').length;
+  const mediumRiskCount = students.filter((s) => s.riskLevel === 'medium').length;
+  const lowRiskCount = students.filter((s) => s.riskLevel === 'low').length;
+  const avgMastery = students.length
+    ? Math.round(students.reduce((a, s) => a + s.avgMastery, 0) / students.length)
+    : 0;
 
-  const sortedStudents = [...mockStudents]
-    .filter((s) => riskFilter === 'all' || s.riskLevel === riskFilter)
-    .sort((a, b) => {
-      const order = { high: 0, medium: 1, low: 2 };
-      return order[a.riskLevel as keyof typeof order] - order[b.riskLevel as keyof typeof order];
-    });
+  const sortedStudents = useMemo(
+    () =>
+      [...students]
+        .filter((s) => riskFilter === 'all' || s.riskLevel === riskFilter)
+        .sort((a, b) => {
+          const order = { high: 0, medium: 1, low: 2 };
+          return order[a.riskLevel as keyof typeof order] - order[b.riskLevel as keyof typeof order];
+        }),
+    [students, riskFilter],
+  );
 
-  const currentStudent = mockStudents.find((s) => s.id === selectedStudent);
+  const currentStudent = students.find((s) => s.id === selectedStudent);
 
   return {
-    students: mockStudents,
+    students,
     teacher: mockTeacher,
     notifications,
     trendData: mockTrendData,
     engagementData: mockEngagementData,
+
+    /* datos reales / curso activo */
+    courses: courses ?? [],
+    activeCourseId: effectiveCourseId,
+    setActiveCourseId,
+    isLoadingStudents,
+    usingRealData,
 
     unreadCount,
     highRiskCount,
