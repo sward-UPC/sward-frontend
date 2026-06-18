@@ -16,6 +16,7 @@ import { X, MessageSquare, TrendingUp, AlertTriangle } from "lucide-react";
 import { DomainRadar } from "../xai/DomainRadar";
 import { AttentionHeatmap } from "../xai/AttentionHeatmap";
 import { StudentInteractionsList } from "./StudentInteractionsList";
+import { useStudentDetail } from "@features/teacher/hooks/useStudentDetail";
 import {
   mockStudentProgressPoints,
   mockConceptMasteryPoints,
@@ -26,6 +27,8 @@ import {
 
 interface StudentData {
   id: number;
+  /** UUID real del estudiante en el backend (para datos reales). */
+  estudianteId?: string;
   name: string;
   email: string;
   riskLevel: string;
@@ -37,6 +40,8 @@ interface StudentData {
 
 interface StudentDetailViewProps {
   student: StudentData;
+  /** Curso activo; junto a `student.estudianteId` habilita los datos reales. */
+  courseId?: string;
   onClose: () => void;
   onSendFeedback: () => void;
 }
@@ -64,7 +69,21 @@ function getRiskBadge(level: string) {
   }
 }
 
-export function StudentDetailView({ student, onClose, onSendFeedback }: StudentDetailViewProps) {
+export function StudentDetailView({ student, courseId, onClose, onSendFeedback }: StudentDetailViewProps) {
+  // Datos REALES (ms-trazabilidad) cuando hay UUID + curso; si no, cae al mock.
+  const { enabled, progress, interactions } = useStudentDetail(student.estudianteId, courseId);
+
+  const realProgress = progress.data;
+  // Dominio promedio: usa el puntaje real cuando está disponible.
+  const avgMastery = realProgress?.puntajePromedio ?? student.avgMastery;
+
+  // Historial de interacciones: real si hay datos, mock como fallback.
+  const interactionsList =
+    enabled && interactions.data && interactions.data.length > 0
+      ? interactions.data
+      : mockStudentInteractions;
+  const interactionsAreReal = enabled && !!interactions.data && interactions.data.length > 0;
+
   return (
     <Card className="border-primary">
       <CardHeader>
@@ -88,7 +107,7 @@ export function StudentDetailView({ student, onClose, onSendFeedback }: StudentD
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground mb-1">Dominio Promedio</p>
-                <p className="text-2xl font-bold text-destructive">{student.avgMastery}%</p>
+                <p className="text-2xl font-bold text-destructive">{avgMastery}%</p>
               </div>
             </CardContent>
           </Card>
@@ -119,6 +138,7 @@ export function StudentDetailView({ student, onClose, onSendFeedback }: StudentD
         </div>
 
         {/* Gráfico de Progreso */}
+        {/* TODO backend: no hay endpoint de progreso semanal por estudiante; usa mock. */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Evolución del Dominio</CardTitle>
@@ -152,6 +172,7 @@ export function StudentDetailView({ student, onClose, onSendFeedback }: StudentD
         </Card>
 
         {/* Vista Rápida de Dominio - Radar */}
+        {/* TODO backend: dominio por concepto y heatmap de atención (XAI) sin endpoint; usa mock. */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DomainRadar data={mockStudentDomainPoints} title="Vista Rápida de Dominio" />
           <AttentionHeatmap
@@ -161,6 +182,7 @@ export function StudentDetailView({ student, onClose, onSendFeedback }: StudentD
         </div>
 
         {/* Dominio por Concepto */}
+        {/* TODO backend: indicadores existen (/indicators) pero no dominio por concepto; usa mock. */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Dominio por Concepto</CardTitle>
@@ -187,10 +209,20 @@ export function StudentDetailView({ student, onClose, onSendFeedback }: StudentD
           </CardContent>
         </Card>
 
-        {/* Historial de Interacciones */}
-        <StudentInteractionsList interactions={mockStudentInteractions} />
+        {/* Historial de Interacciones (REAL cuando hay estudianteId + curso; mock como fallback) */}
+        <StudentInteractionsList interactions={interactionsList} />
+        {enabled && interactions.isLoading && (
+          <p className="text-xs text-muted-foreground -mt-3">Cargando historial real...</p>
+        )}
+        {!interactionsAreReal && (
+          <p className="text-xs text-muted-foreground -mt-3">
+            {/* TODO backend: sin datos reales de interacciones para este estudiante/curso; mostrando ejemplo. */}
+            Mostrando datos de ejemplo (sin interacciones reales disponibles).
+          </p>
+        )}
 
         {/* Recomendaciones para el Docente */}
+        {/* TODO backend: recomendaciones de intervención son contenido mock fijo; sin endpoint. */}
         <Card className="bg-warning/5 border-warning/20">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
