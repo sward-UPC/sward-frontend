@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import { ChevronLeft, ChevronRight, FileText, BarChart2, Users, BookOpen, Clock, Download } from 'lucide-react';
 import { useTeacherDashboard } from './useTeacherDashboard';
+import { downloadClassReport } from '@features/teacher/services/teacher.service';
 import { useLogout } from '../../../core/auth/useLogout';
 import { TeacherTopbar } from './components/TeacherTopbar';
 import { TeacherSidebar } from './components/TeacherSidebar';
@@ -79,6 +80,7 @@ export function TeacherDashboard() {
                 </button>
                 <StudentDetailView
                   student={dash.currentStudent}
+                  courseId={dash.activeCourseId}
                   onClose={() => dash.setSelectedStudent(null)}
                   onSendFeedback={() =>
                     dash.setFeedbackStudent({ id: dash.currentStudent!.id, name: dash.currentStudent!.name })
@@ -270,7 +272,7 @@ export function TeacherDashboard() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { icon: <FileText className="w-6 h-6 text-primary" />, title: 'Reporte Semanal Completo', desc: 'Progreso individual y grupal de las últimas 4 semanas.', badge: 'PDF', badgeColor: 'bg-red-500' },
+                        { icon: <FileText className="w-6 h-6 text-primary" />, title: 'Reporte Semanal Completo', desc: 'Progreso individual y grupal de las últimas 4 semanas.', badge: 'PDF', badgeColor: 'bg-red-500', realPdf: true },
                         { icon: <BarChart2 className="w-6 h-6 text-success" />, title: 'Análisis de Riesgo', desc: 'Detalle de estudiantes en riesgo con recomendaciones de intervención.', badge: 'Excel', badgeColor: 'bg-green-600' },
                         { icon: <Users className="w-6 h-6 text-warning" />, title: 'Registro de Engagement', desc: 'Historial de actividad y tiempos de sesión por estudiante.', badge: 'CSV', badgeColor: 'bg-blue-500' },
                         { icon: <BookOpen className="w-6 h-6 text-purple-500" />, title: 'Mapa de Conocimiento', desc: 'Estado de dominio por concepto para todo el grupo.', badge: 'PDF', badgeColor: 'bg-red-500' },
@@ -278,7 +280,15 @@ export function TeacherDashboard() {
                         <Card
                           key={r.title}
                           className="hover:border-primary/40 transition-colors cursor-pointer group"
-                          onClick={() => alert(`Generando: ${r.title}...`)}
+                          onClick={() => {
+                            if ('realPdf' in r && r.realPdf && dash.activeCourseId) {
+                              downloadClassReport(dash.activeCourseId).catch(() =>
+                                alert('No se pudo generar el reporte. Verifica que haya un curso activo.'),
+                              );
+                            } else {
+                              alert(`Generando: ${r.title}...`);
+                            }
+                          }}
                         >
                           <CardContent className="pt-5 pb-5">
                             <div className="flex items-start gap-4">
