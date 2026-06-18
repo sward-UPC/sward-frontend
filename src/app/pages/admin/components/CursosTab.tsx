@@ -1,12 +1,16 @@
+import { useState } from "react";
 import { Card, CardContent } from "../../../components/ui/card";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { CheckCircle2, Edit, BookOpen, AlertCircle } from "lucide-react";
 import { useAdminCourses } from "../../../../features/admin/hooks/useAdminCourses";
+import type { ApiCurso } from "../../../../features/admin/services/admin.service";
+import { EditCourseDialog } from "./EditCourseDialog";
 
 export function CursosTab() {
   const { data: cursos = [], isLoading, isError } = useAdminCourses();
+  const [editing, setEditing] = useState<ApiCurso | null>(null);
 
   if (isLoading) {
     return (
@@ -82,7 +86,13 @@ export function CursosTab() {
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{c.descripcion}</p>
                   )}
                 </div>
-                <Button variant="ghost" size="icon" title="Editar curso" className="shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Editar curso"
+                  className="shrink-0"
+                  onClick={() => setEditing(c)}
+                >
                   <Edit className="w-4 h-4" />
                 </Button>
               </div>
@@ -101,6 +111,12 @@ export function CursosTab() {
           </Card>
         ))}
       </div>
+
+      <EditCourseDialog
+        curso={editing}
+        open={!!editing}
+        onClose={() => setEditing(null)}
+      />
     </div>
   );
 }
