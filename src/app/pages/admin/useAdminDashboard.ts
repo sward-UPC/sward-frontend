@@ -1,10 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useTheme } from "../../context/ThemeContext";
-import {
-  mockUsers,
-  mockNotifications,
-} from "../../../mocks/data/admin.mock";
-import type { AdminTab, AdminUser, AdminNotification } from "../../../core/types/admin.types";
+import { mockNotifications } from "../../../mocks/data/admin.mock";
+import { useAdminUsers } from "../../../features/admin/hooks/useAdminUsers";
+import { useUpdateUserStatus } from "../../../features/admin/hooks/useUpdateUserStatus";
+import type { AdminTab, AdminNotification, AdminUser, UserStatus } from "../../../core/types/admin.types";
 
 export interface UseAdminDashboardReturn {
   // State
@@ -14,7 +13,10 @@ export interface UseAdminDashboardReturn {
   userSearch: string;
   roleFilter: string;
   statusFilter: string;
-  userList: AdminUser[];
+  users: AdminUser[];
+  usersTotal: number;
+  usersLoading: boolean;
+  usersError: boolean;
   notifs: AdminNotification[];
   showNotifPopup: boolean;
   showProfilePopup: boolean;
@@ -24,8 +26,8 @@ export interface UseAdminDashboardReturn {
   retrainDone: boolean;
   unread: number;
   darkMode: boolean;
-  notifRef: React.RefObject<HTMLDivElement>;
-  profileRef: React.RefObject<HTMLDivElement>;
+  notifRef: React.RefObject<HTMLDivElement | null>;
+  profileRef: React.RefObject<HTMLDivElement | null>;
   filteredUsers: AdminUser[];
 
   // Handlers
@@ -38,7 +40,7 @@ export interface UseAdminDashboardReturn {
   setShowProfilePopup: (v: boolean) => void;
   setShowProfileDialog: (v: boolean) => void;
   setDarkMode: (v: boolean) => void;
-  toggleUserStatus: (id: number) => void;
+  toggleUserStatus: (id: string, currentStatus: UserStatus) => void;
   handleRetrain: () => void;
   openProfile: (tab: "profile" | "settings") => void;
 }
@@ -49,7 +51,6 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
   const [userSearch, setUserSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [userList, setUserList] = useState<AdminUser[]>(mockUsers);
   const [notifs, setNotifs] = useState<AdminNotification[]>(mockNotifications);
   const [showNotifPopup, setShowNotifPopup] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
@@ -61,6 +62,12 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
   const { darkMode, setDarkMode } = useTheme();
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  const { data: usersData, isLoading: usersLoading, isError: usersError } = useAdminUsers();
+  const updateStatus = useUpdateUserStatus();
+
+  const users = usersData?.items ?? [];
+  const usersTotal = usersData?.total ?? 0;
 
   const unread = notifs.filter((n) => !n.read).length;
 
@@ -79,14 +86,9 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
     setShowProfilePopup(false);
   };
 
-  const toggleUserStatus = (id: number) => {
-    setUserList((prev) =>
-      prev.map((u) =>
-        u.id === id
-          ? { ...u, status: u.status === "active" ? "inactive" : "active" }
-          : u
-      )
-    );
+  const toggleUserStatus = (id: string, currentStatus: UserStatus) => {
+    const nextStatus: UserStatus = currentStatus === "active" ? "inactive" : "active";
+    updateStatus.mutate({ userId: id, status: nextStatus });
   };
 
   const handleRetrain = () => {
@@ -98,15 +100,17 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
     }, 3000);
   };
 
-  const filteredUsers = userList.filter((u) => {
-    const matchSearch =
-      userSearch === "" ||
-      u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-      u.email.toLowerCase().includes(userSearch.toLowerCase());
-    const matchRole = roleFilter === "all" || u.role === roleFilter;
-    const matchStatus = statusFilter === "all" || u.status === statusFilter;
-    return matchSearch && matchRole && matchStatus;
-  });
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const matchSearch =
+        userSearch === "" ||
+        u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(userSearch.toLowerCase());
+      const matchRole = roleFilter === "all" || u.role === roleFilter;
+      const matchStatus = statusFilter === "all" || u.status === statusFilter;
+      return matchSearch && matchRole && matchStatus;
+    });
+  }, [users, userSearch, roleFilter, statusFilter]);
 
   return {
     sidebarOpen,
@@ -115,7 +119,10 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
     userSearch,
     roleFilter,
     statusFilter,
-    userList,
+    users,
+    usersTotal,
+    usersLoading,
+    usersError,
     notifs,
     showNotifPopup,
     showProfilePopup,

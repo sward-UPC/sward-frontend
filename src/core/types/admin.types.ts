@@ -6,16 +6,58 @@ export type UserRole2 = "student" | "teacher" | "admin";
 export type NotificationType = "info" | "warning" | "error";
 export type LogLevel = "info" | "warning" | "error";
 
+// ---------------------------------------------------------------------------
+// API response shapes — snake_case como los devuelve el backend
+// ---------------------------------------------------------------------------
+
+export interface ApiAdminUser {
+  id: string;
+  correo: string;
+  nombre: string | null;
+  apellido: string | null;
+  estado: string;
+  rol: string;
+  moodle_user_id: number | null;
+}
+
+export interface ApiUsersListResponse {
+  items: ApiAdminUser[];
+  total: number;
+}
+
+export interface ApiMetrics {
+  total_usuarios: number;
+  usuarios_activos: number;
+  usuarios_inactivos: number;
+  usuarios_por_rol: {
+    estudiante: number;
+    docente: number;
+    administrador: number;
+  };
+}
+
+export interface ApiAuditLog {
+  id: string;
+  accion: string;
+  entidad: string;
+  entidad_id: string | null;
+  detalle: string | null;
+  admin_id: string | null;
+  timestamp: string;
+}
+
+// ---------------------------------------------------------------------------
+// UI types — camelCase para los componentes
+// ---------------------------------------------------------------------------
+
 export interface AdminUser {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: UserRole2;
   status: UserStatus;
-  institution: string;
   lastLogin: string;
-  joinDate: string;
-  courses: number;
+  moodleUserId: number | null;
 }
 
 export interface AdminCourse {
