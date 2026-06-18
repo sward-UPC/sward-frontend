@@ -7,6 +7,8 @@ export type AlertType = 'warning' | 'info' | 'success';
 /** Resumen de progreso de un estudiante visible para el docente (EP005). */
 export interface StudentProgress {
   id: number;
+  /** UUID real del estudiante en el backend (para llamar a /students/{id}/...). */
+  estudianteId?: string;
   name: string;
   email: string;
   riskLevel: RiskLevel;
