@@ -110,11 +110,14 @@ interface ApiCurso {
 /** Cursos disponibles para el docente (ms-cursos-recursos). */
 export async function getTeacherCourses(): Promise<TeacherCourse[]> {
   const { data } = await apiClient.get<ApiCurso[]>(ENDPOINTS.admin.courses);
-  return data.map((c) => ({
-    id: c.id,
-    nombre: c.nombre,
-    moodleCourseId: c.moodle_course_id,
-  }));
+  return data
+    // Excluye el curso-sitio de Moodle (id 1 = portada, no es un curso real).
+    .filter((c) => c.moodle_course_id !== '1')
+    .map((c) => ({
+      id: c.id,
+      nombre: c.nombre,
+      moodleCourseId: c.moodle_course_id,
+    }));
 }
 
 /** Retorna la lista de estudiantes del docente con su estado de riesgo. */
