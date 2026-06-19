@@ -118,7 +118,6 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
   // vacío/skeleton (sin "flash" de mock). El mock es solo para el preview (!enabled).
   // Dominio por concepto/sección REAL → radar, barras y recomendaciones.
   const cmReal = enabled ? (conceptMastery.data ?? []) : null;
-  const cmLoading = enabled && conceptMastery.isLoading;
   const radarData = cmReal
     ? cmReal.map((c) => ({ subject: c.concepto, value: c.dominio, fullMark: 100 }))
     : mockStudentDomainPoints;
@@ -128,7 +127,6 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
 
   // Evolución del dominio REAL (curva por etapas).
   const evoReal = enabled ? (weeklyProgress.data ?? []) : null;
-  const evoLoading = enabled && weeklyProgress.isLoading;
   const evolution = evoReal ?? mockStudentProgressPoints;
   const evolutionIsReal = enabled && (weeklyProgress.data?.length ?? 0) > 0;
   const evolTrend =
@@ -215,25 +213,21 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
           </CardHeader>
           <CardContent>
             <div className="h-[200px]">
-              {evoLoading ? (
-                <div className="h-full w-full rounded-[10px] bg-muted/40 animate-pulse" />
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={evolution}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                    <XAxis dataKey="week" stroke="#6B7280" style={{ fontSize: "12px" }} />
-                    <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#FFFFFF",
-                        border: "1px solid #E5E7EB",
-                        borderRadius: "12px",
-                      }}
-                    />
-                    <Line type="monotone" dataKey="mastery" stroke="#4F46E5" strokeWidth={2} name="Dominio %" />
-                  </LineChart>
-                </ResponsiveContainer>
-              )}
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={evolution}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis dataKey="week" stroke="#6B7280" style={{ fontSize: "12px" }} />
+                  <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#FFFFFF",
+                      border: "1px solid #E5E7EB",
+                      borderRadius: "12px",
+                    }}
+                  />
+                  <Line type="monotone" dataKey="mastery" stroke="#4F46E5" strokeWidth={2} name="Dominio %" />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
             {evolTrend != null && evolTrend < 0 && (
               <div className="mt-3 p-3 bg-destructive/5 border border-destructive/20 rounded-[12px]">
@@ -259,13 +253,10 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
           </CardContent>
         </Card>
 
-        {/* Vista Rápida de Dominio - Radar (real: dominio por sección) */}
+        {/* Vista Rápida de Dominio - Radar (real: dominio por sección).
+            Datos vacíos mientras carga → recharts anima de vacío a real (crece). */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {cmLoading ? (
-            <div className="h-[280px] rounded-[12px] bg-muted/40 animate-pulse" />
-          ) : (
-            <DomainRadar data={radarData} title="Vista Rápida de Dominio" />
-          )}
+          <DomainRadar data={radarData} title="Vista Rápida de Dominio" />
           <AttentionHeatmap
             interactions={attentionInteractions}
             currentPrediction={attentionPrediction}
@@ -285,25 +276,21 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
           </CardHeader>
           <CardContent>
             <div className="h-[200px]">
-              {cmLoading ? (
-                <div className="h-full w-full rounded-[10px] bg-muted/40 animate-pulse" />
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={conceptBars}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                    <XAxis dataKey="concept" stroke="#6B7280" style={{ fontSize: "12px" }} />
-                    <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#FFFFFF",
-                        border: "1px solid #E5E7EB",
-                        borderRadius: "12px",
-                      }}
-                    />
-                    <Bar dataKey="mastery" fill="#4F46E5" name="Dominio %" />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={conceptBars}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis dataKey="concept" stroke="#6B7280" style={{ fontSize: "12px" }} />
+                  <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#FFFFFF",
+                      border: "1px solid #E5E7EB",
+                      borderRadius: "12px",
+                    }}
+                  />
+                  <Bar dataKey="mastery" fill="#4F46E5" name="Dominio %" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>

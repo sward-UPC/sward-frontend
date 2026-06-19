@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router';
 import type { Alert, StudentProgress, TeacherTab } from '@core/types';
 import {
   mockStudents,
@@ -87,11 +88,47 @@ export interface UseTeacherDashboardReturn {
 
 export function useTeacherDashboard(): UseTeacherDashboardReturn {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState<TeacherTab>('resumen');
+
+  // ── Estado en la URL: la tab y el alumno seleccionado viven en query params
+  // (?tab=estudiantes&alumno=5) para que un refresh o un enlace compartido
+  // restauren la misma vista en vez de volver al inicio del docente. ──────────
+  const [searchParams, setSearchParams] = useSearchParams();
+  const VALID_TABS: TeacherTab[] = ['resumen', 'estudiantes', 'analisis', 'reportes'];
+  const tabParam = searchParams.get('tab') as TeacherTab | null;
+  const activeTab: TeacherTab = tabParam && VALID_TABS.includes(tabParam) ? tabParam : 'resumen';
+  const alumnoParam = searchParams.get('alumno');
+  const selectedStudent: number | null = alumnoParam ? Number(alumnoParam) : null;
+
+  const setActiveTab = useCallback((tab: TeacherTab) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (tab === 'resumen') next.delete('tab');
+      else next.set('tab', tab);
+      // Cambiar de sección cierra el detalle del alumno.
+      next.delete('alumno');
+      return next;
+    });
+  }, [setSearchParams]);
+
+  const setSelectedStudent = useCallback((id: number | null) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (id == null) {
+        next.delete('alumno');
+      } else {
+        // Ver el detalle implica estar en la sección Estudiantes (al volver,
+        // aterriza en la lista). Lo fijamos aquí para que los handlers que
+        // llaman setActiveTab + setSelectedStudent no compitan por la URL.
+        next.set('alumno', String(id));
+        next.set('tab', 'estudiantes');
+      }
+      return next;
+    });
+  }, [setSearchParams]);
+
   const [courseFilter, setCourseFilter] = useState('all');
   const [weekFilter, setWeekFilter] = useState('all');
   const [riskFilter, setRiskFilter] = useState('all');
-  const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [feedbackStudent, setFeedbackStudent] = useState<{ id: number; name: string; estudianteId?: string } | null>(null);
   const [showNotifPopup, setShowNotifPopup] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);

@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router';
 import { useTheme } from '../../context/ThemeContext';
 import { mockNotifications } from '@mocks/data/student.mock';
 import type { NavItem, StudentNotification } from '@core/types';
@@ -45,7 +46,20 @@ export interface UseStudentDashboardReturn {
 }
 
 export function useStudentDashboard(): UseStudentDashboardReturn {
-  const [activeNav, setActiveNav] = useState<NavItem>('hoy');
+  // Sección activa en la URL (?nav=progreso) → el refresh mantiene la vista.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const VALID_NAV: NavItem[] = ['hoy', 'aprendizaje', 'atencion', 'progreso', 'recursos'];
+  const navParam = searchParams.get('nav') as NavItem | null;
+  const activeNav: NavItem = navParam && VALID_NAV.includes(navParam) ? navParam : 'hoy';
+  const setActiveNav = useCallback((nav: NavItem) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (nav === 'hoy') next.delete('nav');
+      else next.set('nav', nav);
+      return next;
+    });
+  }, [setSearchParams]);
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedSideResource, setSelectedSideResource] = useState<number | null>(null);
   const [completedResources, setCompletedResources] = useState<number[]>([]);
