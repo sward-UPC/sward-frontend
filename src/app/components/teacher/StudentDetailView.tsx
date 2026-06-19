@@ -69,16 +69,76 @@ function getRiskBadge(level: string) {
   }
 }
 
+interface ConceptMasteryItem {
+  concepto: string;
+  dominio: number;
+  total: number;
+}
+
+/** Recomendaciones de intervención derivadas de datos reales del estudiante. */
+function buildRecomendaciones(
+  conceptos: ConceptMasteryItem[],
+  engagement: number,
+  lastActivity: string,
+): { titulo: string; descripcion: string }[] {
+  const recs: { titulo: string; descripcion: string }[] = [];
+  // Secciones más débiles (vienen ordenadas peor→mejor desde el backend).
+  for (const c of conceptos.filter((x) => x.dominio < 60).slice(0, 2)) {
+    const nivel = c.dominio < 40 ? "crítico" : "bajo";
+    recs.push({
+      titulo: `Reforzar ${c.concepto}`,
+      descripcion: `Dominio ${nivel} (${c.dominio}%) en ${c.total} interacción${c.total === 1 ? "" : "es"}. Sugerir tutoría o recursos adicionales en esta sección.`,
+    });
+  }
+  if (engagement < 50) {
+    recs.push({
+      titulo: "Aumentar engagement",
+      descripcion: `Engagement bajo (${engagement}%).${lastActivity ? ` Última actividad: ${lastActivity}.` : ""} Enviar recordatorio o mensaje de motivación.`,
+    });
+  }
+  if (recs.length === 0) {
+    recs.push({
+      titulo: "Buen desempeño",
+      descripcion: "El estudiante mantiene un dominio adecuado en todas las secciones. Reforzar con retos avanzados.",
+    });
+  }
+  return recs;
+}
+
 export function StudentDetailView({ student, courseId, onClose, onSendFeedback }: StudentDetailViewProps) {
   // Datos REALES (ms-trazabilidad) cuando hay UUID + curso; si no, cae al mock.
-  const { enabled, progress, interactions, attention } = useStudentDetail(
-    student.estudianteId,
-    courseId,
-  );
+  const { enabled, progress, interactions, attention, conceptMastery, weeklyProgress } =
+    useStudentDetail(student.estudianteId, courseId);
 
   const realProgress = progress.data;
   // Dominio promedio: usa el puntaje real cuando está disponible.
   const avgMastery = realProgress?.puntajePromedio ?? student.avgMastery;
+
+  // Dominio por concepto/sección REAL → radar, barras y recomendaciones.
+  const cm = enabled && conceptMastery.data && conceptMastery.data.length > 0
+    ? conceptMastery.data
+    : null;
+  const radarData = cm
+    ? cm.map((c) => ({ subject: c.concepto, value: c.dominio, fullMark: 100 }))
+    : mockStudentDomainPoints;
+  const conceptBars = cm
+    ? cm.map((c) => ({ concept: c.concepto, mastery: c.dominio }))
+    : mockConceptMasteryPoints;
+
+  // Evolución del dominio REAL (curva por etapas).
+  const evolution = enabled && weeklyProgress.data && weeklyProgress.data.length > 0
+    ? weeklyProgress.data
+    : mockStudentProgressPoints;
+  const evolutionIsReal = enabled && !!weeklyProgress.data && weeklyProgress.data.length > 0;
+  const evolTrend =
+    evolutionIsReal && evolution.length >= 2
+      ? evolution[evolution.length - 1].mastery - evolution[0].mastery
+      : null;
+
+  // Recomendaciones de intervención derivadas de datos reales.
+  const recomendaciones = cm
+    ? buildRecomendaciones(cm, student.engagement, student.lastActivity)
+    : null;
 
   // Historial de interacciones: real si hay datos, mock como fallback.
   const interactionsList =
@@ -150,17 +210,16 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
           </Card>
         </div>
 
-        {/* Gráfico de Progreso */}
-        {/* TODO backend: no hay endpoint de progreso semanal por estudiante; usa mock. */}
+        {/* Evolución del Dominio (real: dominio acumulado por etapa) */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Evolución del Dominio</CardTitle>
-            <CardDescription>Progreso semanal del estudiante</CardDescription>
+            <CardDescription>Dominio acumulado a lo largo de las actividades</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockStudentProgressPoints}>
+                <LineChart data={evolution}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                   <XAxis dataKey="week" stroke="#6B7280" style={{ fontSize: "12px" }} />
                   <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
@@ -171,24 +230,37 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
                       borderRadius: "12px",
                     }}
                   />
-                  <Line type="monotone" dataKey="mastery" stroke="#DC2626" strokeWidth={2} name="Dominio %" />
+                  <Line type="monotone" dataKey="mastery" stroke="#4F46E5" strokeWidth={2} name="Dominio %" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-3 p-3 bg-destructive/5 border border-destructive/20 rounded-[12px]">
-              <p className="text-sm text-destructive">
-                <strong>Tendencia negativa:</strong> El dominio promedio ha disminuido en las últimas
-                2 semanas. Se recomienda intervención.
+            {evolTrend != null && evolTrend < 0 && (
+              <div className="mt-3 p-3 bg-destructive/5 border border-destructive/20 rounded-[12px]">
+                <p className="text-sm text-destructive">
+                  <strong>Tendencia negativa:</strong> el dominio cayó {Math.abs(evolTrend)} puntos a
+                  lo largo del curso. Se recomienda intervención.
+                </p>
+              </div>
+            )}
+            {evolTrend != null && evolTrend > 0 && (
+              <div className="mt-3 p-3 bg-success/5 border border-success/20 rounded-[12px]">
+                <p className="text-sm text-success">
+                  <strong>Tendencia positiva:</strong> el dominio mejoró {evolTrend} puntos a lo largo
+                  del curso.
+                </p>
+              </div>
+            )}
+            {!evolutionIsReal && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Mostrando datos de ejemplo (sin secuencia real disponible).
               </p>
-            </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Vista Rápida de Dominio - Radar */}
-        {/* TODO backend: dominio por concepto (radar) sin endpoint; usa mock. */}
-        {/* El heatmap de atención SÍ es real (SAKT vía ms-recomendacion) cuando hay datos. */}
+        {/* Vista Rápida de Dominio - Radar (real: dominio por sección) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DomainRadar data={mockStudentDomainPoints} title="Vista Rápida de Dominio" />
+          <DomainRadar data={radarData} title="Vista Rápida de Dominio" />
           <AttentionHeatmap
             interactions={attentionInteractions}
             currentPrediction={attentionPrediction}
@@ -204,17 +276,16 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
           </p>
         )}
 
-        {/* Dominio por Concepto */}
-        {/* TODO backend: indicadores existen (/indicators) pero no dominio por concepto; usa mock. */}
+        {/* Dominio por Concepto (real: % de acierto por sección del curso) */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Dominio por Concepto</CardTitle>
-            <CardDescription>Estado actual de cada concepto</CardDescription>
+            <CardDescription>Tasa de acierto por sección del curso</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockConceptMasteryPoints}>
+                <BarChart data={conceptBars}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                   <XAxis dataKey="concept" stroke="#6B7280" style={{ fontSize: "12px" }} />
                   <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
@@ -244,39 +315,25 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
           </p>
         )}
 
-        {/* Recomendaciones para el Docente */}
-        {/* TODO backend: recomendaciones de intervención son contenido mock fijo; sin endpoint. */}
-        <Card className="bg-warning/5 border-warning/20">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-warning" />
-              Recomendaciones de Intervención
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="p-3 bg-background rounded-[12px]">
-              <p className="text-sm font-medium mb-1">1. Reforzar Redes Neuronales</p>
-              <p className="text-xs text-muted-foreground">
-                Dominio crítico (35%). Se detectaron 3 intentos incorrectos consecutivos. Sugerir
-                tutoría personalizada o recursos adicionales.
-              </p>
-            </div>
-            <div className="p-3 bg-background rounded-[12px]">
-              <p className="text-sm font-medium mb-1">2. Monitorear Deep Learning</p>
-              <p className="text-xs text-muted-foreground">
-                Dominio bajo (40%). El estudiante muestra dificultades con conceptos intermedios.
-                Considerar sesión de retroalimentación.
-              </p>
-            </div>
-            <div className="p-3 bg-background rounded-[12px]">
-              <p className="text-sm font-medium mb-1">3. Aumentar Engagement</p>
-              <p className="text-xs text-muted-foreground">
-                Engagement bajo (35%). Última actividad hace 2 días. Enviar recordatorio o mensaje
-                de motivación.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Recomendaciones de Intervención (derivadas de las secciones reales) */}
+        {recomendaciones && (
+          <Card className="bg-warning/5 border-warning/20">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-warning" />
+                Recomendaciones de Intervención
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {recomendaciones.map((r, i) => (
+                <div key={r.titulo} className="p-3 bg-background rounded-[12px]">
+                  <p className="text-sm font-medium mb-1">{i + 1}. {r.titulo}</p>
+                  <p className="text-xs text-muted-foreground">{r.descripcion}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Acciones */}
         <div className="flex gap-2 pt-4 border-t">

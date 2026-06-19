@@ -73,6 +73,11 @@ export const ENDPOINTS = {
       `/students/${studentId}/interactions?courseId=${courseId}`,
     studentIndicators: (studentId: string, courseId: string) =>
       `/students/${studentId}/indicators?courseId=${courseId}`,
+    // Dominio por concepto/sección y evolución del estudiante (ms-trazabilidad).
+    studentConceptMastery: (studentId: string, courseId: string) =>
+      `/students/${studentId}/concept-mastery?courseId=${courseId}`,
+    studentWeeklyProgress: (studentId: string, courseId: string) =>
+      `/students/${studentId}/weekly-progress?courseId=${courseId}`,
     // Reporte PDF de la clase (ms-trazabilidad, descarga binaria).
     report: (courseId: string) => `/dashboard/teacher/${courseId}/report`,
     // Retroalimentación docente→estudiante (ms-trazabilidad).
