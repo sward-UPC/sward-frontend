@@ -1,6 +1,5 @@
 import {
-  Eye, EyeOff, AlertCircle, ChevronRight,
-  GraduationCap, BookOpen, ShieldCheck, Mail, Lock,
+  Eye, EyeOff, AlertCircle, ChevronRight, Mail, Lock,
 } from "lucide-react";
 import type { LoginScreen } from "../useLoginForm";
 import {
@@ -11,12 +10,6 @@ import { FormField as Field } from "./FormField";
 function Spinner() {
   return <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />;
 }
-
-const ROLES = [
-  { value: "student" as const, label: "Estudiante", icon: GraduationCap },
-  { value: "teacher" as const, label: "Docente", icon: BookOpen },
-  { value: "admin" as const, label: "Admin", icon: ShieldCheck },
-];
 
 interface LoginFormFieldsProps {
   loginScreen: LoginScreen;
@@ -59,9 +52,9 @@ interface LoginFormFieldsProps {
 }
 
 export function LoginFormFields({
-  loginScreen, loginEmail, loginPassword, showLoginPw, loginRole, loginError, loginLoading,
+  loginScreen, loginEmail, loginPassword, showLoginPw, loginError, loginLoading,
   recEmail, recEmailErr, otp, otpErr, newPw, confirmPw, showNewPw, newPwErr, recLoading, resendTimer,
-  onLoginEmail, onLoginPassword, onShowLoginPw, onLoginRole, onLoginError, onLoginScreen,
+  onLoginEmail, onLoginPassword, onShowLoginPw, onLoginError, onLoginScreen,
   onRecEmail, onRecEmailErr, onOtp, onNewPw, onConfirmPw, onShowNewPw, onNewPwErr, onResendTimer,
   onSubmitLogin, onSendCode, onVerifyCode, onSetNewPw, onResetRecovery, onFlip,
 }: LoginFormFieldsProps) {
@@ -83,15 +76,6 @@ export function LoginFormFields({
       <div>
         <h1 className="text-xl font-bold text-foreground">Bienvenido de vuelta</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Ingresa tus credenciales para continuar</p>
-      </div>
-
-      <div className="flex p-1 bg-muted/60 rounded-[12px] gap-1">
-        {ROLES.map(({ value, label, icon: Icon }) => (
-          <button key={value} type="button" onClick={() => onLoginRole(value)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-[10px] text-xs font-medium transition-all ${loginRole === value ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-            <Icon className="w-3.5 h-3.5" />{label}
-          </button>
-        ))}
       </div>
 
       <form onSubmit={onSubmitLogin} className="flex flex-col gap-3.5">
