@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, CheckCircle2, GraduationCap, BookOpen, ChevronRight, AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronRight, AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { LoginBranding, LoginFormFields, useLoginForm } from "./auth";
 import { FormField as Field } from "./auth/components/FormField";
 import { useAuth } from "@core/auth/useAuth";
@@ -35,7 +35,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [regStep, setRegStep] = useState(1);
   const [regEmail, setRegEmail] = useState("");
-  const [regRole, setRegRole] = useState<"student" | "teacher">("student");
   const [regPw, setRegPw] = useState("");
   const [regConfirmPw, setRegConfirmPw] = useState("");
   const [showRegPw, setShowRegPw] = useState(false);
@@ -81,7 +80,14 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     }
   };
 
-  const faceBase = "absolute inset-0 overflow-y-auto rounded-2xl bg-card/95 backdrop-blur-sm shadow-2xl border border-border/50 p-6 sm:p-8 flex flex-col";
+  // Sin overflow en la cara 3D: un elemento con backface-visibility:hidden y
+  // overflow!=visible "aplana" el render y deja ver la cara de atrás (se veía el
+  // login detrás del registro). El scroll va en un wrapper interno.
+  const faceBase = "absolute inset-0 rounded-2xl bg-card/95 backdrop-blur-sm shadow-2xl border border-border/50 p-6 sm:p-8 flex flex-col";
+  const faceStyle: React.CSSProperties = {
+    backfaceVisibility: "hidden",
+    WebkitBackfaceVisibility: "hidden",
+  };
   const mobileLogo = (
     <div className="flex lg:hidden items-center gap-2.5 mb-5">
       <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
@@ -103,7 +109,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           <div style={{ width: "100%", height: "100%", position: "relative", transformStyle: "preserve-3d", transition: "transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)", transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)" }}>
 
             {/* FRONT — LOGIN */}
-            <div className={faceBase} style={{ backfaceVisibility: "hidden" }}>
+            <div className={faceBase} style={faceStyle}>
+              <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
               {mobileLogo}
               <LoginFormFields
                 loginScreen={form.loginScreen} loginEmail={form.loginEmail} loginPassword={form.loginPassword}
@@ -120,10 +127,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 onSendCode={form.handleSendCode} onVerifyCode={form.handleVerifyCode}
                 onSetNewPw={form.handleSetNewPw} onResetRecovery={form.resetRecovery} onFlip={flip}
               />
+              </div>
             </div>
 
             {/* BACK — REGISTER */}
-            <div className={faceBase} style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
+            <div className={faceBase} style={{ ...faceStyle, transform: "rotateY(180deg)" }}>
+              <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
               {mobileLogo}
               {!regSuccess ? (
                 <div className="flex-1 flex flex-col gap-5">
@@ -165,16 +174,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                     <form onSubmit={handleRegister} className="flex flex-col gap-4 flex-1">
                       <div className="space-y-3.5">
                         <div className="space-y-1.5">
-                          <label className="text-sm font-medium">Soy</label>
-                          <div className="flex gap-2">
-                            {[{ v: "student" as const, l: "Estudiante", icon: GraduationCap }, { v: "teacher" as const, l: "Docente", icon: BookOpen }].map(({ v, l, icon: Icon }) => (
-                              <button key={v} type="button" onClick={() => setRegRole(v)} className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[10px] text-sm border transition-all ${regRole === v ? "border-primary bg-primary/5 text-primary font-medium" : "border-border text-muted-foreground hover:border-primary/40"}`}>
-                                <Icon className="w-4 h-4" />{l}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="space-y-1.5">
                           <label className="text-sm font-medium">Contraseña</label>
                           <Field type={showRegPw ? "text" : "password"} value={regPw} onChange={(v: string) => { setRegPw(v); setRegErrors((e) => ({ ...e, pw: "" })); }} placeholder="Mínimo 8 caracteres" icon={Lock}
                             right={<button type="button" tabIndex={-1} onClick={() => setShowRegPw((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">{showRegPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>} />
@@ -215,6 +214,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
                 </div>
               )}
+              </div>
             </div>
 
           </div>
