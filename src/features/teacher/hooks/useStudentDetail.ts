@@ -4,6 +4,8 @@ import {
   getStudentIndicators,
   getStudentInteractions,
   getStudentAttention,
+  getConceptMastery,
+  getWeeklyProgress,
 } from '../services/teacher.service';
 
 /**
@@ -46,5 +48,29 @@ export function useStudentDetail(
     staleTime: 1000 * 60 * 2,
   });
 
-  return { enabled, progress, indicators, interactions, attention };
+  // Dominio por concepto/sección (radar + barras + recomendaciones).
+  const conceptMastery = useQuery({
+    queryKey: ['teacher', 'student-detail', 'concept-mastery', estudianteId, courseId],
+    queryFn: () => getConceptMastery(estudianteId as string, courseId as string),
+    enabled,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  // Evolución del dominio por etapa (curva de progreso).
+  const weeklyProgress = useQuery({
+    queryKey: ['teacher', 'student-detail', 'weekly', estudianteId, courseId],
+    queryFn: () => getWeeklyProgress(estudianteId as string, courseId as string),
+    enabled,
+    staleTime: 1000 * 60 * 2,
+  });
+
+  return {
+    enabled,
+    progress,
+    indicators,
+    interactions,
+    attention,
+    conceptMastery,
+    weeklyProgress,
+  };
 }

@@ -342,6 +342,55 @@ export async function getClassTrendReal(courseId: string): Promise<ClassTrendDat
 }
 
 // ───────────────────────────────────────────────────────────────────────────
+// Dominio por concepto/sección y evolución del estudiante (ms-trazabilidad).
+// ───────────────────────────────────────────────────────────────────────────
+
+interface ApiConceptMastery {
+  concepto: string;
+  dominio: number; // 0-100
+  total: number;
+  correctas: number;
+}
+
+/** Dominio por concepto/sección (real). Listo para radar y barras. */
+export interface ConceptMastery {
+  concepto: string;
+  dominio: number;
+  total: number;
+}
+
+export async function getConceptMastery(
+  studentId: string,
+  courseId: string,
+): Promise<ConceptMastery[]> {
+  const { data } = await apiClient.get<ApiConceptMastery[]>(
+    ENDPOINTS.teacher.studentConceptMastery(studentId, courseId),
+  );
+  return data.map((c) => ({ concepto: c.concepto, dominio: Math.round(c.dominio), total: c.total }));
+}
+
+interface ApiWeeklyProgress {
+  etapa: string;
+  dominio: number;
+}
+
+/** Evolución del dominio por etapa (real). `week`/`mastery` para el LineChart. */
+export interface WeeklyProgressPoint {
+  week: string;
+  mastery: number;
+}
+
+export async function getWeeklyProgress(
+  studentId: string,
+  courseId: string,
+): Promise<WeeklyProgressPoint[]> {
+  const { data } = await apiClient.get<ApiWeeklyProgress[]>(
+    ENDPOINTS.teacher.studentWeeklyProgress(studentId, courseId),
+  );
+  return data.map((p) => ({ week: p.etapa, mastery: Math.round(p.dominio) }));
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // Heatmap de atención del SAKT (ms-recomendacion) — endpoint REAL:
 //   GET /recommendations/attention?estudianteId=...&cursoId=...
 // Pesos de atención reales que el modelo asignó a cada interacción pasada.
