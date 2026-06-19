@@ -254,6 +254,7 @@ interface ApiInteraction {
   concept_id: string | null;
   is_correct: boolean | null;
   url_modulo: string;
+  nombre_actividad: string;
 }
 
 /** Etiqueta legible para el tipo de interacción del backend. */
@@ -298,8 +299,12 @@ export async function getStudentInteractions(
     return {
       id: i + 1,
       date,
-      // El concepto real es la sección de Moodle (concept_id).
-      resource: it.concept_id || (TIPO_INTERACCION_LABEL[it.tipo] ?? it.tipo),
+      // Título = nombre real de la actividad en Moodle; el tag (concept) = la
+      // sección/concepto. Si no hay nombre de actividad, cae al concepto o al tipo.
+      resource:
+        it.nombre_actividad ||
+        it.concept_id ||
+        (TIPO_INTERACCION_LABEL[it.tipo] ?? it.tipo),
       concept: it.concept_id || 'General',
       result: it.is_correct === false ? 'Incorrecto' : 'Completado',
       time,
