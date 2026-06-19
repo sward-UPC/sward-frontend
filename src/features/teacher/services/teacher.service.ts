@@ -251,6 +251,9 @@ interface ApiInteraction {
   tipo: 'respuesta' | 'vista' | 'descarga' | 'completado';
   fecha: string; // ISO 8601
   curso_id: string;
+  concept_id: string | null;
+  is_correct: boolean | null;
+  url_modulo: string;
 }
 
 /** Etiqueta legible para el tipo de interacción del backend. */
@@ -295,10 +298,12 @@ export async function getStudentInteractions(
     return {
       id: i + 1,
       date,
-      resource: TIPO_INTERACCION_LABEL[it.tipo] ?? it.tipo,
-      concept: it.actividad_id ? `Actividad ${it.actividad_id.slice(0, 8)}` : 'General',
-      result: 'Completado',
+      // El concepto real es la sección de Moodle (concept_id).
+      resource: it.concept_id || (TIPO_INTERACCION_LABEL[it.tipo] ?? it.tipo),
+      concept: it.concept_id || 'General',
+      result: it.is_correct === false ? 'Incorrecto' : 'Completado',
       time,
+      url: it.url_modulo || undefined,
     };
   });
 }
