@@ -62,7 +62,12 @@ export function TeacherDashboard() {
           activeTab={dash.activeTab}
           sidebarOpen={dash.sidebarOpen}
           highRiskCount={dash.highRiskCount}
-          onTabChange={dash.setActiveTab}
+          onTabChange={(t) => {
+            // Al cambiar de sección, salir del detalle del alumno (si no, el
+            // detalle tapaba la nueva tab y parecía que no se podía navegar).
+            dash.setSelectedStudent(null);
+            dash.setActiveTab(t);
+          }}
           onClose={() => dash.setSidebarOpen(false)}
         />
 
