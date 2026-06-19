@@ -256,7 +256,11 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
         {/* Vista Rápida de Dominio - Radar (real: dominio por sección).
             Datos vacíos mientras carga → recharts anima de vacío a real (crece). */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DomainRadar data={radarData} title="Vista Rápida de Dominio" />
+          <DomainRadar
+            key={`radar-${student.id}-${radarData.length}`}
+            data={radarData}
+            title="Vista Rápida de Dominio"
+          />
           <AttentionHeatmap
             interactions={attentionInteractions}
             currentPrediction={attentionPrediction}
