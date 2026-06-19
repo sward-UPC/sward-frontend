@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { User, UserRole, LoginResponse } from '@core/types';
-import { me } from '@features/auth/services/auth.service';
+import { logout as revokeSession, me } from '@features/auth/services/auth.service';
 
 interface AuthContextValue {
   user: User | null;
@@ -10,8 +10,8 @@ interface AuthContextValue {
   role: UserRole | null;
   /** Persiste tokens y carga el perfil del usuario tras login exitoso. */
   login: (response: LoginResponse) => Promise<void>;
-  /** Limpia sesión de localStorage y estado. */
-  logout: () => void;
+  /** Revoca el token en el servidor y limpia la sesión local. */
+  logout: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -51,7 +51,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    // Revoca el token en el servidor (blacklist en Redis). Best-effort: aunque
+    // falle (p. ej. token ya vencido), igual limpiamos la sesión local.
+    try {
+      await revokeSession();
+    } catch {
+      // ignorado a propósito
+    }
     localStorage.removeItem('sward_access_token');
     localStorage.removeItem('sward_refresh_token');
     localStorage.removeItem('sward_user');
