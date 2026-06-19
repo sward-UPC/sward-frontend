@@ -136,7 +136,18 @@ export function StudentRiskTable({
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium text-sm">{student.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm">{student.name}</p>
+                          {student.registrado === false && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] px-1.5 py-0 text-muted-foreground border-muted-foreground/30"
+                              title="El estudiante existe en Moodle pero aún no se ha registrado en SWARD"
+                            >
+                              No registrado en SWARD
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">{student.email}</p>
                       </div>
                     </TableCell>
