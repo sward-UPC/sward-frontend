@@ -65,6 +65,10 @@ export function DomainRadar({ data = defaultData, title = "Vista Rápida de Domi
                 fill="#6366f1"
                 fillOpacity={0.4}
                 strokeWidth={2}
+                isAnimationActive
+                animationBegin={150}
+                animationDuration={1100}
+                animationEasing="ease-out"
               />
               <Tooltip content={<CustomTooltip />} />
             </RadarChart>
