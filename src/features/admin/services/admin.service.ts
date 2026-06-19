@@ -129,6 +129,21 @@ export async function getCursos(): Promise<ApiCurso[]> {
   return data;
 }
 
+/** Campos editables de un curso desde el panel admin. */
+export interface UpdateCursoPayload {
+  descripcion?: string;
+  estado?: 'activo' | 'inactivo';
+}
+
+/**
+ * Actualiza un curso (PUT /courses/{id}). Solo campos que el sync de Moodle NO
+ * sobreescribe: descripción y estado. nombre/código vienen de Moodle.
+ */
+export async function updateCurso(id: string, payload: UpdateCursoPayload): Promise<ApiCurso> {
+  const { data } = await apiClient.put<ApiCurso>(ENDPOINTS.admin.courseById(id), payload);
+  return data;
+}
+
 // ---------------------------------------------------------------------------
 // Sistema
 // ---------------------------------------------------------------------------
