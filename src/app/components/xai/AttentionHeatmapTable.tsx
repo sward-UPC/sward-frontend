@@ -5,22 +5,12 @@ interface AttentionHeatmapTableProps {
   interactions: InteractionData[];
 }
 
-const CONCEPTS = ["Knowledge Tracing", "Intro a IA", "Python Básico", "Deep Learning", "Redes Neur."];
-const SESSIONS = ["S1", "S2", "S3", "S4", "S5", "S6", "S7"];
-
-const heatmapMatrix = [
-  [92, 85, 78, 70, 60, 45, 30],
-  [88, 82, 75, 68, 55, 42, 28],
-  [76, 70, 65, 58, 50, 40, 25],
-  [65, 60, 55, 50, 45, 35, 20],
-  [45, 40, 38, 32, 28, 22, 15],
-];
-
 function getBubbleStyle(value: number): { bg: string; label: string } {
   if (value >= 80) return { bg: "#312e81", label: "Alta" };
   if (value >= 60) return { bg: "#6366f1", label: "Media" };
   if (value >= 40) return { bg: "#a5b4fc", label: "Media" };
-  return { bg: "#e0e7ff", label: "Baja" };
+  if (value > 0) return { bg: "#e0e7ff", label: "Baja" };
+  return { bg: "#f1f5f9", label: "—" }; // celda vacía (ese concepto no fue esa sesión)
 }
 
 function getBubbleSize(value: number): number {
@@ -29,6 +19,15 @@ function getBubbleSize(value: number): number {
 
 export function AttentionHeatmapTable({ interactions }: AttentionHeatmapTableProps) {
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
+
+  // Matriz REAL: columnas = interacciones (sesiones) con mayor atención del SAKT;
+  // filas = sus conceptos. La celda lleva el peso de atención (0 = no aplica).
+  const cols = interactions.slice(0, 7);
+  const SESSIONS = cols.map((_, i) => `S${i + 1}`);
+  const CONCEPTS = Array.from(new Set(cols.map((c) => c.concept))).slice(0, 6);
+  const heatmapMatrix = CONCEPTS.map((concept) =>
+    cols.map((col) => (col.concept === concept ? col.attention : 0)),
+  );
 
   return (
     <>
