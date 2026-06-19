@@ -27,6 +27,7 @@ interface ApiEstudianteProgress {
   engagement?: number;
   conceptos_en_riesgo?: number;
   ultima_actividad?: string;
+  registrado_en_sward?: boolean;
 }
 
 /** "Hace 2 días", "Hace 3 h", etc. desde una fecha ISO. '' si no hay. */
@@ -88,6 +89,7 @@ export async function getCourseStudentsProgress(courseId: string): Promise<Stude
     conceptsAtRisk: e.conceptos_en_riesgo ?? 0,
     lastActivity: tiempoRelativo(e.ultima_actividad),
     engagement: e.engagement ?? 0,
+    registrado: e.registrado_en_sward ?? false,
   }));
 }
 
