@@ -6,8 +6,8 @@ export function useLogout() {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
-  return () => {
-    logout();
+  return async () => {
+    await logout();
     navigate('/login', { replace: true });
   };
 }
