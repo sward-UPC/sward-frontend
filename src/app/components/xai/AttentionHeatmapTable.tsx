@@ -1,169 +1,83 @@
-import { useState } from "react";
 import { InteractionData } from "@core/types/xai.types";
 
 interface AttentionHeatmapTableProps {
   interactions: InteractionData[];
 }
 
-function getBubbleStyle(value: number): { bg: string; label: string } {
-  if (value >= 80) return { bg: "#312e81", label: "Alta" };
-  if (value >= 60) return { bg: "#6366f1", label: "Media" };
-  if (value >= 40) return { bg: "#a5b4fc", label: "Media" };
-  if (value > 0) return { bg: "#e0e7ff", label: "Baja" };
-  return { bg: "#f1f5f9", label: "—" }; // celda vacía (ese concepto no fue esa sesión)
-}
-
-function getBubbleSize(value: number): number {
-  return 28 + Math.round((value / 100) * 18);
+/** Color del peso de atención (escala índigo: más oscuro = más atención). */
+function barColor(v: number): string {
+  if (v >= 30) return "#4338ca"; // alta
+  if (v >= 18) return "#6366f1"; // media
+  if (v >= 10) return "#818cf8"; // media-baja
+  return "#c7d2fe"; // baja
 }
 
 export function AttentionHeatmapTable({ interactions }: AttentionHeatmapTableProps) {
-  const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
-
-  // Matriz REAL: columnas = interacciones (sesiones) con mayor atención del SAKT;
-  // filas = sus conceptos. La celda lleva el peso de atención (0 = no aplica).
-  const cols = interactions.slice(0, 7);
-  const SESSIONS = cols.map((_, i) => `S${i + 1}`);
-  const CONCEPTS = Array.from(new Set(cols.map((c) => c.concept))).slice(0, 6);
-  const heatmapMatrix = CONCEPTS.map((concept) =>
-    cols.map((col) => (col.concept === concept ? col.attention : 0)),
-  );
+  // Distribución de atención: interacciones pasadas ordenadas por su peso.
+  const items = [...interactions].sort((a, b) => b.attention - a.attention).slice(0, 8);
+  const max = Math.max(1, ...items.map((i) => i.attention));
 
   return (
-    <>
-      {/* Bubble Heatmap */}
+    <div className="space-y-3">
       <div>
-        <p className="text-sm font-medium mb-4 text-center text-muted-foreground">
-          Mapa de Calor de Atención
+        <p className="text-sm font-medium">Distribución de atención del SAKT</p>
+        <p className="text-xs text-muted-foreground">
+          Cuánto pesó cada interacción pasada en la predicción actual — barra más larga = más
+          atención del modelo.
         </p>
-        <div className="overflow-x-auto">
-          <div className="min-w-[480px]">
-            {/* Session headers */}
-            <div className="flex items-center mb-2" style={{ paddingLeft: "130px" }}>
-              {SESSIONS.map((s) => (
-                <div
-                  key={s}
-                  className="text-xs text-muted-foreground text-center"
-                  style={{ width: "52px" }}
-                >
-                  {s}
-                </div>
-              ))}
-            </div>
-
-            {/* Rows */}
-            <div className="space-y-2">
-              {CONCEPTS.map((concept, rowIdx) => (
-                <div key={concept} className="flex items-center gap-0">
-                  <div
-                    className="text-xs text-muted-foreground text-right pr-3 shrink-0"
-                    style={{ width: "130px" }}
-                  >
-                    {concept}
-                  </div>
-                  <div className="flex items-center">
-                    {SESSIONS.map((_, colIdx) => {
-                      const value = heatmapMatrix[rowIdx][colIdx];
-                      const style = getBubbleStyle(value);
-                      const size = getBubbleSize(value);
-                      const isHovered =
-                        hoveredCell?.row === rowIdx && hoveredCell?.col === colIdx;
-                      return (
-                        <div
-                          key={colIdx}
-                          className="flex items-center justify-center cursor-pointer transition-transform"
-                          style={{ width: "52px", height: "52px" }}
-                          onMouseEnter={() => setHoveredCell({ row: rowIdx, col: colIdx })}
-                          onMouseLeave={() => setHoveredCell(null)}
-                        >
-                          <div
-                            className="rounded-full transition-all duration-200 flex items-center justify-center"
-                            style={{
-                              width: `${size}px`,
-                              height: `${size}px`,
-                              background: style.bg,
-                              transform: isHovered ? "scale(1.25)" : "scale(1)",
-                              boxShadow: isHovered ? `0 0 0 3px ${style.bg}44` : "none",
-                            }}
-                            title={`${concept} - ${SESSIONS[colIdx]}: ${value}%`}
-                          >
-                            {isHovered && (
-                              <span
-                                className="text-white select-none"
-                                style={{ fontSize: "9px", fontWeight: 700 }}
-                              >
-                                {value}%
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Legend */}
-            <div className="flex items-center justify-center gap-6 mt-5">
-              {[
-                { color: "#e0e7ff", label: "Baja" },
-                { color: "#a5b4fc", label: "Media" },
-                { color: "#4f46e5", label: "Alta" },
-              ].map(({ color, label }) => (
-                <div key={label} className="flex items-center gap-1.5">
-                  <div
-                    className="rounded-full"
-                    style={{ width: "14px", height: "14px", background: color }}
-                  />
-                  <span className="text-xs text-muted-foreground">{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Tabla de interacciones recientes */}
-      <div>
-        <p className="text-sm font-medium mb-3">Interacciones Recientes con Mayor Atención</p>
-        <div className="space-y-2">
-          {interactions.slice(0, 4).map((interaction) => (
-            <div
-              key={interaction.id}
-              className="flex items-center justify-between p-3 rounded-[12px] bg-muted/40 hover:bg-muted/70 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-3 h-3 rounded-full shrink-0"
-                  style={{ background: getBubbleStyle(interaction.attention).bg }}
-                />
-                <div>
-                  <p className="text-sm font-medium">{interaction.concept}</p>
-                  <p className="text-xs text-muted-foreground">{interaction.timestamp}</p>
+      <div className="space-y-2.5">
+        {items.map((it) => {
+          const rel = Math.round((it.attention / max) * 100); // ancho relativo al máximo
+          return (
+            <div key={it.id} className="space-y-1">
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span
+                    className={`shrink-0 font-bold ${it.isCorrect ? "text-success" : "text-destructive"}`}
+                    title={it.isCorrect ? "Respondió correcto" : "Respondió incorrecto"}
+                  >
+                    {it.isCorrect ? "✓" : "✗"}
+                  </span>
+                  <span className="font-medium truncate" title={it.concept}>
+                    {it.concept}
+                  </span>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                {interaction.isCorrect ? (
-                  <span className="text-xs px-2 py-0.5 bg-success/10 text-success rounded-full">
-                    ✓ Correcto
-                  </span>
-                ) : (
-                  <span className="text-xs px-2 py-0.5 bg-destructive/10 text-destructive rounded-full">
-                    ✗ Incorrecto
-                  </span>
-                )}
                 <span
-                  className="text-sm font-semibold w-10 text-right"
-                  style={{ color: getBubbleStyle(interaction.attention).bg }}
+                  className="shrink-0 font-semibold tabular-nums"
+                  style={{ color: barColor(it.attention) }}
                 >
-                  {interaction.attention}%
+                  {it.attention}%
                 </span>
               </div>
+              <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{ width: `${Math.max(4, rel)}%`, background: barColor(it.attention) }}
+                />
+              </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
+        {items.length === 0 && (
+          <p className="text-xs text-muted-foreground">Sin interacciones para mostrar.</p>
+        )}
       </div>
-    </>
+
+      {/* Leyenda */}
+      <div className="flex items-center justify-end gap-4 pt-1">
+        {[
+          { c: "#c7d2fe", l: "Baja" },
+          { c: "#818cf8", l: "Media" },
+          { c: "#4338ca", l: "Alta" },
+        ].map(({ c, l }) => (
+          <div key={l} className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-sm" style={{ background: c }} />
+            <span className="text-xs text-muted-foreground">{l}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
