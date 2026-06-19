@@ -126,7 +126,8 @@ export interface ApiCurso {
 
 export async function getCursos(): Promise<ApiCurso[]> {
   const { data } = await apiClient.get<ApiCurso[]>(ENDPOINTS.admin.courses);
-  return data;
+  // Excluye el curso-sitio de Moodle (id 1 = portada, no es un curso real).
+  return data.filter((c) => c.moodle_course_id !== '1');
 }
 
 /** Campos editables de un curso desde el panel admin. */
