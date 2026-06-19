@@ -16,6 +16,8 @@ export interface StudentProgress {
   conceptsAtRisk: number;
   lastActivity: string;
   engagement: number;       // 0-100, índice de participación
+  /** False si el estudiante solo existe en Moodle (no se registró en SWARD). */
+  registrado?: boolean;
 }
 
 /** Alerta académica generada automáticamente por SAKT (EP005). */
