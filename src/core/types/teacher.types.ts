@@ -76,6 +76,8 @@ export interface StudentInteractionRecord {
   concept: string;
   result: 'Completado' | 'Incorrecto';
   time: string;
+  /** Enlace directo al módulo en Moodle (si está disponible). */
+  url?: string;
 }
 
 /** Interacción con atención para el heatmap SAKT (EP005). */

@@ -114,47 +114,44 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
   // Dominio promedio: usa el puntaje real cuando está disponible.
   const avgMastery = realProgress?.puntajePromedio ?? student.avgMastery;
 
+  // En modo REAL (enabled) usamos SOLO datos reales; mientras cargan mostramos
+  // vacío/skeleton (sin "flash" de mock). El mock es solo para el preview (!enabled).
   // Dominio por concepto/sección REAL → radar, barras y recomendaciones.
-  const cm = enabled && conceptMastery.data && conceptMastery.data.length > 0
-    ? conceptMastery.data
-    : null;
-  const radarData = cm
-    ? cm.map((c) => ({ subject: c.concepto, value: c.dominio, fullMark: 100 }))
+  const cmReal = enabled ? (conceptMastery.data ?? []) : null;
+  const cmLoading = enabled && conceptMastery.isLoading;
+  const radarData = cmReal
+    ? cmReal.map((c) => ({ subject: c.concepto, value: c.dominio, fullMark: 100 }))
     : mockStudentDomainPoints;
-  const conceptBars = cm
-    ? cm.map((c) => ({ concept: c.concepto, mastery: c.dominio }))
+  const conceptBars = cmReal
+    ? cmReal.map((c) => ({ concept: c.concepto, mastery: c.dominio }))
     : mockConceptMasteryPoints;
 
   // Evolución del dominio REAL (curva por etapas).
-  const evolution = enabled && weeklyProgress.data && weeklyProgress.data.length > 0
-    ? weeklyProgress.data
-    : mockStudentProgressPoints;
-  const evolutionIsReal = enabled && !!weeklyProgress.data && weeklyProgress.data.length > 0;
+  const evoReal = enabled ? (weeklyProgress.data ?? []) : null;
+  const evoLoading = enabled && weeklyProgress.isLoading;
+  const evolution = evoReal ?? mockStudentProgressPoints;
+  const evolutionIsReal = enabled && (weeklyProgress.data?.length ?? 0) > 0;
   const evolTrend =
     evolutionIsReal && evolution.length >= 2
       ? evolution[evolution.length - 1].mastery - evolution[0].mastery
       : null;
 
-  // Recomendaciones de intervención derivadas de datos reales.
-  const recomendaciones = cm
-    ? buildRecomendaciones(cm, student.engagement, student.lastActivity)
-    : null;
+  // Recomendaciones de intervención derivadas de datos reales (solo si hay datos).
+  const recomendaciones =
+    cmReal && cmReal.length > 0
+      ? buildRecomendaciones(cmReal, student.engagement, student.lastActivity)
+      : null;
 
-  // Historial de interacciones: real si hay datos, mock como fallback.
-  const interactionsList =
-    enabled && interactions.data && interactions.data.length > 0
-      ? interactions.data
-      : mockStudentInteractions;
-  const interactionsAreReal = enabled && !!interactions.data && interactions.data.length > 0;
+  // Historial de interacciones: real (vacío mientras carga); mock solo en preview.
+  const interactionsList = enabled ? (interactions.data ?? []) : mockStudentInteractions;
 
-  // Heatmap de atención SAKT: pesos reales (ms-recomendacion) o mock como fallback.
-  const attentionIsReal =
-    enabled && !!attention.data && attention.data.interactions.length > 0;
-  const attentionInteractions = attentionIsReal
-    ? attention.data!.interactions
+  // Heatmap de atención SAKT: pesos reales; mock solo en preview.
+  const attRealData = enabled ? attention.data : null;
+  const attentionInteractions = attRealData
+    ? attRealData.interactions
     : mockAttentionInteractions;
-  const attentionPrediction = attentionIsReal
-    ? attention.data!.prediction
+  const attentionPrediction = attRealData
+    ? attRealData.prediction
     : 'Probabilidad de éxito en próximo ejercicio de Redes Neuronales: 38%. Se recomienda intervención docente.';
 
   return (
@@ -218,21 +215,25 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
           </CardHeader>
           <CardContent>
             <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={evolution}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="week" stroke="#6B7280" style={{ fontSize: "12px" }} />
-                  <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#FFFFFF",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: "12px",
-                    }}
-                  />
-                  <Line type="monotone" dataKey="mastery" stroke="#4F46E5" strokeWidth={2} name="Dominio %" />
-                </LineChart>
-              </ResponsiveContainer>
+              {evoLoading ? (
+                <div className="h-full w-full rounded-[10px] bg-muted/40 animate-pulse" />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={evolution}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                    <XAxis dataKey="week" stroke="#6B7280" style={{ fontSize: "12px" }} />
+                    <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#FFFFFF",
+                        border: "1px solid #E5E7EB",
+                        borderRadius: "12px",
+                      }}
+                    />
+                    <Line type="monotone" dataKey="mastery" stroke="#4F46E5" strokeWidth={2} name="Dominio %" />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
             {evolTrend != null && evolTrend < 0 && (
               <div className="mt-3 p-3 bg-destructive/5 border border-destructive/20 rounded-[12px]">
@@ -250,9 +251,9 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
                 </p>
               </div>
             )}
-            {!evolutionIsReal && (
+            {!enabled && (
               <p className="text-xs text-muted-foreground mt-2">
-                Mostrando datos de ejemplo (sin secuencia real disponible).
+                Mostrando datos de ejemplo.
               </p>
             )}
           </CardContent>
@@ -260,19 +261,19 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
 
         {/* Vista Rápida de Dominio - Radar (real: dominio por sección) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DomainRadar data={radarData} title="Vista Rápida de Dominio" />
+          {cmLoading ? (
+            <div className="h-[280px] rounded-[12px] bg-muted/40 animate-pulse" />
+          ) : (
+            <DomainRadar data={radarData} title="Vista Rápida de Dominio" />
+          )}
           <AttentionHeatmap
             interactions={attentionInteractions}
             currentPrediction={attentionPrediction}
           />
         </div>
-        {enabled && attention.isLoading && (
-          <p className="text-xs text-muted-foreground -mt-3">Cargando atención del modelo...</p>
-        )}
-        {!attentionIsReal && (
+        {!enabled && (
           <p className="text-xs text-muted-foreground -mt-3">
-            {/* TODO backend: sin pesos de atención reales para este estudiante/curso; mostrando ejemplo. */}
-            Mapa de atención con datos de ejemplo (sin secuencia real disponible).
+            Mapa de atención con datos de ejemplo.
           </p>
         )}
 
@@ -284,35 +285,38 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
           </CardHeader>
           <CardContent>
             <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={conceptBars}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="concept" stroke="#6B7280" style={{ fontSize: "12px" }} />
-                  <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#FFFFFF",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: "12px",
-                    }}
-                  />
-                  <Bar dataKey="mastery" fill="#4F46E5" name="Dominio %" />
-                </BarChart>
-              </ResponsiveContainer>
+              {cmLoading ? (
+                <div className="h-full w-full rounded-[10px] bg-muted/40 animate-pulse" />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={conceptBars}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                    <XAxis dataKey="concept" stroke="#6B7280" style={{ fontSize: "12px" }} />
+                    <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#FFFFFF",
+                        border: "1px solid #E5E7EB",
+                        borderRadius: "12px",
+                      }}
+                    />
+                    <Bar dataKey="mastery" fill="#4F46E5" name="Dominio %" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Historial de Interacciones (REAL cuando hay estudianteId + curso; mock como fallback) */}
-        <StudentInteractionsList interactions={interactionsList} />
+        {/* Historial de Interacciones (real; mock solo en preview) */}
+        {!(enabled && interactionsList.length === 0 && interactions.isLoading) && (
+          <StudentInteractionsList interactions={interactionsList} />
+        )}
         {enabled && interactions.isLoading && (
           <p className="text-xs text-muted-foreground -mt-3">Cargando historial real...</p>
         )}
-        {!interactionsAreReal && (
-          <p className="text-xs text-muted-foreground -mt-3">
-            {/* TODO backend: sin datos reales de interacciones para este estudiante/curso; mostrando ejemplo. */}
-            Mostrando datos de ejemplo (sin interacciones reales disponibles).
-          </p>
+        {!enabled && (
+          <p className="text-xs text-muted-foreground -mt-3">Mostrando datos de ejemplo.</p>
         )}
 
         {/* Recomendaciones de Intervención (derivadas de las secciones reales) */}
