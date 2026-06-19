@@ -12,10 +12,6 @@ import type { StudentProgress } from '@core/types';
 
 interface StudentRiskTableProps {
   sortedStudents: StudentProgress[];
-  courseFilter: string;
-  setCourseFilter: (v: string) => void;
-  weekFilter: string;
-  setWeekFilter: (v: string) => void;
   riskFilter: string;
   setRiskFilter: (v: string) => void;
   onViewStudent: (id: number) => void;
@@ -50,10 +46,6 @@ function getMasteryColor(v: number) {
 
 export function StudentRiskTable({
   sortedStudents,
-  courseFilter,
-  setCourseFilter,
-  weekFilter,
-  setWeekFilter,
   riskFilter,
   setRiskFilter,
   onViewStudent,
@@ -66,29 +58,7 @@ export function StudentRiskTable({
         <CardContent className="pt-4 pb-4">
           <div className="flex flex-wrap gap-3 items-center">
             <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
-            <div className="shrink-0 w-44">
-              <Select value={courseFilter} onValueChange={setCourseFilter}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Curso" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los cursos</SelectItem>
-                  <SelectItem value="ia">Inteligencia Artificial</SelectItem>
-                  <SelectItem value="ml">Machine Learning</SelectItem>
-                  <SelectItem value="dl">Deep Learning</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="shrink-0 w-36">
-              <Select value={weekFilter} onValueChange={setWeekFilter}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Semana" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las semanas</SelectItem>
-                  <SelectItem value="1">Semana 1</SelectItem>
-                  <SelectItem value="2">Semana 2</SelectItem>
-                  <SelectItem value="3">Semana 3</SelectItem>
-                  <SelectItem value="4">Semana 4</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <span className="text-xs text-muted-foreground">Filtrar por riesgo:</span>
             <div className="shrink-0 w-36">
               <Select value={riskFilter} onValueChange={setRiskFilter}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Riesgo" /></SelectTrigger>
