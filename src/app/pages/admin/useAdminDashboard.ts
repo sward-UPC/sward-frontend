@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router";
 import { useTheme } from "../../context/ThemeContext";
 import { mockNotifications } from "../../../mocks/data/admin.mock";
 import { useAdminUsers } from "../../../features/admin/hooks/useAdminUsers";
@@ -47,7 +48,20 @@ export interface UseAdminDashboardReturn {
 
 export function useAdminDashboard(): UseAdminDashboardReturn {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState<AdminTab>("resumen");
+
+  // Tab activa en la URL (?tab=usuarios) → el refresh mantiene la sección.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const VALID_TABS: AdminTab[] = ["resumen", "usuarios", "cursos", "sistema", "logs"];
+  const tabParam = searchParams.get("tab") as AdminTab | null;
+  const activeTab: AdminTab = tabParam && VALID_TABS.includes(tabParam) ? tabParam : "resumen";
+  const setActiveTab = useCallback((tab: AdminTab) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (tab === "resumen") next.delete("tab");
+      else next.set("tab", tab);
+      return next;
+    });
+  }, [setSearchParams]);
   const [userSearch, setUserSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
