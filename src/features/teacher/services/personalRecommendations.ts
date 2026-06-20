@@ -35,6 +35,8 @@ export interface RecursoRecomendado {
   concepto: string;
   dominio: number;
   recurso: CourseResource;
+  /** Rol en el refuerzo: estudiar (aprender) o practicar (aplicar). */
+  rol: 'estudiar' | 'practicar';
   /** Explicación de por qué se recomienda (XAI). */
   motivo: string;
 }
@@ -55,7 +57,7 @@ export function construirRecursosRecomendados(
   const recs: RecursoRecomendado[] = [];
   const usados = new Set<string>();
 
-  // Solo secciones flojas (dominio < 60), las 3 peores.
+  // Conceptos débiles según el estado de conocimiento (peor→mejor). Las 3 peores.
   const secciones = weak.filter((c) => c.dominio < 60).slice(0, 3);
 
   for (const c of secciones) {
@@ -70,40 +72,65 @@ export function construirRecursosRecomendados(
     );
     if (candidatos.length === 0) continue;
 
-    // Para REFORZAR: material de estudio primero (en el formato que más consume),
-    // la práctica/evaluación queda como último recurso.
-    const ranked = [...candidatos].sort(
-      (a, b) => puntua(b, formatoConsumido) - puntua(a, formatoConsumido),
-    );
-    const elegido = ranked[0];
-    usados.add(elegido.url);
+    // Combo de refuerzo por concepto débil: material para ESTUDIAR (lectura/
+    // video, en el formato que más consume) + actividad para PRACTICAR (quiz/
+    // tarea). Así reforzamos con variedad: aprender → aplicar.
+    const estudio = candidatos
+      .filter((r) => TIPOS_ESTUDIO.has(r.tipo))
+      .sort(
+        (a, b) =>
+          (b.tipo === formatoConsumido ? 1 : 0) - (a.tipo === formatoConsumido ? 1 : 0),
+      );
+    const practica = candidatos.filter((r) => TIPOS_PRACTICA.has(r.tipo));
 
-    recs.push({
-      concepto: c.concepto,
-      dominio: c.dominio,
-      recurso: elegido,
-      motivo: explicar(c, elegido, formatoConsumido),
-    });
+    const elegidos: RecursoRecomendado[] = [];
+    if (estudio[0]) {
+      elegidos.push({
+        concepto: c.concepto,
+        dominio: c.dominio,
+        recurso: estudio[0],
+        rol: 'estudiar',
+        motivo: explicarEstudio(c, estudio[0], formatoConsumido),
+      });
+    }
+    if (practica[0]) {
+      elegidos.push({
+        concepto: c.concepto,
+        dominio: c.dominio,
+        recurso: practica[0],
+        rol: 'practicar',
+        motivo: explicarPractica(c, practica[0]),
+      });
+    }
+    // Si la sección no tiene ni estudio ni práctica clara, recomendá lo que haya.
+    if (elegidos.length === 0) {
+      const r = candidatos[0];
+      elegidos.push({
+        concepto: c.concepto,
+        dominio: c.dominio,
+        recurso: r,
+        rol: TIPOS_PRACTICA.has(r.tipo) ? 'practicar' : 'estudiar',
+        motivo: explicarEstudio(c, r, formatoConsumido),
+      });
+    }
+
+    for (const e of elegidos) {
+      usados.add(e.recurso.url);
+      recs.push(e);
+    }
   }
 
   return recs;
 }
 
-function puntua(r: CourseResource, formatoConsumido: string): number {
-  let s = 0;
-  if (TIPOS_ESTUDIO.has(r.tipo)) s += 5; // reforzar = estudiar primero
-  if (formatoConsumido && r.tipo === formatoConsumido) s += 2; // el formato que más consume
-  if (TIPOS_PRACTICA.has(r.tipo)) s += 1; // práctica solo si no hay material de estudio
-  return s;
+function explicarEstudio(c: ConceptMastery, r: CourseResource, formatoConsumido: string): string {
+  const base = `Para reforzar ${c.concepto} (estás al ${c.dominio}%):`;
+  if (formatoConsumido && r.tipo === formatoConsumido) {
+    return `${base} estudia este(a) ${tipoLabel(r.tipo).toLowerCase()} — el formato que más usas.`;
+  }
+  return `${base} estudia este(a) ${tipoLabel(r.tipo).toLowerCase()} para afianzar el concepto.`;
 }
 
-function explicar(c: ConceptMastery, r: CourseResource, formatoConsumido: string): string {
-  const base = `Refuerza ${c.concepto}, donde estás al ${c.dominio}%.`;
-  if (TIPOS_ESTUDIO.has(r.tipo)) {
-    if (formatoConsumido && r.tipo === formatoConsumido) {
-      return `${base} Es un(a) ${tipoLabel(r.tipo).toLowerCase()} — el formato que más usas — para estudiar el tema antes de volver a practicar.`;
-    }
-    return `${base} Material de estudio para afianzar el concepto antes de volver a practicar.`;
-  }
-  return `${base} Practica con este ${tipoLabel(r.tipo).toLowerCase()} para evaluar tu avance.`;
+function explicarPractica(c: ConceptMastery, r: CourseResource): string {
+  return `Y luego aplica lo aprendido con este(a) ${tipoLabel(r.tipo).toLowerCase()} de ${c.concepto}.`;
 }
