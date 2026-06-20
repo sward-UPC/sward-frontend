@@ -371,6 +371,38 @@ export interface ConceptMastery {
   total: number;
 }
 
+/** Recurso/módulo de Moodle de un curso (incluye lecturas). */
+export interface CourseResource {
+  seccion: string;
+  nombre: string;
+  tipo: string;
+  url: string;
+}
+
+/** Tipos de módulo Moodle que son material de lectura/estudio. */
+const TIPOS_LECTURA = new Set(['page', 'resource', 'url', 'book', 'lesson', 'folder']);
+
+/** Recursos del curso por sección (en vivo desde Moodle vía ms-integracion-lms). */
+export async function getCourseResources(moodleCourseId: string): Promise<CourseResource[]> {
+  const { data } = await apiClient.get<CourseResource[]>(
+    ENDPOINTS.teacher.courseResources(moodleCourseId),
+  );
+  return data;
+}
+
+/**
+ * Dado el catálogo de recursos del curso, elige el material más adecuado para
+ * reforzar una sección: prioriza lecturas/recursos de estudio sobre tareas.
+ */
+export function sugerirRecursoPorSeccion(
+  recursos: CourseResource[],
+  seccion: string,
+): CourseResource | undefined {
+  const enSeccion = recursos.filter((r) => r.seccion && r.seccion === seccion && r.url);
+  if (enSeccion.length === 0) return undefined;
+  return enSeccion.find((r) => TIPOS_LECTURA.has(r.tipo)) ?? enSeccion[0];
+}
+
 export async function getConceptMastery(
   studentId: string,
   courseId: string,

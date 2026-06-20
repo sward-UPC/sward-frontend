@@ -199,6 +199,7 @@ export function TeacherDashboard() {
                 <StudentDetailView
                   student={dash.currentStudent}
                   courseId={dash.activeCourseId}
+                  moodleCourseId={dash.courses.find((c) => c.id === dash.activeCourseId)?.moodleCourseId}
                   onClose={() => dash.setSelectedStudent(null)}
                   onSendFeedback={() =>
                     dash.setFeedbackStudent({
