@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
 import { useTheme } from '../../context/ThemeContext';
-import { mockNotifications } from '@mocks/data/student.mock';
 import type { NavItem, StudentNotification } from '@core/types';
 
 export interface UseStudentDashboardReturn {
@@ -67,7 +66,7 @@ export function useStudentDashboard(): UseStudentDashboardReturn {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [profileDialogTab, setProfileDialogTab] = useState<'profile' | 'settings'>('profile');
-  const [notifications, setNotifications] = useState<StudentNotification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<StudentNotification[]>([]);
 
   const { darkMode, setDarkMode } = useTheme();
   const notifRef = useRef<HTMLDivElement>(null);
