@@ -78,6 +78,9 @@ export const ENDPOINTS = {
       `/students/${studentId}/concept-mastery?courseId=${courseId}`,
     studentWeeklyProgress: (studentId: string, courseId: string) =>
       `/students/${studentId}/weekly-progress?courseId=${courseId}`,
+    /** Preferencia de formato del estudiante (en qué tipo de recurso rinde mejor). */
+    studentPreferences: (studentId: string, courseId: string) =>
+      `/students/${studentId}/preferences?courseId=${courseId}`,
     // Reporte PDF de la clase (ms-trazabilidad, descarga binaria).
     report: (courseId: string) => `/dashboard/teacher/${courseId}/report`,
     /** Recursos del curso por sección (incl. lecturas) — ms-integracion-lms. */
