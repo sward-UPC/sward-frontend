@@ -80,6 +80,8 @@ export const ENDPOINTS = {
       `/students/${studentId}/weekly-progress?courseId=${courseId}`,
     // Reporte PDF de la clase (ms-trazabilidad, descarga binaria).
     report: (courseId: string) => `/dashboard/teacher/${courseId}/report`,
+    /** Recursos del curso por sección (incl. lecturas) — ms-integracion-lms. */
+    courseResources: (moodleCourseId: string) => `/lms/courses/${moodleCourseId}/resources`,
     // Retroalimentación docente→estudiante (ms-trazabilidad).
     feedbackReal: '/dashboard/teacher/feedback',
     // Tendencia semanal histórica de la clase (ms-trazabilidad).
