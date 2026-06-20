@@ -18,7 +18,9 @@ import { AttentionHeatmap } from "../xai/AttentionHeatmap";
 import { StudentInteractionsList } from "./StudentInteractionsList";
 import { useStudentDetail } from "@features/teacher/hooks/useStudentDetail";
 import { useCourseResources } from "@features/teacher/hooks/useCourseResources";
+import { useStudentPreferences } from "@features/teacher/hooks/useStudentPreferences";
 import { sugerirRecursoPorSeccion, type CourseResource } from "@features/teacher/services/teacher.service";
+import { RecommendedResources } from "./RecommendedResources";
 
 interface StudentData {
   id: number;
@@ -117,6 +119,8 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
     useStudentDetail(student.estudianteId, courseId);
   // Recursos del curso (lecturas de Moodle) para sugerir material concreto.
   const { data: courseResources } = useCourseResources(moodleCourseId);
+  // Preferencia de formato del alumno (en qué tipo de recurso rinde mejor).
+  const { data: studentPrefs } = useStudentPreferences(student.estudianteId, courseId);
 
   const realProgress = progress.data;
   // Dominio promedio: usa el puntaje real cuando está disponible.
@@ -357,6 +361,17 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
               ))}
             </CardContent>
           </Card>
+        )}
+
+        {/* Recursos recomendados (personalizado: sección débil + formato preferido) */}
+        {enabled && cmReal.length > 0 && (courseResources?.length ?? 0) > 0 && (
+          <RecommendedResources
+            weak={cmReal}
+            recursos={courseResources ?? []}
+            prefs={studentPrefs}
+            title="Recursos recomendados para el alumno"
+            description="Material de Moodle elegido según sus secciones flojas y el formato en el que rinde mejor."
+          />
         )}
 
         {/* Acciones */}
