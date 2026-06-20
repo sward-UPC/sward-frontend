@@ -110,6 +110,20 @@ export async function getLogs(limit = 50): Promise<ApiAuditLog[]> {
   return data;
 }
 
+/** Punto de actividad de la plataforma (interacciones por día). */
+export interface PlatformActivityPoint {
+  day: string;
+  sesiones: number;
+}
+
+/** Actividad real de la plataforma: interacciones por día (ms-trazabilidad). */
+export async function getPlatformActivity(days = 7): Promise<PlatformActivityPoint[]> {
+  const { data } = await apiClient.get<PlatformActivityPoint[]>(
+    ENDPOINTS.admin.platformActivity(days),
+  );
+  return data;
+}
+
 // ---------------------------------------------------------------------------
 // Cursos (ms-cursos-recursos)
 // ---------------------------------------------------------------------------
