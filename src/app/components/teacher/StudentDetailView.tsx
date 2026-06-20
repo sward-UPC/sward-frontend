@@ -12,11 +12,13 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { X, MessageSquare, TrendingUp, AlertTriangle } from "lucide-react";
+import { X, MessageSquare, TrendingUp, AlertTriangle, BookOpen, ExternalLink } from "lucide-react";
 import { DomainRadar } from "../xai/DomainRadar";
 import { AttentionHeatmap } from "../xai/AttentionHeatmap";
 import { StudentInteractionsList } from "./StudentInteractionsList";
 import { useStudentDetail } from "@features/teacher/hooks/useStudentDetail";
+import { useCourseResources } from "@features/teacher/hooks/useCourseResources";
+import { sugerirRecursoPorSeccion, type CourseResource } from "@features/teacher/services/teacher.service";
 
 interface StudentData {
   id: number;
@@ -35,6 +37,8 @@ interface StudentDetailViewProps {
   student: StudentData;
   /** Curso activo; junto a `student.estudianteId` habilita los datos reales. */
   courseId?: string;
+  /** ID del curso en Moodle, para sugerir lecturas concretas en las recomendaciones. */
+  moodleCourseId?: string;
   onClose: () => void;
   onSendFeedback: () => void;
 }
@@ -69,18 +73,27 @@ interface ConceptMasteryItem {
 }
 
 /** Recomendaciones de intervención derivadas de datos reales del estudiante. */
+interface Recomendacion {
+  titulo: string;
+  descripcion: string;
+  recurso?: { nombre: string; url: string; tipo: string };
+}
+
 function buildRecomendaciones(
   conceptos: ConceptMasteryItem[],
   engagement: number,
   lastActivity: string,
-): { titulo: string; descripcion: string }[] {
-  const recs: { titulo: string; descripcion: string }[] = [];
+  recursos: CourseResource[] = [],
+): Recomendacion[] {
+  const recs: Recomendacion[] = [];
   // Secciones más débiles (vienen ordenadas peor→mejor desde el backend).
   for (const c of conceptos.filter((x) => x.dominio < 60).slice(0, 2)) {
     const nivel = c.dominio < 40 ? "crítico" : "bajo";
+    const sugerido = sugerirRecursoPorSeccion(recursos, c.concepto);
     recs.push({
       titulo: `Reforzar ${c.concepto}`,
-      descripcion: `Dominio ${nivel} (${c.dominio}%) en ${c.total} interacción${c.total === 1 ? "" : "es"}. Sugerir tutoría o recursos adicionales en esta sección.`,
+      descripcion: `Dominio ${nivel} (${c.dominio}%) en ${c.total} interacción${c.total === 1 ? "" : "es"}. Sugerir tutoría o material de la sección.`,
+      recurso: sugerido ? { nombre: sugerido.nombre, url: sugerido.url, tipo: sugerido.tipo } : undefined,
     });
   }
   if (engagement < 50) {
@@ -98,10 +111,12 @@ function buildRecomendaciones(
   return recs;
 }
 
-export function StudentDetailView({ student, courseId, onClose, onSendFeedback }: StudentDetailViewProps) {
+export function StudentDetailView({ student, courseId, moodleCourseId, onClose, onSendFeedback }: StudentDetailViewProps) {
   // Datos REALES (ms-trazabilidad) cuando hay UUID + curso; si no, cae al mock.
   const { enabled, progress, interactions, attention, conceptMastery, weeklyProgress } =
     useStudentDetail(student.estudianteId, courseId);
+  // Recursos del curso (lecturas de Moodle) para sugerir material concreto.
+  const { data: courseResources } = useCourseResources(moodleCourseId);
 
   const realProgress = progress.data;
   // Dominio promedio: usa el puntaje real cuando está disponible.
@@ -134,7 +149,7 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
   // Recomendaciones de intervención derivadas de datos reales (solo si hay datos).
   const recomendaciones =
     cmReal.length > 0
-      ? buildRecomendaciones(cmReal, student.engagement, student.lastActivity)
+      ? buildRecomendaciones(cmReal, student.engagement, student.lastActivity, courseResources ?? [])
       : null;
 
   // Historial de interacciones reales (vacío mientras carga).
@@ -325,6 +340,19 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
                 <div key={r.titulo} className="p-3 bg-background rounded-[12px]">
                   <p className="text-sm font-medium mb-1">{i + 1}. {r.titulo}</p>
                   <p className="text-xs text-muted-foreground">{r.descripcion}</p>
+                  {r.recurso && (
+                    <a
+                      href={r.recurso.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                      title="Abrir recurso en Moodle"
+                    >
+                      <BookOpen className="w-3.5 h-3.5" />
+                      Recurso sugerido: {r.recurso.nombre}
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
                 </div>
               ))}
             </CardContent>
