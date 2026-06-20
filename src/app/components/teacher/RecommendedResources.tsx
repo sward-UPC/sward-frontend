@@ -40,6 +40,9 @@ export function RecommendedResources({
   const fuerte = prefs?.tipo_fuerte
     ? prefs.por_tipo.find((p) => p.tipo === prefs.tipo_fuerte)
     : undefined;
+  const consumido = prefs?.formato_mas_consumido
+    ? prefs.engagement_por_tipo?.find((e) => e.tipo === prefs.formato_mas_consumido)
+    : undefined;
 
   return (
     <Card className="border-primary/30 bg-primary/[0.03]">
@@ -51,12 +54,25 @@ export function RecommendedResources({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {fuerte && (
-          <div className="text-xs text-muted-foreground bg-background rounded-[10px] p-2.5 border">
-            Detectamos que rindes mejor con{" "}
-            <span className="font-medium text-foreground">{tipoLabel(prefs!.tipo_fuerte)}</span>{" "}
-            (promedio {Math.round(fuerte.promedio)}% en {fuerte.total} actividad
-            {fuerte.total === 1 ? "" : "es"}). Priorizamos ese formato.
+        {(fuerte || consumido) && (
+          <div className="text-xs text-muted-foreground bg-background rounded-[10px] p-2.5 border space-y-1">
+            {fuerte && (
+              <p>
+                📈 Rinde mejor con{" "}
+                <span className="font-medium text-foreground">{tipoLabel(prefs!.tipo_fuerte)}</span>{" "}
+                (promedio {Math.round(fuerte.promedio)}% en {fuerte.total} actividad
+                {fuerte.total === 1 ? "" : "es"}).
+              </p>
+            )}
+            {consumido && (
+              <p>
+                👀 Es el que más consume:{" "}
+                <span className="font-medium text-foreground">
+                  {tipoLabel(prefs!.formato_mas_consumido!)}
+                </span>{" "}
+                ({consumido.vistas} vista{consumido.vistas === 1 ? "" : "s"}). Priorizamos esos formatos.
+              </p>
+            )}
           </div>
         )}
 
