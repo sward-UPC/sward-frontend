@@ -403,6 +403,23 @@ export function sugerirRecursoPorSeccion(
   return enSeccion.find((r) => TIPOS_LECTURA.has(r.tipo)) ?? enSeccion[0];
 }
 
+/** Preferencia de formato del estudiante: en qué tipo de recurso rinde mejor. */
+export interface StudentPreferences {
+  por_tipo: { tipo: string; promedio: number; total: number }[];
+  tipo_fuerte: string;
+  tipo_debil: string;
+}
+
+export async function getStudentPreferences(
+  studentId: string,
+  courseId: string,
+): Promise<StudentPreferences> {
+  const { data } = await apiClient.get<StudentPreferences>(
+    ENDPOINTS.teacher.studentPreferences(studentId, courseId),
+  );
+  return data;
+}
+
 export async function getConceptMastery(
   studentId: string,
   courseId: string,
