@@ -1,11 +1,138 @@
+import { BookOpen, ExternalLink, FileQuestion, PenLine, FileText, Library, Check } from 'lucide-react';
 import type { StudentTabProps } from '@features/student/useStudentContext';
+import { useStudentDetail } from '@features/teacher/hooks/useStudentDetail';
+import { useCourseResources } from '@features/teacher/hooks/useCourseResources';
+import { useStudentPreferences } from '@features/teacher/hooks/useStudentPreferences';
+import { tipoLabel } from '@features/teacher/services/personalRecommendations';
+import type { CourseResource } from '@features/teacher/services/teacher.service';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Badge } from '../../../components/ui/badge';
+import { RecommendedResources } from '../../../components/teacher/RecommendedResources';
 
-/** Tab "Recursos" del panel del estudiante (Recomendado para ti). Implementación real en progreso. */
-export function StudentRecursosTab(_props: StudentTabProps) {
+/** Ícono según el tipo de módulo de Moodle (lecturas, quizzes, prácticas...). */
+function iconFor(tipo: string) {
+  if (tipo === 'quiz') return <FileQuestion className="w-4 h-4" />;
+  if (['assign', 'workshop'].includes(tipo)) return <PenLine className="w-4 h-4" />;
+  if (['page', 'book', 'resource', 'folder', 'url', 'lesson'].includes(tipo))
+    return <BookOpen className="w-4 h-4" />;
+  return <FileText className="w-4 h-4" />;
+}
+
+/** Agrupa los recursos del curso por sección (preservando el orden de llegada). */
+function agruparPorSeccion(recursos: CourseResource[]): { seccion: string; items: CourseResource[] }[] {
+  const grupos: { seccion: string; items: CourseResource[] }[] = [];
+  const indice = new Map<string, number>();
+  for (const r of recursos) {
+    if (!r.url) continue; // recursos sin URL no se muestran
+    const seccion = r.seccion || 'General';
+    let i = indice.get(seccion);
+    if (i === undefined) {
+      i = grupos.length;
+      indice.set(seccion, i);
+      grupos.push({ seccion, items: [] });
+    }
+    grupos[i].items.push(r);
+  }
+  return grupos;
+}
+
+/**
+ * Tab "Recursos" del panel del estudiante (en 2da persona).
+ * Arriba, el material recomendado para ti (secciones flojas + formato preferido);
+ * debajo, el catálogo completo del curso agrupado por sección, con marca de "visto".
+ * SOLO datos reales: skeleton mientras cargan y estado vacío si no hay recursos.
+ */
+export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: StudentTabProps) {
+  const { conceptMastery } = useStudentDetail(estudianteId, courseId);
+  const { data: courseResources, isLoading: resourcesLoading } = useCourseResources(moodleCourseId);
+  const { data: preferences } = useStudentPreferences(estudianteId, courseId);
+
+  const vistos = new Set(preferences?.recursos_vistos ?? []);
+  const grupos = agruparPorSeccion(courseResources ?? []);
+
+  // Skeleton mientras cargan los recursos o el dominio por concepto.
+  const loading = resourcesLoading || conceptMastery.isLoading;
+  if (loading) {
+    return (
+      <div className="space-y-4 animate-pulse">
+        <div className="h-40 rounded-[12px] bg-muted/50" />
+        <div className="h-56 rounded-[12px] bg-muted/50" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4 animate-pulse">
-      <div className="h-40 rounded-[12px] bg-muted/50" />
-      <div className="h-56 rounded-[12px] bg-muted/50" />
+    <div className="space-y-6">
+      {/* Recomendado para ti (personalizado: sección floja + formato preferido) */}
+      <RecommendedResources
+        weak={conceptMastery.data ?? []}
+        recursos={courseResources ?? []}
+        prefs={preferences}
+        title="Recomendado para ti"
+        description="Material elegido según tus secciones flojas y el formato en el que mejor aprendes."
+      />
+
+      {/* Todos los recursos del curso, agrupados por sección */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Library className="w-5 h-5 text-primary" />
+            Todos los recursos del curso
+          </CardTitle>
+          <CardDescription>
+            El material completo de tu curso, organizado por sección.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {grupos.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              Aún no hay recursos disponibles en este curso.
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {grupos.map((g) => (
+                <div key={g.seccion} className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">{g.seccion}</p>
+                  <div className="space-y-2">
+                    {g.items.map((r) => {
+                      const visto = vistos.has(r.url);
+                      return (
+                        <a
+                          key={r.url}
+                          href={r.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-start gap-3 p-3 bg-background rounded-[12px] border hover:border-primary/40 transition-colors group"
+                          title="Abrir en Moodle"
+                        >
+                          <div className="w-9 h-9 rounded-[10px] bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            {iconFor(r.tipo)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-medium truncate">{r.nombre}</p>
+                              <Badge variant="outline" className="text-[10px] shrink-0">
+                                {tipoLabel(r.tipo)}
+                              </Badge>
+                              {visto && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-success shrink-0">
+                                  <Check className="w-3 h-3" />
+                                  Visto
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
