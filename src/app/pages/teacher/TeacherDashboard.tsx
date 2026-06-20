@@ -7,8 +7,14 @@ import {
   BarChart, Bar, Legend,
 } from 'recharts';
 import { ChevronLeft, ChevronRight, FileText, BarChart2, Users, BookOpen, Clock, Download, AlertCircle, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 import { useTeacherDashboard } from './useTeacherDashboard';
 import { downloadClassReport } from '@features/teacher/services/teacher.service';
+import {
+  downloadRiskAnalysisCsv,
+  downloadEngagementCsv,
+  downloadKnowledgeMapCsv,
+} from '@features/teacher/services/reports';
 import { useLogout } from '../../../core/auth/useLogout';
 import { TeacherTopbar } from './components/TeacherTopbar';
 import { TeacherSidebar } from './components/TeacherSidebar';
@@ -90,9 +96,56 @@ function DashboardEmpty() {
   );
 }
 
+/** Reportes disponibles en el panel docente. */
+type ReportKey = 'completo' | 'riesgo' | 'engagement' | 'conocimiento';
+interface GeneratedReport {
+  key: ReportKey;
+  name: string;
+  format: string;
+  time: string;
+}
+
 export function TeacherDashboard() {
   const dash = useTeacherDashboard();
   const logout = useLogout();
+
+  // Historial REAL de reportes generados en esta sesión (no mock).
+  const [reportLog, setReportLog] = useState<GeneratedReport[]>([]);
+  const [generating, setGenerating] = useState<ReportKey | null>(null);
+
+  const activeCourseName = dash.courses.find((c) => c.id === dash.activeCourseId)?.nombre;
+
+  async function handleGenerateReport(key: ReportKey, name: string, format: string) {
+    try {
+      setGenerating(key);
+      if (key === 'completo') {
+        if (!dash.activeCourseId) {
+          alert('Selecciona un curso para generar el reporte.');
+          return;
+        }
+        await downloadClassReport(dash.activeCourseId, activeCourseName);
+      } else {
+        if (dash.students.length === 0) {
+          alert('No hay datos de estudiantes para este curso todavía.');
+          return;
+        }
+        if (key === 'riesgo') downloadRiskAnalysisCsv(dash.students, activeCourseName);
+        if (key === 'engagement') downloadEngagementCsv(dash.students, activeCourseName);
+        if (key === 'conocimiento') downloadKnowledgeMapCsv(dash.students, activeCourseName);
+      }
+      const time = new Date().toLocaleString('es-PE', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      setReportLog((prev) => [{ key, name, format, time }, ...prev].slice(0, 8));
+    } catch {
+      alert('No se pudo generar el reporte. Inténtalo de nuevo.');
+    } finally {
+      setGenerating(null);
+    }
+  }
 
   return (
     <div className="h-screen w-full bg-background flex flex-col overflow-hidden">
@@ -359,25 +412,23 @@ export function TeacherDashboard() {
                 {/* TAB: REPORTES */}
                 {dash.activeTab === 'reportes' && (
                   <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">
+                        Reportes generados con los datos reales del curso
+                        {activeCourseName ? <> <span className="font-medium text-foreground">{activeCourseName}</span></> : null}.
+                      </p>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[
-                        { icon: <FileText className="w-6 h-6 text-primary" />, title: 'Reporte Semanal Completo', desc: 'Progreso individual y grupal de las últimas 4 semanas.', badge: 'PDF', badgeColor: 'bg-red-500', realPdf: true },
-                        { icon: <BarChart2 className="w-6 h-6 text-success" />, title: 'Análisis de Riesgo', desc: 'Detalle de estudiantes en riesgo con recomendaciones de intervención.', badge: 'Excel', badgeColor: 'bg-green-600' },
-                        { icon: <Users className="w-6 h-6 text-warning" />, title: 'Registro de Engagement', desc: 'Historial de actividad y tiempos de sesión por estudiante.', badge: 'CSV', badgeColor: 'bg-blue-500' },
-                        { icon: <BookOpen className="w-6 h-6 text-purple-500" />, title: 'Mapa de Conocimiento', desc: 'Estado de dominio por concepto para todo el grupo.', badge: 'PDF', badgeColor: 'bg-red-500' },
-                      ].map((r) => (
+                      {([
+                        { key: 'completo', icon: <FileText className="w-6 h-6 text-primary" />, title: 'Reporte de Clase (PDF)', desc: 'Documento con resumen por nivel de riesgo y detalle por estudiante.', badge: 'PDF', badgeColor: 'bg-red-500' },
+                        { key: 'riesgo', icon: <BarChart2 className="w-6 h-6 text-success" />, title: 'Análisis de Riesgo', desc: 'Estudiantes en riesgo alto/medio con dominio, conceptos en riesgo y engagement.', badge: 'CSV', badgeColor: 'bg-green-600' },
+                        { key: 'engagement', icon: <Users className="w-6 h-6 text-warning" />, title: 'Registro de Engagement', desc: 'Engagement y dominio por estudiante, ordenado por participación.', badge: 'CSV', badgeColor: 'bg-blue-500' },
+                        { key: 'conocimiento', icon: <BookOpen className="w-6 h-6 text-purple-500" />, title: 'Mapa de Conocimiento', desc: 'Estado de dominio del grupo por estudiante, con promedio grupal.', badge: 'CSV', badgeColor: 'bg-purple-500' },
+                      ] as const).map((r) => (
                         <Card
-                          key={r.title}
+                          key={r.key}
                           className="hover:border-primary/40 transition-colors cursor-pointer group"
-                          onClick={() => {
-                            if ('realPdf' in r && r.realPdf && dash.activeCourseId) {
-                              downloadClassReport(dash.activeCourseId).catch(() =>
-                                alert('No se pudo generar el reporte. Verifica que haya un curso activo.'),
-                              );
-                            } else {
-                              alert(`Generando: ${r.title}...`);
-                            }
-                          }}
+                          onClick={() => handleGenerateReport(r.key, r.title, r.badge)}
                         >
                           <CardContent className="pt-5 pb-5">
                             <div className="flex items-start gap-4">
@@ -391,7 +442,11 @@ export function TeacherDashboard() {
                                 </div>
                                 <p className="text-xs text-muted-foreground leading-relaxed">{r.desc}</p>
                               </div>
-                              <Download className="w-4 h-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
+                              {generating === r.key ? (
+                                <div className="w-4 h-4 mt-1 shrink-0 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                              ) : (
+                                <Download className="w-4 h-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
+                              )}
                             </div>
                           </CardContent>
                         </Card>
@@ -401,27 +456,28 @@ export function TeacherDashboard() {
                     <Card>
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-muted-foreground" /> Historial de Reportes
+                          <Clock className="w-4 h-4 text-muted-foreground" /> Reportes generados (esta sesión)
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2">
-                        {[
-                          { name: 'Reporte Semana 3 — Completo', date: '28 May 2026', size: '2.4 MB' },
-                          { name: 'Análisis de Riesgo — Semana 3', date: '28 May 2026', size: '1.1 MB' },
-                          { name: 'Reporte Semana 2 — Completo', date: '21 May 2026', size: '2.2 MB' },
-                          { name: 'Registro de Engagement — Mayo', date: '18 May 2026', size: '0.8 MB' },
-                        ].map((r) => (
-                          <div key={r.name} className="flex items-center justify-between p-3 rounded-[10px] hover:bg-muted/50 transition-colors cursor-pointer group">
-                            <div className="flex items-center gap-3">
-                              <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                              <div>
-                                <p className="text-sm font-medium">{r.name}</p>
-                                <p className="text-xs text-muted-foreground">{r.date} · {r.size}</p>
+                        {reportLog.length === 0 ? (
+                          <p className="text-sm text-muted-foreground py-2">
+                            Aún no has generado reportes en esta sesión. Genera uno desde las tarjetas de arriba.
+                          </p>
+                        ) : (
+                          reportLog.map((r, i) => (
+                            <div key={`${r.key}-${i}`} className="flex items-center justify-between p-3 rounded-[10px] bg-muted/30">
+                              <div className="flex items-center gap-3">
+                                <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                                <div>
+                                  <p className="text-sm font-medium">{r.name}</p>
+                                  <p className="text-xs text-muted-foreground">{r.time} · {r.format}</p>
+                                </div>
                               </div>
+                              <span className="text-xs text-success font-medium">Descargado</span>
                             </div>
-                            <Download className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                          </div>
-                        ))}
+                          ))
+                        )}
                       </CardContent>
                     </Card>
                   </div>
