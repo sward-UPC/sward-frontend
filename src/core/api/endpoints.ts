@@ -85,6 +85,8 @@ export const ENDPOINTS = {
     report: (courseId: string) => `/dashboard/teacher/${courseId}/report`,
     /** Recursos del curso por sección (incl. lecturas) — ms-integracion-lms. */
     courseResources: (moodleCourseId: string) => `/lms/courses/${moodleCourseId}/resources`,
+    /** Recomendaciones generadas por el modelo SAKT (ms-recomendacion). */
+    generateRecommendations: '/recommendations/generate',
     // Retroalimentación docente→estudiante (ms-trazabilidad).
     feedbackReal: '/dashboard/teacher/feedback',
     // Tendencia semanal histórica de la clase (ms-trazabilidad).

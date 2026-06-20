@@ -5,9 +5,11 @@ import { useCourseResources } from '@features/teacher/hooks/useCourseResources';
 import { useStudentPreferences } from '@features/teacher/hooks/useStudentPreferences';
 import { tipoLabel } from '@features/teacher/services/personalRecommendations';
 import type { CourseResource } from '@features/teacher/services/teacher.service';
+import { useSaktRecommendations } from '@features/student/useSaktRecommendations';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
 import { RecommendedResources } from '../../../components/teacher/RecommendedResources';
+import { SaktRecommendations } from '../../../components/student/SaktRecommendations';
 
 /** Ícono según el tipo de módulo de Moodle (lecturas, quizzes, prácticas...). */
 function iconFor(tipo: string) {
@@ -46,6 +48,8 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
   const { conceptMastery } = useStudentDetail(estudianteId, courseId);
   const { data: courseResources, isLoading: resourcesLoading } = useCourseResources(moodleCourseId);
   const { data: preferences } = useStudentPreferences(estudianteId, courseId);
+  // Motor REAL: el modelo SAKT entrenado. Si no devuelve nada, cae al heurístico.
+  const { data: saktItems } = useSaktRecommendations(estudianteId, courseId);
 
   const vistos = new Set(preferences?.recursos_vistos ?? []);
   const grupos = agruparPorSeccion(courseResources ?? []);
@@ -63,14 +67,18 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
 
   return (
     <div className="space-y-6">
-      {/* Recomendado para ti (personalizado: sección floja + formato preferido) */}
-      <RecommendedResources
-        weak={conceptMastery.data ?? []}
-        recursos={courseResources ?? []}
-        prefs={preferences}
-        title="Recomendado para ti"
-        description="Material elegido según tus secciones flojas y el formato en el que mejor aprendes."
-      />
+      {/* Recomendado para ti — motor SAKT real; si no devuelve nada, heurístico. */}
+      {saktItems && saktItems.length > 0 ? (
+        <SaktRecommendations items={saktItems} />
+      ) : (
+        <RecommendedResources
+          weak={conceptMastery.data ?? []}
+          recursos={courseResources ?? []}
+          prefs={preferences}
+          title="Recomendado para ti"
+          description="Material elegido según tus secciones flojas y el formato en el que mejor aprendes."
+        />
+      )}
 
       {/* Todos los recursos del curso, agrupados por sección */}
       <Card>
