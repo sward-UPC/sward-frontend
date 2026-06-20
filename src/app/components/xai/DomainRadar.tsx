@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import {
   Radar,
@@ -41,51 +41,46 @@ const CustomTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) =
 export function DomainRadar({ data = defaultData, title = "Vista Rápida de Dominio" }: DomainRadarProps) {
   const hasData = data.length > 0;
 
-  // El RadarChart de recharts NO anima en mount si el ResponsiveContainer mide
-  // tamaño 0 en el primer paint (caso típico al abrir un detalle dentro de un
-  // grid recién montado): la geometría polar colapsa y la animación se omite.
-  // Soluciones combinadas:
-  //  1) `ready`: difiere el montaje del chart un frame para que el contenedor
-  //     ya tenga tamaño real → la animación "crecer desde el centro" se ve.
-  //  2) `animKey`: se incrementa cuando llega la data real (length 0 → N), así
-  //     el <Radar> re-monta y re-dispara su animación aunque la data venga
-  //     cacheada y el `key` del padre sea estable.
-  const [ready, setReady] = useState(false);
-  const animKey = useRef(0);
-  const prevHasData = useRef(false);
+  // Para que los PUNTOS del radar "se expandan desde el centro": arrancamos el
+  // polígono colapsado (todos los valores en 0) y un frame después ponemos los
+  // valores reales. recharts interpola cada punto de 0 → real, así que el
+  // polígono crece visiblemente desde el centro (animación nativa fiable, sin
+  // depender de que el ResponsiveContainer ya tenga tamaño en el primer paint).
+  const [animatedData, setAnimatedData] = useState<DomainRadarProps["data"]>([]);
+  // Clave estable: solo re-anima cuando cambian los valores reales (no en cada
+  // render del padre, que recrea el array con los mismos datos).
+  const dataKey = data.map((d) => `${d.subject}:${d.value}`).join("|");
 
   useEffect(() => {
-    // Espera a que el contenedor se mida (doble rAF) antes de montar el chart.
+    if (!hasData) {
+      setAnimatedData([]);
+      return;
+    }
+    // 1) colapsado en el centro
+    setAnimatedData(data.map((d) => ({ ...d, value: 0 })));
+    // 2) tras dos frames (ya con layout/tamaño), a los valores reales → crece
     let raf2 = 0;
     const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => setReady(true));
+      raf2 = requestAnimationFrame(() => setAnimatedData(data));
     });
     return () => {
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
     };
-  }, []);
-
-  // Cuando la data real aparece por primera vez, fuerza una nueva animación.
-  if (hasData && !prevHasData.current) {
-    prevHasData.current = true;
-    animKey.current += 1;
-  } else if (!hasData && prevHasData.current) {
-    prevHasData.current = false;
-  }
+    // dataKey resume los valores reales; data se usa adentro a propósito.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataKey]);
 
   return (
-    // Animación de entrada GARANTIZADA del card (fade + scale), independiente de
-    // recharts: siempre corre al montar el detalle del estudiante.
-    <Card className="animate-in fade-in zoom-in-95 duration-500">
+    <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[280px] w-full">
-          {ready && hasData && (
+          {hasData && (
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart key={animKey.current} cx="50%" cy="50%" outerRadius="75%" data={data}>
+              <RadarChart cx="50%" cy="50%" outerRadius="75%" data={animatedData}>
                 <PolarGrid stroke="#e5e7eb" />
                 <PolarAngleAxis
                   dataKey="subject"
@@ -106,7 +101,7 @@ export function DomainRadar({ data = defaultData, title = "Vista Rápida de Domi
                   strokeWidth={2}
                   isAnimationActive
                   animationBegin={0}
-                  animationDuration={1100}
+                  animationDuration={1000}
                   animationEasing="ease-out"
                 />
                 <Tooltip content={<CustomTooltip />} />
