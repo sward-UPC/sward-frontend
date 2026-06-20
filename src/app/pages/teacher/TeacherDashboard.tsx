@@ -6,7 +6,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend,
 } from 'recharts';
-import { ChevronLeft, ChevronRight, FileText, BarChart2, Users, BookOpen, Clock, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, BarChart2, Users, BookOpen, Clock, Download, AlertCircle, RefreshCw } from 'lucide-react';
 import { useTeacherDashboard } from './useTeacherDashboard';
 import { downloadClassReport } from '@features/teacher/services/teacher.service';
 import { useLogout } from '../../../core/auth/useLogout';
@@ -28,6 +28,66 @@ function getRiskColor(level: string) {
 
 function getMasteryColor(v: number) {
   return v >= 80 ? 'text-success' : v >= 60 ? 'text-warning' : 'text-destructive';
+}
+
+/** Estado de error: el backend no respondió. Nunca se muestra data ficticia. */
+function DashboardError() {
+  return (
+    <Card className="border-destructive/30">
+      <CardContent className="flex flex-col items-center justify-center text-center gap-3 py-16">
+        <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+          <AlertCircle className="w-6 h-6 text-destructive" />
+        </div>
+        <div>
+          <p className="font-semibold">Ocurrió un error al cargar los datos</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            No se pudo contactar al servidor. Verifica tu conexión e inténtalo de nuevo.
+          </p>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-1 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm rounded-lg hover:opacity-90"
+        >
+          <RefreshCw className="w-4 h-4" /> Reintentar
+        </button>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Skeleton mientras cargan los datos reales. */
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-24 rounded-[12px] bg-muted/50" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="h-52 rounded-[12px] bg-muted/50" />
+        <div className="h-52 rounded-[12px] bg-muted/50" />
+      </div>
+      <div className="h-64 rounded-[12px] bg-muted/50" />
+    </div>
+  );
+}
+
+/** Estado vacío: el docente no tiene cursos asignados. */
+function DashboardEmpty() {
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-center justify-center text-center gap-2 py-16">
+        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+          <BookOpen className="w-6 h-6 text-muted-foreground" />
+        </div>
+        <p className="font-semibold">No hay cursos disponibles</p>
+        <p className="text-sm text-muted-foreground">
+          Aún no tienes cursos asignados o sincronizados desde Moodle.
+        </p>
+      </CardContent>
+    </Card>
+  );
 }
 
 export function TeacherDashboard() {
@@ -96,6 +156,12 @@ export function TeacherDashboard() {
                   }
                 />
               </div>
+            ) : dash.isError ? (
+              <DashboardError />
+            ) : dash.isLoading ? (
+              <DashboardSkeleton />
+            ) : !dash.hasCourses ? (
+              <DashboardEmpty />
             ) : (
               <>
                 {/* SELECTOR DE CURSO (datos reales por curso) */}

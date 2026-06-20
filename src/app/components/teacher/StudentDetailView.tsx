@@ -17,13 +17,6 @@ import { DomainRadar } from "../xai/DomainRadar";
 import { AttentionHeatmap } from "../xai/AttentionHeatmap";
 import { StudentInteractionsList } from "./StudentInteractionsList";
 import { useStudentDetail } from "@features/teacher/hooks/useStudentDetail";
-import {
-  mockStudentProgressPoints,
-  mockConceptMasteryPoints,
-  mockStudentInteractions,
-  mockAttentionInteractions,
-  mockStudentDomainPoints,
-} from "@mocks/data/teacher.mock";
 
 interface StudentData {
   id: number;
@@ -114,20 +107,24 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
   // Dominio promedio: usa el puntaje real cuando está disponible.
   const avgMastery = realProgress?.puntajePromedio ?? student.avgMastery;
 
-  // En modo REAL (enabled) usamos SOLO datos reales; mientras cargan mostramos
-  // vacío/skeleton (sin "flash" de mock). El mock es solo para el preview (!enabled).
+  // SOLO datos reales: mientras cargan se muestra vacío (los charts animan al
+  // llegar la data); nunca hay data ficticia. Si el alumno no está en SWARD
+  // (!enabled) o el backend falla, se muestra un aviso, no un mock.
+  const isError =
+    enabled &&
+    (conceptMastery.isError ||
+      weeklyProgress.isError ||
+      interactions.isError ||
+      attention.isError ||
+      progress.isError);
+
   // Dominio por concepto/sección REAL → radar, barras y recomendaciones.
-  const cmReal = enabled ? (conceptMastery.data ?? []) : null;
-  const radarData = cmReal
-    ? cmReal.map((c) => ({ subject: c.concepto, value: c.dominio, fullMark: 100 }))
-    : mockStudentDomainPoints;
-  const conceptBars = cmReal
-    ? cmReal.map((c) => ({ concept: c.concepto, mastery: c.dominio }))
-    : mockConceptMasteryPoints;
+  const cmReal = enabled ? (conceptMastery.data ?? []) : [];
+  const radarData = cmReal.map((c) => ({ subject: c.concepto, value: c.dominio, fullMark: 100 }));
+  const conceptBars = cmReal.map((c) => ({ concept: c.concepto, mastery: c.dominio }));
 
   // Evolución del dominio REAL (curva por etapas).
-  const evoReal = enabled ? (weeklyProgress.data ?? []) : null;
-  const evolution = evoReal ?? mockStudentProgressPoints;
+  const evolution = enabled ? (weeklyProgress.data ?? []) : [];
   const evolutionIsReal = enabled && (weeklyProgress.data?.length ?? 0) > 0;
   const evolTrend =
     evolutionIsReal && evolution.length >= 2
@@ -136,21 +133,17 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
 
   // Recomendaciones de intervención derivadas de datos reales (solo si hay datos).
   const recomendaciones =
-    cmReal && cmReal.length > 0
+    cmReal.length > 0
       ? buildRecomendaciones(cmReal, student.engagement, student.lastActivity)
       : null;
 
-  // Historial de interacciones: real (vacío mientras carga); mock solo en preview.
-  const interactionsList = enabled ? (interactions.data ?? []) : mockStudentInteractions;
+  // Historial de interacciones reales (vacío mientras carga).
+  const interactionsList = enabled ? (interactions.data ?? []) : [];
 
-  // Heatmap de atención SAKT: pesos reales; mock solo en preview.
+  // Heatmap de atención SAKT: pesos reales (vacío mientras carga).
   const attRealData = enabled ? attention.data : null;
-  const attentionInteractions = attRealData
-    ? attRealData.interactions
-    : mockAttentionInteractions;
-  const attentionPrediction = attRealData
-    ? attRealData.prediction
-    : 'Probabilidad de éxito en próximo ejercicio de Redes Neuronales: 38%. Se recomienda intervención docente.';
+  const attentionInteractions = attRealData ? attRealData.interactions : [];
+  const attentionPrediction = attRealData ? attRealData.prediction : '';
 
   return (
     <Card className="border-primary">
@@ -169,6 +162,27 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Aviso de error de backend (nunca mostramos datos ficticios) */}
+        {isError && (
+          <div className="flex items-start gap-3 p-3 bg-destructive/5 border border-destructive/20 rounded-[12px]">
+            <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+            <p className="text-sm text-destructive">
+              <strong>No se pudieron cargar los datos del estudiante.</strong> Hubo un error al
+              contactar al servidor. Vuelve a intentarlo más tarde.
+            </p>
+          </div>
+        )}
+        {/* Aviso: el estudiante no está registrado en SWARD → no hay seguimiento real */}
+        {!enabled && (
+          <div className="flex items-start gap-3 p-3 bg-warning/5 border border-warning/20 rounded-[12px]">
+            <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+            <p className="text-sm text-muted-foreground">
+              Este estudiante aún <strong>no está registrado en SWARD</strong>, por lo que todavía no
+              hay datos de seguimiento (dominio, atención ni interacciones).
+            </p>
+          </div>
+        )}
+
         {/* Métricas Principales */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
@@ -245,11 +259,6 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
                 </p>
               </div>
             )}
-            {!enabled && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Mostrando datos de ejemplo.
-              </p>
-            )}
           </CardContent>
         </Card>
 
@@ -266,11 +275,6 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
             currentPrediction={attentionPrediction}
           />
         </div>
-        {!enabled && (
-          <p className="text-xs text-muted-foreground -mt-3">
-            Mapa de atención con datos de ejemplo.
-          </p>
-        )}
 
         {/* Dominio por Concepto (real: % de acierto por sección del curso) */}
         <Card>
@@ -305,9 +309,6 @@ export function StudentDetailView({ student, courseId, onClose, onSendFeedback }
         )}
         {enabled && interactions.isLoading && (
           <p className="text-xs text-muted-foreground -mt-3">Cargando historial real...</p>
-        )}
-        {!enabled && (
-          <p className="text-xs text-muted-foreground -mt-3">Mostrando datos de ejemplo.</p>
         )}
 
         {/* Recomendaciones de Intervención (derivadas de las secciones reales) */}

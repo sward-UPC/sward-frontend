@@ -1,11 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Skeleton } from "../../../components/ui/skeleton";
-import { ChevronRight, Clock } from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell,
-} from "recharts";
-import { activityData } from "../../../../mocks/data/admin.mock";
+import { ChevronRight, Clock, BarChart2 } from "lucide-react";
+import { PieChart, Pie, Cell } from "recharts";
 import { AdminMetricsCards } from "./AdminMetricsCards";
 import { SystemStatusPanel } from "./SystemStatusPanel";
 import { useAdminMetrics } from "../../../../features/admin/hooks/useAdminMetrics";
@@ -56,21 +52,10 @@ export function ResumenTab({ onViewLogs }: ResumenTabProps) {
             <CardTitle className="text-sm">Actividad de Sesiones — Últimos 7 días</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={activityData}>
-                <defs>
-                  <linearGradient id="gSes" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} />
-                <Area type="monotone" dataKey="sesiones" stroke="#f59e0b" fill="url(#gSes)" strokeWidth={2} name="Sesiones" />
-              </AreaChart>
-            </ResponsiveContainer>
+            <div className="h-[200px] flex flex-col items-center justify-center text-center gap-2 text-muted-foreground">
+              <BarChart2 className="w-8 h-8 opacity-50" />
+              <p className="text-sm">Aún no hay histórico de actividad de sesiones disponible.</p>
+            </div>
           </CardContent>
         </Card>
 
