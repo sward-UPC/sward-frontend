@@ -89,7 +89,16 @@ export function RecommendedResources({
               {iconFor(r.recurso.tipo)}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                    r.rol === "estudiar"
+                      ? "bg-primary/15 text-primary"
+                      : "bg-amber-500/15 text-amber-600"
+                  }`}
+                >
+                  {r.rol === "estudiar" ? "📖 Estudiar" : "✏️ Practicar"}
+                </span>
                 <p className="text-sm font-medium truncate">{r.recurso.nombre}</p>
                 <Badge variant="outline" className="text-[10px] shrink-0">
                   {tipoLabel(r.recurso.tipo)}
