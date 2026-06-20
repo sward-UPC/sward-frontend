@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router";
 import { useTheme } from "../../context/ThemeContext";
-import { mockNotifications } from "../../../mocks/data/admin.mock";
 import { useAdminUsers } from "../../../features/admin/hooks/useAdminUsers";
 import { useUpdateUserStatus } from "../../../features/admin/hooks/useUpdateUserStatus";
 import type { AdminTab, AdminNotification, AdminUser, UserStatus } from "../../../core/types/admin.types";
@@ -65,7 +64,7 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
   const [userSearch, setUserSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [notifs, setNotifs] = useState<AdminNotification[]>(mockNotifications);
+  const [notifs, setNotifs] = useState<AdminNotification[]>([]);
   const [showNotifPopup, setShowNotifPopup] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);

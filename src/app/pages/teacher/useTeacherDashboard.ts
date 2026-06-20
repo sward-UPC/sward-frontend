@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
-import type { Alert, StudentProgress, TeacherTab } from '@core/types';
-import {
-  mockStudents,
-  mockTeacher,
-  mockTeacherNotifications,
-  mockTrendData,
-  mockEngagementData,
-} from '@mocks/data/teacher.mock';
+import type {
+  Alert,
+  StudentProgress,
+  TeacherTab,
+  TeacherProfile,
+  ClassTrendDataPoint,
+  EngagementDataPoint,
+} from '@core/types';
+import { useAuth } from '@core/auth/useAuth';
 import { useTeacherCourses } from '@features/teacher/hooks/useTeacherCourses';
 import { useTeacherStudents } from '@features/teacher/hooks/useTeacherStudents';
 import { useTeacherAlerts } from '@features/teacher/hooks/useTeacherAlerts';
@@ -17,10 +18,10 @@ import { useTheme } from '../../context/ThemeContext';
 export interface UseTeacherDashboardReturn {
   /* data */
   students: StudentProgress[];
-  teacher: typeof mockTeacher;
+  teacher: TeacherProfile;
   notifications: Alert[];
-  trendData: typeof mockTrendData;
-  engagementData: typeof mockEngagementData;
+  trendData: ClassTrendDataPoint[];
+  engagementData: EngagementDataPoint[];
 
   /* datos reales / curso activo */
   courses: { id: string; nombre: string; moodleCourseId: string }[];
@@ -28,6 +29,11 @@ export interface UseTeacherDashboardReturn {
   setActiveCourseId: (id: string | undefined) => void;
   isLoadingStudents: boolean;
   usingRealData: boolean;
+
+  /* estados globales del dashboard (skeleton / error / vacío) */
+  isLoading: boolean;
+  isError: boolean;
+  hasCourses: boolean;
 
   /* derived counts */
   unreadCount: number;
@@ -134,43 +140,62 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [profileDialogTab, setProfileDialogTab] = useState<'profile' | 'settings'>('profile');
-  const [notifications, setNotifications] = useState<Alert[]>(mockTeacherNotifications);
+  const [notifications, setNotifications] = useState<Alert[]>([]);
 
   const { darkMode, setDarkMode } = useTheme();
+  const { user } = useAuth();
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // ── Datos reales (con fallback a mock si no hay curso/datos) ──────────────
-  const { data: courses } = useTeacherCourses();
+  // ── Datos reales (SIN fallback a mock): cargando → skeleton, error → estado
+  // de error, vacío → estado vacío. Nunca se muestra data ficticia. ───────────
+  const {
+    data: courses,
+    isLoading: isLoadingCourses,
+    isError: isErrorCourses,
+  } = useTeacherCourses();
   const [activeCourseId, setActiveCourseId] = useState<string | undefined>(undefined);
   // Selecciona el primer curso disponible mientras no haya selección explícita.
   const effectiveCourseId = activeCourseId ?? courses?.[0]?.id;
-  const { data: realStudents, isLoading: isLoadingStudents } =
-    useTeacherStudents(effectiveCourseId);
+  const {
+    data: realStudents,
+    isLoading: isLoadingStudents,
+    isError: isErrorStudents,
+  } = useTeacherStudents(effectiveCourseId);
 
-  // Si el backend devuelve estudiantes, se usan; si no, se conserva el mock
-  // para no perder la vista (ver PENDIENTES-PANEL-DOCENTE.md).
-  const usingRealData = !!realStudents && realStudents.length > 0;
-  const students: StudentProgress[] = usingRealData ? realStudents : mockStudents;
+  const students: StudentProgress[] = realStudents ?? [];
+  const usingRealData = students.length > 0;
 
-  // Alertas (ms-xai) y tendencia (ms-trazabilidad) reales, con fallback a mock.
+  // Alertas (ms-xai) y tendencia (ms-trazabilidad) reales, sin fallback.
   const { data: realAlerts } = useTeacherAlerts(effectiveCourseId);
   const { data: realTrend } = useClassTrend(effectiveCourseId);
 
-  // Cuando llegan alertas reales, reemplazan a las notificaciones mock.
+  // Las alertas reales son la fuente de las notificaciones; sin alertas → vacío.
   useEffect(() => {
-    if (realAlerts && realAlerts.length > 0) setNotifications(realAlerts);
+    setNotifications(realAlerts ?? []);
   }, [realAlerts]);
 
-  const trendData = realTrend && realTrend.length > 0 ? realTrend : mockTrendData;
-  // Engagement real: se deriva de los estudiantes reales; si no, mock.
-  const engagementData = usingRealData
-    ? students.map((s) => ({
-        name: s.name.split(' ')[0] || s.name,
-        engagement: s.engagement,
-        dominio: s.avgMastery,
-      }))
-    : mockEngagementData;
+  const trendData: ClassTrendDataPoint[] = realTrend ?? [];
+  const engagementData: EngagementDataPoint[] = students.map((s) => ({
+    name: s.name.split(' ')[0] || s.name,
+    engagement: s.engagement,
+    dominio: s.avgMastery,
+  }));
+
+  // Perfil del docente desde la sesión real (no mock).
+  const teacher: TeacherProfile = {
+    name: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || 'Docente',
+    email: user?.email ?? '',
+    role: 'Docente',
+    department: user?.institution ?? '',
+    avatar: user?.avatarUrl ?? '',
+    courses: courses?.map((c) => c.nombre).join(', ') ?? '',
+  };
+
+  // Estados globales para que la vista muestre skeleton / error / vacío.
+  const hasCourses = (courses?.length ?? 0) > 0;
+  const isLoading = isLoadingCourses || (!!effectiveCourseId && isLoadingStudents);
+  const isError = isErrorCourses || isErrorStudents;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -217,7 +242,7 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
 
   return {
     students,
-    teacher: mockTeacher,
+    teacher,
     notifications,
     trendData,
     engagementData,
@@ -228,6 +253,11 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
     setActiveCourseId,
     isLoadingStudents,
     usingRealData,
+
+    /* estados globales */
+    isLoading,
+    isError,
+    hasCourses,
 
     unreadCount,
     highRiskCount,
