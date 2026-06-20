@@ -37,7 +37,7 @@ jobs:
 
       - name: Build
         env:
-          VITE_API_URL: https://d2z5yyv5sjm9sz.cloudfront.net
+          VITE_API_URL: https://d11c2gdoarsvsa.cloudfront.net
           VITE_BASE_URL: /sward-frontend/
         run: pnpm build && cp dist/index.html dist/404.html
 
