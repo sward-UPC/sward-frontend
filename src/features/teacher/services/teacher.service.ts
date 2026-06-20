@@ -165,14 +165,16 @@ export async function exportClassReport(): Promise<{ url: string }> {
  * Descarga el reporte PDF real de la clase (ms-trazabilidad) y dispara la
  * descarga en el navegador. El PDF se genera profesionalmente server-side.
  */
-export async function downloadClassReport(courseId: string): Promise<void> {
+export async function downloadClassReport(courseId: string, courseName?: string): Promise<void> {
   const { data } = await apiClient.get(ENDPOINTS.teacher.report(courseId), {
     responseType: 'blob',
+    params: courseName ? { courseName } : undefined,
   });
   const url = URL.createObjectURL(new Blob([data], { type: 'application/pdf' }));
   const a = document.createElement('a');
   a.href = url;
-  a.download = `reporte_clase_${courseId}.pdf`;
+  const slug = (courseName || courseId).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  a.download = `reporte-clase_${slug || courseId}.pdf`;
   document.body.appendChild(a);
   a.click();
   a.remove();
