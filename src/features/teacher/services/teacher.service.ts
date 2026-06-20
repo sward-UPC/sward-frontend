@@ -403,11 +403,18 @@ export function sugerirRecursoPorSeccion(
   return enSeccion.find((r) => TIPOS_LECTURA.has(r.tipo)) ?? enSeccion[0];
 }
 
-/** Preferencia de formato del estudiante: en qué tipo de recurso rinde mejor. */
+/** Preferencia de formato del estudiante: rendimiento (calificadas) + engagement (vistas). */
 export interface StudentPreferences {
+  /** Rendimiento por tipo de recurso calificado (promedio de nota). */
   por_tipo: { tipo: string; promedio: number; total: number }[];
   tipo_fuerte: string;
   tipo_debil: string;
+  /** Engagement: cuántas lecturas/recursos no calificados vio, por tipo. */
+  engagement_por_tipo?: { tipo: string; vistas: number }[];
+  /** Formato no calificado que más consume el estudiante. */
+  formato_mas_consumido?: string;
+  /** URLs de recursos que el estudiante YA vio (para no re-recomendarlos). */
+  recursos_vistos?: string[];
 }
 
 export async function getStudentPreferences(

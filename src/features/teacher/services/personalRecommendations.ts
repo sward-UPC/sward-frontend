@@ -49,6 +49,8 @@ export function construirRecursosRecomendados(
   prefs?: StudentPreferences,
 ): RecursoRecomendado[] {
   const tipoFuerte = prefs?.tipo_fuerte || '';
+  const formatoConsumido = prefs?.formato_mas_consumido || '';
+  const vistos = new Set(prefs?.recursos_vistos ?? []);
   const recs: RecursoRecomendado[] = [];
   const usados = new Set<string>();
 
@@ -57,13 +59,19 @@ export function construirRecursosRecomendados(
 
   for (const c of secciones) {
     const candidatos = recursos.filter(
-      (r) => r.seccion && r.seccion === c.concepto && r.url && !usados.has(r.url),
+      (r) =>
+        r.seccion &&
+        r.seccion === c.concepto &&
+        r.url &&
+        !usados.has(r.url) &&
+        !vistos.has(r.url), // no re-recomendar lo que ya vio
     );
     if (candidatos.length === 0) continue;
 
-    // Puntúa cada candidato: prioriza el formato que mejor le funciona al
-    // estudiante; luego material de lectura/estudio para reforzar.
-    const ranked = [...candidatos].sort((a, b) => puntua(b, tipoFuerte) - puntua(a, tipoFuerte));
+    // Puntúa: formato en el que mejor RINDE + formato que más CONSUME + material de estudio.
+    const ranked = [...candidatos].sort(
+      (a, b) => puntua(b, tipoFuerte, formatoConsumido) - puntua(a, tipoFuerte, formatoConsumido),
+    );
     const elegido = ranked[0];
     usados.add(elegido.url);
 
@@ -71,24 +79,33 @@ export function construirRecursosRecomendados(
       concepto: c.concepto,
       dominio: c.dominio,
       recurso: elegido,
-      motivo: explicar(c, elegido, tipoFuerte),
+      motivo: explicar(c, elegido, tipoFuerte, formatoConsumido),
     });
   }
 
   return recs;
 }
 
-function puntua(r: CourseResource, tipoFuerte: string): number {
+function puntua(r: CourseResource, tipoFuerte: string, formatoConsumido: string): number {
   let s = 0;
-  if (tipoFuerte && r.tipo === tipoFuerte) s += 3; // el formato que mejor le va
+  if (tipoFuerte && r.tipo === tipoFuerte) s += 3; // el formato en el que mejor rinde
+  if (formatoConsumido && r.tipo === formatoConsumido) s += 2; // el que más consume
   if (TIPOS_LECTURA.has(r.tipo)) s += 1; // material de estudio para reforzar
   return s;
 }
 
-function explicar(c: ConceptMastery, r: CourseResource, tipoFuerte: string): string {
+function explicar(
+  c: ConceptMastery,
+  r: CourseResource,
+  tipoFuerte: string,
+  formatoConsumido: string,
+): string {
   const base = `Refuerza ${c.concepto}, donde estás al ${c.dominio}%.`;
   if (tipoFuerte && r.tipo === tipoFuerte) {
     return `${base} Es un(a) ${tipoLabel(r.tipo).toLowerCase()}, el formato en el que mejor te va.`;
+  }
+  if (formatoConsumido && r.tipo === formatoConsumido) {
+    return `${base} Es un(a) ${tipoLabel(r.tipo).toLowerCase()}, el formato que más sueles consumir.`;
   }
   if (TIPOS_LECTURA.has(r.tipo)) {
     return `${base} Lectura de apoyo para afianzar el concepto.`;
