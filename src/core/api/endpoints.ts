@@ -105,6 +105,8 @@ export const ENDPOINTS = {
     userRoles: (id: string) => `/admin/users/${id}/roles`,
     metrics: '/admin/metrics',
     logs: '/admin/logs',
+    /** Actividad real de la plataforma (interacciones/día) — ms-trazabilidad. */
+    platformActivity: (days = 7) => `/dashboard/platform-activity?days=${days}`,
     courses: '/courses',
     courseById: (id: string) => `/courses/${id}`,
     systemStatus: '/admin/system/status',

@@ -1,11 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { ChevronRight, Clock, BarChart2 } from "lucide-react";
-import { PieChart, Pie, Cell } from "recharts";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
+} from "recharts";
 import { AdminMetricsCards } from "./AdminMetricsCards";
 import { SystemStatusPanel } from "./SystemStatusPanel";
 import { useAdminMetrics } from "../../../../features/admin/hooks/useAdminMetrics";
 import { useAdminLogs } from "../../../../features/admin/hooks/useAdminLogs";
+import { useAdminActivity } from "../../../../features/admin/hooks/useAdminActivity";
 
 const ROLE_COLORS = {
   Estudiantes: "#6366f1",
@@ -33,6 +37,9 @@ interface ResumenTabProps {
 export function ResumenTab({ onViewLogs }: ResumenTabProps) {
   const { data: metrics, isLoading: metricsLoading } = useAdminMetrics();
   const { data: logs = [], isLoading: logsLoading } = useAdminLogs(4);
+  const { data: activity = [], isLoading: activityLoading, isError: activityError } =
+    useAdminActivity(7);
+  const hasActivity = activity.some((a) => a.sesiones > 0);
 
   const userDistData = metrics
     ? [
@@ -49,13 +56,37 @@ export function ResumenTab({ onViewLogs }: ResumenTabProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="md:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Actividad de Sesiones — Últimos 7 días</CardTitle>
+            <CardTitle className="text-sm">Actividad de la Plataforma — Últimos 7 días</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] flex flex-col items-center justify-center text-center gap-2 text-muted-foreground">
-              <BarChart2 className="w-8 h-8 opacity-50" />
-              <p className="text-sm">Aún no hay histórico de actividad de sesiones disponible.</p>
-            </div>
+            {activityLoading ? (
+              <div className="h-[200px] rounded-[10px] bg-muted/40 animate-pulse" />
+            ) : activityError || !hasActivity ? (
+              <div className="h-[200px] flex flex-col items-center justify-center text-center gap-2 text-muted-foreground">
+                <BarChart2 className="w-8 h-8 opacity-50" />
+                <p className="text-sm">
+                  {activityError
+                    ? "No se pudo cargar la actividad de la plataforma."
+                    : "Aún no hay actividad registrada en los últimos 7 días."}
+                </p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={activity}>
+                  <defs>
+                    <linearGradient id="gSes" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                  <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" allowDecimals={false} />
+                  <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} />
+                  <Area type="monotone" dataKey="sesiones" stroke="#f59e0b" fill="url(#gSes)" strokeWidth={2} name="Interacciones" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
