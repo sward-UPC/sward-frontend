@@ -80,6 +80,28 @@ export async function generarMaterial(
   return data;
 }
 
+/** Veredicto de la IA al verificar la respuesta del alumno a un ejercicio. */
+export interface VerificacionEjercicio {
+  aprobado: boolean;
+  feedback: string;
+}
+
+/**
+ * Verifica con la IA si la respuesta que escribió el alumno a un ejercicio es
+ * correcta en lo esencial. Devuelve aprobado + feedback alentador (best-effort).
+ */
+export async function verificarEjercicio(params: {
+  enunciado: string;
+  solucion: string;
+  respuesta: string;
+}): Promise<VerificacionEjercicio> {
+  const { data } = await apiClient.post<VerificacionEjercicio>(
+    ENDPOINTS.recommendations.verifyExercise,
+    params,
+  );
+  return data;
+}
+
 /** Resultado de registrar un quiz respondido. */
 export interface QuizResultRegistrado {
   registrado: boolean;
