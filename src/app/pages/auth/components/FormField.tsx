@@ -11,6 +11,8 @@ interface FormFieldProps {
   right?: React.ReactNode
   disabled?: boolean
   autoComplete?: string
+  invalid?: boolean
+  describedBy?: string
 }
 
 /** Input reutilizable con ícono opcional para formularios de autenticación. */
@@ -24,6 +26,8 @@ export function FormField({
   right,
   disabled,
   autoComplete = 'off',
+  invalid,
+  describedBy,
 }: FormFieldProps) {
   return (
     <div className="relative">
@@ -38,10 +42,14 @@ export function FormField({
         placeholder={placeholder}
         autoComplete={autoComplete}
         disabled={disabled}
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
         className={cn(
-          'w-full py-2.5 rounded-[12px] border border-input bg-card/80 text-sm',
-          'placeholder:text-muted-foreground focus:outline-none focus:ring-2',
-          'focus:ring-primary/25 focus:border-primary transition-all',
+          'w-full h-11 rounded-xl border bg-card/80 text-sm transition-all duration-200',
+          'placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2',
+          invalid
+            ? 'border-destructive focus-visible:ring-destructive/25 focus-visible:border-destructive'
+            : 'border-input focus-visible:ring-primary/25 focus-visible:border-primary',
           Icon ? 'pl-9' : 'pl-3',
           right ? 'pr-10' : 'pr-3',
           disabled && 'opacity-50 cursor-not-allowed',

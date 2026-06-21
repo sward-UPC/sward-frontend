@@ -72,33 +72,36 @@ export function LoginFormFields({
   }
 
   return (
-    <div className="flex-1 flex flex-col gap-5">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Bienvenido de vuelta</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Ingresa tus credenciales para continuar</p>
+    <div className="flex-1 flex flex-col gap-6">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Bienvenido de vuelta</h1>
+        <p className="text-sm text-muted-foreground">Ingresa tus credenciales para continuar</p>
       </div>
 
-      <form onSubmit={onSubmitLogin} className="flex flex-col gap-3.5">
+      <form onSubmit={onSubmitLogin} className="flex flex-col gap-4" noValidate>
         <div className="space-y-1.5">
           <label className="text-sm font-medium" htmlFor="l-email">Correo</label>
-          <Field id="l-email" type="email" value={loginEmail}
+          <Field id="l-email" type="email" value={loginEmail} autoComplete="email"
+            invalid={!!loginError}
             onChange={(v: string) => { onLoginEmail(v); onLoginError(""); }}
             placeholder="tu@institución.edu.pe" icon={Mail} />
         </div>
         <div className="space-y-1.5">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center gap-2">
             <label className="text-sm font-medium" htmlFor="l-pw">Contraseña</label>
             <button type="button" onClick={() => { onLoginScreen("forgot-email"); onRecEmail(loginEmail); }}
-              className="text-xs text-primary hover:text-primary/70 transition-colors">
+              className="text-xs font-medium text-primary hover:text-primary/70 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded">
               ¿Olvidaste tu contraseña?
             </button>
           </div>
           <Field id="l-pw" type={showLoginPw ? "text" : "password"} value={loginPassword}
+            autoComplete="current-password" invalid={!!loginError}
             onChange={(v: string) => { onLoginPassword(v); onLoginError(""); }}
             placeholder="••••••••" icon={Lock}
             right={
               <button type="button" tabIndex={-1} onClick={() => onShowLoginPw((p) => !p)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                aria-label={showLoginPw ? "Ocultar contraseña" : "Mostrar contraseña"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                 {showLoginPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             }
@@ -106,14 +109,14 @@ export function LoginFormFields({
         </div>
 
         {loginError && (
-          <div className="flex items-center gap-2 p-2.5 rounded-[10px] bg-destructive/8 border border-destructive/20">
-            <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0" />
+          <div role="alert" className="flex items-center gap-2 p-3 rounded-xl bg-destructive/8 border border-destructive/20">
+            <AlertCircle className="w-4 h-4 text-destructive shrink-0" />
             <p className="text-xs text-destructive">{loginError}</p>
           </div>
         )}
 
         <button type="submit" disabled={loginLoading}
-          className="w-full h-10 rounded-[12px] text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[.98] disabled:opacity-70"
+          className="w-full h-11 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card mt-1"
           style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
           {loginLoading ? <><Spinner /> Verificando...</> : <>Ingresar <ChevronRight className="w-4 h-4" /></>}
         </button>
@@ -121,7 +124,7 @@ export function LoginFormFields({
 
       <div className="text-center text-sm text-muted-foreground mt-auto">
         ¿No tienes cuenta?{" "}
-        <button onClick={onFlip} className="text-primary font-semibold hover:text-primary/70 transition-colors">Regístrate</button>
+        <button onClick={onFlip} className="text-primary font-semibold hover:text-primary/70 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded">Regístrate</button>
       </div>
     </div>
   );

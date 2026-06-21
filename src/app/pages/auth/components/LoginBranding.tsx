@@ -11,10 +11,12 @@ export function LoginBranding() {
     >
       {/* Background orbs */}
       <div
+        aria-hidden
         className="absolute top-0 right-0 w-80 h-80 rounded-full opacity-20 blur-3xl pointer-events-none"
         style={{ background: "radial-gradient(circle, #a5b4fc, transparent)" }}
       />
       <div
+        aria-hidden
         className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-15 blur-3xl pointer-events-none"
         style={{ background: "radial-gradient(circle, #818cf8, transparent)" }}
       />
