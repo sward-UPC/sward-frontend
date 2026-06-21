@@ -2,9 +2,13 @@ import { Sparkles, BookOpen, Video, FileQuestion, PenLine, FileText, ExternalLin
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import type { SaktRecItem } from '@features/student/sakt.service';
+import { tipoLabel as prefTipoLabel } from '@features/teacher/services/personalRecommendations';
+import type { StudentPreferences } from '@features/teacher/services/teacher.service';
 
 interface SaktRecommendationsProps {
   items: SaktRecItem[];
+  /** Señal de preferencia del alumno: para explicar el porqué (en qué rinde/consume). */
+  prefs?: StudentPreferences;
 }
 
 /** Etiqueta legible por tipo SWARD que devuelve el motor de recomendación. */
@@ -32,8 +36,17 @@ function iconFor(tipo: string) {
  * "Recomendado para ti" generado por el MODELO SAKT entrenado (ms-recomendacion):
  * predice tu dominio y rankea el material del concepto débil. Explicable (motivo).
  */
-export function SaktRecommendations({ items }: SaktRecommendationsProps) {
+export function SaktRecommendations({ items, prefs }: SaktRecommendationsProps) {
   if (items.length === 0) return null;
+
+  // Señal de preferencia (mismo "porqué" que el motor heurístico): en qué formato
+  // rinde mejor y cuál consume más, para explicar la elección del modelo.
+  const fuerte = prefs?.tipo_fuerte
+    ? prefs.por_tipo.find((p) => p.tipo === prefs.tipo_fuerte)
+    : undefined;
+  const consumido = prefs?.formato_mas_consumido
+    ? prefs.engagement_por_tipo?.find((e) => e.tipo === prefs.formato_mas_consumido)
+    : undefined;
 
   return (
     <Card className="border-primary/30 bg-primary/[0.03]">
@@ -48,6 +61,28 @@ export function SaktRecommendations({ items }: SaktRecommendationsProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
+        {(fuerte || consumido) && (
+          <div className="text-xs text-muted-foreground bg-background rounded-[10px] p-2.5 border space-y-1">
+            {fuerte && (
+              <p>
+                📈 Rinde mejor con{' '}
+                <span className="font-medium text-foreground">{prefTipoLabel(prefs!.tipo_fuerte)}</span>{' '}
+                (promedio {Math.round(fuerte.promedio)}% en {fuerte.total} actividad
+                {fuerte.total === 1 ? '' : 'es'}).
+              </p>
+            )}
+            {consumido && (
+              <p>
+                👀 Es el que más consume:{' '}
+                <span className="font-medium text-foreground">
+                  {prefTipoLabel(prefs!.formato_mas_consumido!)}
+                </span>{' '}
+                ({consumido.vistas} vista{consumido.vistas === 1 ? '' : 's'}). El modelo lo tiene en cuenta.
+              </p>
+            )}
+          </div>
+        )}
+
         {items.map((it) => (
           <a
             key={it.recurso_id + it.url}

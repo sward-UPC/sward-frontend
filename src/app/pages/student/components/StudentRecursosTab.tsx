@@ -77,7 +77,7 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
       {saktLoading ? (
         <div className="h-48 rounded-[12px] bg-muted/50 animate-pulse" />
       ) : saktItems && saktItems.length > 0 ? (
-        <SaktRecommendations items={saktItems} />
+        <SaktRecommendations items={saktItems} prefs={preferences} />
       ) : (
         <RecommendedResources
           weak={conceptMastery.data ?? []}
