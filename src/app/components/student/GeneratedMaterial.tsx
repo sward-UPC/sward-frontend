@@ -152,6 +152,7 @@ export function GeneratedMaterial({
   regenerando,
 }: GeneratedMaterialProps) {
   const [abierto, setAbierto] = useState<number | null>(null);
+  const [completados, setCompletados] = useState<Record<number, boolean>>({});
   const listo = material.disponible && material.recursos.length > 0;
 
   // Confeti cuando el material termina de generar/cargar (una vez por concepto;
@@ -217,11 +218,13 @@ export function GeneratedMaterial({
           {material.recursos.map((recurso, i) => {
             const meta = TIPO_META[recurso.tipo];
             const Icon = meta.icon;
+            const completado = !!completados[i];
             return (
               <button
                 key={i}
                 type="button"
                 onClick={() => setAbierto(i)}
+                aria-label={`${meta.label}: ${recurso.titulo}${completado ? ' (completado)' : ''}`}
                 className="flex items-center gap-3 p-3 bg-background rounded-[12px] border text-left hover:border-violet-400/50 hover:shadow-sm transition-all group"
               >
                 <div className="w-10 h-10 rounded-[10px] bg-violet-500/10 text-violet-600 flex items-center justify-center shrink-0">
@@ -234,7 +237,14 @@ export function GeneratedMaterial({
                   <p className="text-sm font-medium truncate mt-0.5">{recurso.titulo}</p>
                   <p className="text-xs text-muted-foreground truncate">{meta.hint}</p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 group-hover:text-violet-600 transition-colors" />
+                {completado ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-[11px] font-medium text-success shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Completado
+                  </span>
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 group-hover:text-violet-600 transition-colors" />
+                )}
               </button>
             );
           })}
@@ -286,7 +296,14 @@ export function GeneratedMaterial({
               </DialogHeader>
               <div className="space-y-4">
                 <LearningHint>{TIPO_META[seleccion.tipo].aprende}</LearningHint>
-                <RecursoBody recurso={seleccion} concepto={concepto} courseId={courseId} />
+                <RecursoBody
+                  recurso={seleccion}
+                  concepto={concepto}
+                  courseId={courseId}
+                  onCompletado={() =>
+                    setCompletados((c) => (abierto !== null ? { ...c, [abierto]: true } : c))
+                  }
+                />
               </div>
             </>
           )}
@@ -301,20 +318,30 @@ function RecursoBody({
   recurso,
   concepto,
   courseId,
+  onCompletado,
 }: {
   recurso: RecursoGenerado;
   concepto: string;
   courseId: string;
+  onCompletado?: () => void;
 }) {
   switch (recurso.tipo) {
     case 'quiz':
-      return <QuizBody recurso={recurso} concepto={concepto} courseId={courseId} />;
+      return (
+        <QuizBody recurso={recurso} concepto={concepto} courseId={courseId} onCompletado={onCompletado} />
+      );
     case 'lectura':
-      return <LecturaBody recurso={recurso} concepto={concepto} courseId={courseId} />;
+      return (
+        <LecturaBody recurso={recurso} concepto={concepto} courseId={courseId} onCompletado={onCompletado} />
+      );
     case 'practica':
-      return <PracticaBody recurso={recurso} concepto={concepto} courseId={courseId} />;
+      return (
+        <PracticaBody recurso={recurso} concepto={concepto} courseId={courseId} onCompletado={onCompletado} />
+      );
     case 'video':
-      return <VideoBody recurso={recurso} concepto={concepto} courseId={courseId} />;
+      return (
+        <VideoBody recurso={recurso} concepto={concepto} courseId={courseId} onCompletado={onCompletado} />
+      );
     default:
       return null;
   }
@@ -329,10 +356,12 @@ function QuizBody({
   recurso,
   concepto,
   courseId,
+  onCompletado,
 }: {
   recurso: RecursoQuiz;
   concepto: string;
   courseId: string;
+  onCompletado?: () => void;
 }) {
   const [paso, setPaso] = useState(0);
   const [respuestas, setRespuestas] = useState<Record<number, number>>({});
@@ -355,6 +384,7 @@ function QuizBody({
 
   async function finalizar() {
     setFinalizado(true);
+    onCompletado?.();
     // Confeti al COMPLETAR el quiz (siempre); más fuerte si aprobó.
     if (pct >= 60) sideCannons();
     else burstConfetti();
@@ -517,10 +547,12 @@ function LecturaBody({
   recurso,
   concepto,
   courseId,
+  onCompletado,
 }: {
   recurso: RecursoLectura;
   concepto: string;
   courseId: string;
+  onCompletado?: () => void;
 }) {
   const flashcards = recurso.flashcards ?? [];
   const [modo, setModo] = useState<'leccion' | 'flashcards'>('leccion');
@@ -569,11 +601,12 @@ function LecturaBody({
       <div className="pt-1">
         <CompletarRecurso
           label="¡Listo, lo entendí!"
-          onComplete={() =>
+          onComplete={() => {
+            onCompletado?.();
             registrarMaterialCompletado({ cursoId: courseId, concepto, tipo: 'lectura' })
               .then(() => invalidarProgreso())
-              .catch(() => {})
-          }
+              .catch(() => {});
+          }}
         />
       </div>
     </div>
@@ -708,10 +741,12 @@ function PracticaBody({
   recurso,
   concepto,
   courseId,
+  onCompletado,
 }: {
   recurso: RecursoPractica;
   concepto: string;
   courseId: string;
+  onCompletado?: () => void;
 }) {
   const total = recurso.ejercicios.length;
   const [paso, setPaso] = useState(0);
@@ -755,8 +790,10 @@ function PracticaBody({
         const aprobadosAhora = recurso.ejercicios.filter(
           (_, i) => i === paso || veredicto[i]?.aprobado,
         ).length;
-        if (aprobadosAhora >= total) setTimeout(sideCannons, 300);
-        else burstConfetti();
+        if (aprobadosAhora >= total) {
+          onCompletado?.();
+          setTimeout(sideCannons, 300);
+        } else burstConfetti();
       }
     } catch {
       setVeredicto((m) => ({
@@ -983,10 +1020,12 @@ function VideoBody({
   recurso,
   concepto,
   courseId,
+  onCompletado,
 }: {
   recurso: RecursoVideo;
   concepto: string;
   courseId: string;
+  onCompletado?: () => void;
 }) {
   const invalidarProgreso = useInvalidarProgreso();
   return (
@@ -994,11 +1033,12 @@ function VideoBody({
       <YouTubePlayer videoId={recurso.video_id} title={recurso.titulo} />
       <CompletarRecurso
         label="Marcar como visto"
-        onComplete={() =>
+        onComplete={() => {
+          onCompletado?.();
           registrarMaterialCompletado({ cursoId: courseId, concepto, tipo: 'video' })
             .then(() => invalidarProgreso())
-            .catch(() => {})
-        }
+            .catch(() => {});
+        }}
       />
     </div>
   );
