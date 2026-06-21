@@ -10,6 +10,7 @@ export const ENDPOINTS = {
     logout: '/auth/logout',
     refresh: '/auth/refresh',
     me: '/auth/me',
+    changePassword: '/auth/change-password',
     passwordRecovery: '/auth/password-recovery',
     passwordReset: '/auth/password-reset',
   },

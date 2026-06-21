@@ -13,7 +13,10 @@ export interface User {
   lastName: string;
   role: UserRole;
   institution: string;
+  /** Imagen de perfil como data URL base64 (gestionada en "Mi Perfil"). */
   avatarUrl?: string;
+  /** Color de fondo del avatar cuando no hay imagen (hex). */
+  avatarColor?: string;
   createdAt: string;
 }
 

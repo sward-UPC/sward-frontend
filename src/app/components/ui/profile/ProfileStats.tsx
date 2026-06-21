@@ -1,5 +1,6 @@
+import { useRef } from "react";
 import { Badge } from "../badge";
-import { Camera, Check, BookOpen, User } from "lucide-react";
+import { Camera, Check, BookOpen, User, Loader2 } from "lucide-react";
 import { Label } from "../label";
 
 interface ProfileStatsProps {
@@ -7,7 +8,13 @@ interface ProfileStatsProps {
   role: string;
   memberSince: string;
   avatarColor: string;
+  avatarUrl?: string;
+  /** Conteo real de recursos completados; solo se muestra si se provee. */
+  recursosCompletados?: number;
+  uploadingAvatar?: boolean;
+  avatarError?: string;
   onAvatarColorChange: (color: string) => void;
+  onAvatarFileSelected: (file: File) => void;
 }
 
 const AVATAR_COLORS = [
@@ -26,8 +33,15 @@ export function ProfileStats({
   role,
   memberSince,
   avatarColor,
+  avatarUrl,
+  recursosCompletados,
+  uploadingAvatar = false,
+  avatarError,
   onAvatarColorChange,
+  onAvatarFileSelected,
 }: ProfileStatsProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const initials = name
     .split(" ")
     .map((n) => n[0])
@@ -35,20 +49,51 @@ export function ProfileStats({
     .join("")
     .toUpperCase();
 
+  const handlePick = () => fileInputRef.current?.click();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) onAvatarFileSelected(file);
+    // Permite re-seleccionar el mismo archivo más tarde.
+    e.target.value = "";
+  };
+
   return (
     <>
       {/* Avatar */}
       <div className="flex items-center gap-5">
         <div className="relative">
           <div
-            className="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md"
+            className="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md overflow-hidden"
             style={{ background: avatarColor }}
           >
-            {initials}
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+            ) : (
+              initials
+            )}
+            {uploadingAvatar && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              </div>
+            )}
           </div>
-          <button className="absolute bottom-0 right-0 w-7 h-7 bg-primary rounded-full flex items-center justify-center shadow-sm">
+          <button
+            type="button"
+            onClick={handlePick}
+            disabled={uploadingAvatar}
+            aria-label="Cambiar foto de perfil"
+            className="absolute bottom-0 right-0 w-7 h-7 bg-primary rounded-full flex items-center justify-center shadow-sm disabled:opacity-60"
+          >
             <Camera className="w-3.5 h-3.5 text-white" />
           </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
         </div>
         <div className="flex-1">
           <Label className="text-sm font-medium mb-2 block">Color de avatar</Label>
@@ -56,6 +101,7 @@ export function ProfileStats({
             {AVATAR_COLORS.map((c) => (
               <button
                 key={c.bg}
+                type="button"
                 onClick={() => onAvatarColorChange(c.bg)}
                 className="w-7 h-7 rounded-full transition-transform hover:scale-110 relative"
                 style={{ background: c.bg }}
@@ -67,20 +113,25 @@ export function ProfileStats({
               </button>
             ))}
           </div>
+          {avatarError && <p className="text-xs text-destructive mt-2">{avatarError}</p>}
         </div>
       </div>
 
       {/* Badges */}
       <div className="flex flex-wrap gap-2">
-        <Badge variant="outline" className="gap-1.5">
-          <BookOpen className="w-3 h-3" /> 12 recursos completados
-        </Badge>
+        {recursosCompletados !== undefined && (
+          <Badge variant="outline" className="gap-1.5">
+            <BookOpen className="w-3 h-3" /> {recursosCompletados} recursos completados
+          </Badge>
+        )}
         <Badge variant="outline" className="gap-1.5">
           <User className="w-3 h-3" /> {role}
         </Badge>
-        <Badge variant="outline" className="gap-1.5 text-muted-foreground">
-          Desde {memberSince}
-        </Badge>
+        {memberSince && (
+          <Badge variant="outline" className="gap-1.5 text-muted-foreground">
+            Desde {memberSince}
+          </Badge>
+        )}
       </div>
     </>
   );
