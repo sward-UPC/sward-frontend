@@ -44,6 +44,11 @@ interface GeneratedMaterialProps {
   courseId: string;
 }
 
+// Conceptos cuyo confeti de "material listo" ya se mostró. En memoria (no
+// sessionStorage) para que un refresh de la página lo vuelva a disparar una vez,
+// pero navegar entre tabs no lo repita en bucle.
+const confettiMostrado = new Set<string>();
+
 /** Metadatos de presentación + hint de aprendizaje por tipo de recurso. */
 const TIPO_META: Record<
   RecursoGenerado['tipo'],
@@ -75,6 +80,31 @@ const TIPO_META: Record<
   },
 };
 
+/** Botón para marcar un recurso como completado; lanza confeti de celebración. */
+function CompletarRecurso({ label = '¡Listo, lo completé!' }: { label?: string }) {
+  const [hecho, setHecho] = useState(false);
+  if (hecho) {
+    return (
+      <div className="flex items-center gap-1.5 text-sm font-medium text-success">
+        <CheckCircle2 className="w-4 h-4" /> ¡Completado!
+      </div>
+    );
+  }
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={() => {
+        setHecho(true);
+        burstConfetti();
+      }}
+    >
+      <CheckCircle2 className="w-4 h-4 mr-1.5" />
+      {label}
+    </Button>
+  );
+}
+
 /** Banner de hint de aprendizaje que resalta, para que el alumno saque provecho. */
 function LearningHint({ children }: { children: React.ReactNode }) {
   return (
@@ -95,13 +125,14 @@ export function GeneratedMaterial({ material, courseId }: GeneratedMaterialProps
   const [abierto, setAbierto] = useState<number | null>(null);
   const listo = material.disponible && material.recursos.length > 0;
 
-  // Confeti cuando el material termina de generar (una vez por concepto en la sesión).
+  // Confeti cuando el material termina de generar/cargar (una vez por concepto;
+  // un refresh lo vuelve a mostrar porque el guard vive en memoria).
   useEffect(() => {
     if (!listo) return;
-    const clave = `sward-confetti:${material.concepto ?? 'material'}`;
-    if (sessionStorage.getItem(clave)) return;
-    sessionStorage.setItem(clave, '1');
-    const t = setTimeout(burstConfetti, 250);
+    const clave = material.concepto ?? 'material';
+    if (confettiMostrado.has(clave)) return;
+    confettiMostrado.add(clave);
+    const t = setTimeout(sideCannons, 300);
     return () => clearTimeout(t);
   }, [listo, material.concepto]);
 
@@ -487,27 +518,46 @@ function LecturaBody({ recurso }: { recurso: RecursoLectura }) {
           </div>
         </div>
       )}
+
+      <div className="pt-1">
+        <CompletarRecurso label="¡Listo, lo entendí!" />
+      </div>
     </div>
   );
 }
 
-/** Tarjeta con animación de volteo 3D (frente: concepto · reverso: definición). */
+/** Tarjeta con animación de volteo 3D (frente: concepto · reverso: definición).
+ *
+ * Usa estilos inline (igual que el flip del login): las clases arbitrarias de
+ * Tailwind NO emiten el prefijo -webkit-, así que en Safari la cara de atrás se
+ * veía espejada. Con backfaceVisibility + WebkitBackfaceVisibility inline se oculta
+ * bien. Las caras NO llevan overflow (eso "aplana" el 3D y deja ver el reverso). */
 function Flashcard({ card }: { card: { frente: string; reverso: string } }) {
   const [volteada, setVolteada] = useState(false);
+  const cara: React.CSSProperties = {
+    backfaceVisibility: 'hidden',
+    WebkitBackfaceVisibility: 'hidden',
+  };
   return (
     <button
       type="button"
       onClick={() => setVolteada((v) => !v)}
-      className="h-32 w-full text-left [perspective:1000px]"
+      className="h-32 w-full text-left"
+      style={{ perspective: '1000px' }}
     >
       <div
-        className={cn(
-          'relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]',
-          volteada && '[transform:rotateY(180deg)]',
-        )}
+        className="relative h-full w-full"
+        style={{
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+          transform: volteada ? 'rotateY(180deg)' : 'rotateY(0deg)',
+        }}
       >
         {/* Frente: concepto */}
-        <div className="absolute inset-0 [backface-visibility:hidden] rounded-[12px] border bg-background p-3 flex flex-col justify-center gap-1">
+        <div
+          className="absolute inset-0 rounded-[12px] border bg-background p-3 flex flex-col justify-center gap-1"
+          style={cara}
+        >
           <span className="text-[10px] uppercase tracking-wide font-semibold text-violet-600">
             Concepto
           </span>
@@ -515,7 +565,10 @@ function Flashcard({ card }: { card: { frente: string; reverso: string } }) {
           <span className="text-[10px] text-muted-foreground mt-auto">toca para ver la definición</span>
         </div>
         {/* Reverso: definición */}
-        <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[12px] border border-violet-400/40 bg-violet-500/[0.07] p-3 flex flex-col justify-center gap-1">
+        <div
+          className="absolute inset-0 rounded-[12px] border border-violet-400/40 bg-violet-500/[0.07] p-3 flex flex-col justify-center gap-1"
+          style={{ ...cara, transform: 'rotateY(180deg)' }}
+        >
           <span className="text-[10px] uppercase tracking-wide font-semibold text-violet-600">
             Definición
           </span>
@@ -555,7 +608,14 @@ function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
         respuesta: texto,
       });
       setVeredicto((m) => ({ ...m, [paso]: r }));
-      if (r.aprobado) burstConfetti();
+      if (r.aprobado) {
+        // Confeti al resolver; si con este quedan TODOS resueltos, celebración grande.
+        const aprobadosAhora = recurso.ejercicios.filter(
+          (_, i) => i === paso || veredicto[i]?.aprobado,
+        ).length;
+        if (aprobadosAhora >= total) setTimeout(sideCannons, 300);
+        else burstConfetti();
+      }
     } catch {
       setVeredicto((m) => ({
         ...m,
@@ -749,15 +809,18 @@ function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
 /** Video real de YouTube embebido. */
 function VideoBody({ recurso }: { recurso: RecursoVideo }) {
   return (
-    <div className="relative w-full overflow-hidden rounded-[10px] bg-black aspect-video">
-      <iframe
-        className="absolute inset-0 w-full h-full"
-        src={`https://www.youtube-nocookie.com/embed/${recurso.video_id}`}
-        title={recurso.titulo}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        loading="lazy"
-      />
+    <div className="space-y-3">
+      <div className="relative w-full overflow-hidden rounded-[10px] bg-black aspect-video">
+        <iframe
+          className="absolute inset-0 w-full h-full"
+          src={`https://www.youtube-nocookie.com/embed/${recurso.video_id}`}
+          title={recurso.titulo}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          loading="lazy"
+        />
+      </div>
+      <CompletarRecurso label="Marcar como visto" />
     </div>
   );
 }
