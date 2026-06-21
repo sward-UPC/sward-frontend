@@ -18,7 +18,6 @@ export interface UseStudentDashboardReturn {
   handleCompleteSideResource: () => void;
   completedCount: number;
   totalResources: number;
-  streak: number;
 
   /* notifications */
   notifications: StudentNotification[];
@@ -106,7 +105,6 @@ export function useStudentDashboard(): UseStudentDashboardReturn {
 
   const completedCount = 12 + completedResources.length;
   const totalResources = 18;
-  const streak = 5;
 
   return {
     activeNav,
@@ -120,7 +118,6 @@ export function useStudentDashboard(): UseStudentDashboardReturn {
     handleCompleteSideResource,
     completedCount,
     totalResources,
-    streak,
     notifications,
     unreadCount,
     showNotifPopup,
