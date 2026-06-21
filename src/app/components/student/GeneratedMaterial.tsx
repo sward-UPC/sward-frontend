@@ -544,18 +544,27 @@ function LecturaBody({
   );
 }
 
-/** Mazo de flashcards: una por vez, con anterior/siguiente y volteo. */
+/** Mazo de flashcards: una por vez, con puntos de progreso, anterior/siguiente. */
 function FlashcardDeck({ flashcards }: { flashcards: { frente: string; reverso: string }[] }) {
   const [idx, setIdx] = useState(0);
   const total = flashcards.length;
 
   return (
     <div className="space-y-3 animate-in fade-in-50 duration-300">
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>
-          Tarjeta {idx + 1} de {total}
-        </span>
-        <span>toca para voltear</span>
+      {/* Puntos de progreso del mazo */}
+      <div className="flex items-center justify-center gap-1.5">
+        {flashcards.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setIdx(i)}
+            className={cn(
+              'h-1.5 rounded-full transition-all',
+              i === idx ? 'w-5 bg-violet-500' : 'w-1.5 bg-muted hover:bg-violet-500/40',
+            )}
+            title={`Tarjeta ${i + 1}`}
+          />
+        ))}
       </div>
 
       {/* key fuerza el re-montaje al cambiar de tarjeta → siempre arranca en "Concepto" */}
@@ -571,6 +580,9 @@ function FlashcardDeck({ flashcards }: { flashcards: { frente: string; reverso: 
           <ChevronLeft className="w-4 h-4 mr-1" />
           Anterior
         </Button>
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {idx + 1} / {total}
+        </span>
         <Button
           size="sm"
           variant="ghost"
@@ -585,9 +597,9 @@ function FlashcardDeck({ flashcards }: { flashcards: { frente: string; reverso: 
   );
 }
 
-/** Tarjeta con volteo SIN backface-visibility (que fallaba/espejaba en Safari y en
- * el flip del login): se rota a 90° (canto, invisible) y a mitad de la animación se
- * cambia la cara, luego vuelve a 0°. Solo se renderiza una cara → nunca hay espejo. */
+/** Tarjeta de estudio con volteo SIN backface-visibility (evita el espejo de Safari/
+ * login): se encoge en X hasta el canto, cambia la cara a mitad de la animación y se
+ * expande de nuevo. Solo se renderiza una cara → nunca hay texto espejado. */
 function Flashcard({ card }: { card: { frente: string; reverso: string } }) {
   const [lado, setLado] = useState<'frente' | 'reverso'>('frente');
   const [girando, setGirando] = useState(false);
@@ -595,35 +607,55 @@ function Flashcard({ card }: { card: { frente: string; reverso: string } }) {
   function voltear() {
     if (girando) return;
     setGirando(true);
-    // A los 150ms (tarjeta de canto) se cambia la cara; a los 300ms termina.
-    window.setTimeout(() => setLado((l) => (l === 'frente' ? 'reverso' : 'frente')), 150);
-    window.setTimeout(() => setGirando(false), 300);
+    window.setTimeout(() => setLado((l) => (l === 'frente' ? 'reverso' : 'frente')), 170);
+    window.setTimeout(() => setGirando(false), 340);
   }
 
   const esFrente = lado === 'frente';
   return (
-    <button type="button" onClick={voltear} className="h-36 w-full text-left">
+    <button
+      type="button"
+      onClick={voltear}
+      className="group h-48 w-full select-none"
+      style={{ perspective: '1200px' }}
+    >
       <div
         className={cn(
-          'h-full w-full rounded-[12px] border p-4 flex flex-col justify-center gap-1.5',
-          esFrente ? 'bg-background' : 'border-violet-400/40 bg-violet-500/[0.07]',
+          'relative h-full w-full rounded-2xl border p-5 flex flex-col items-center justify-center text-center shadow-sm transition-shadow group-hover:shadow-md',
+          esFrente
+            ? 'bg-gradient-to-br from-background to-violet-500/[0.04] border-violet-400/30'
+            : 'bg-gradient-to-br from-violet-500/[0.10] to-violet-500/[0.03] border-violet-400/50',
         )}
         style={{
-          transition: 'transform 0.3s ease',
-          transform: girando ? 'rotateY(90deg)' : 'rotateY(0deg)',
+          transition: 'transform 0.34s cubic-bezier(0.4, 0, 0.2, 1)',
+          transform: girando ? 'rotateY(90deg) scale(0.97)' : 'rotateY(0deg) scale(1)',
         }}
       >
-        <span className="text-[10px] uppercase tracking-wide font-semibold text-violet-600">
-          {esFrente ? 'Concepto' : 'Definición'}
+        {/* Etiqueta de la cara */}
+        <span
+          className={cn(
+            'absolute top-3 left-4 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-bold',
+            esFrente ? 'text-violet-500/70' : 'text-violet-600',
+          )}
+        >
+          {esFrente ? (
+            <>
+              <Repeat2 className="w-3 h-3" /> Concepto
+            </>
+          ) : (
+            <>
+              <Lightbulb className="w-3 h-3" /> Definición
+            </>
+          )}
         </span>
-        <span className={cn('text-sm', esFrente && 'font-medium')}>
+
+        <p className={cn('px-2', esFrente ? 'text-base font-semibold' : 'text-sm leading-relaxed')}>
           {esFrente ? card.frente : card.reverso}
+        </p>
+
+        <span className="absolute bottom-3 inset-x-0 text-[10px] text-muted-foreground">
+          {esFrente ? 'toca para ver la definición' : 'toca para volver'}
         </span>
-        {esFrente && (
-          <span className="text-[10px] text-muted-foreground mt-auto">
-            toca para ver la definición
-          </span>
-        )}
       </div>
     </button>
   );
