@@ -66,6 +66,47 @@ function useInvalidarProgreso() {
 // pero navegar entre tabs no lo repita en bucle.
 const confettiMostrado = new Set<string>();
 
+// --- Persistencia de recursos completados -----------------------------------
+// El badge "Completado" debe SOBREVIVIR a un refresh. La fuente de verdad
+// persistida es el set de TIPOS completados (no índices): un material tiene a lo
+// más un quiz, una lectura, etc., así que el tipo es estable aunque el orden de
+// los recursos cambie levemente. Clave estable por curso + concepto.
+
+/** Clave de localStorage para los completados de un material. */
+function claveCompletados(courseId: string, concepto: string | null): string {
+  return `sward:completados:${courseId}:${concepto ?? ''}`;
+}
+
+/** Lee el set de TIPOS completados desde localStorage (robusto, SSR-safe). */
+function leerTiposCompletados(courseId: string, concepto: string | null): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = window.localStorage.getItem(claveCompletados(courseId, concepto));
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? new Set(arr.filter((t): t is string => typeof t === 'string')) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+/** Persiste el set de TIPOS completados en localStorage (robusto, SSR-safe). */
+function guardarTiposCompletados(
+  courseId: string,
+  concepto: string | null,
+  tipos: Set<string>,
+): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(
+      claveCompletados(courseId, concepto),
+      JSON.stringify([...tipos]),
+    );
+  } catch {
+    // Best-effort: si localStorage no está disponible, no rompemos la UI.
+  }
+}
+
 /** Metadatos de presentación + hint de aprendizaje por tipo de recurso. */
 const TIPO_META: Record<
   RecursoGenerado['tipo'],
@@ -152,8 +193,28 @@ export function GeneratedMaterial({
   regenerando,
 }: GeneratedMaterialProps) {
   const [abierto, setAbierto] = useState<number | null>(null);
-  const [completados, setCompletados] = useState<Record<number, boolean>>({});
+  // Render por índice, pero hidratado desde el set de TIPOS persistido: marcamos
+  // como completado cada índice cuyo recurso sea de un tipo ya completado.
+  const [completados, setCompletados] = useState<Record<number, boolean>>(() => {
+    const tipos = leerTiposCompletados(courseId, material.concepto ?? null);
+    const inicial: Record<number, boolean> = {};
+    material.recursos.forEach((r, i) => {
+      if (tipos.has(r.tipo)) inicial[i] = true;
+    });
+    return inicial;
+  });
   const listo = material.disponible && material.recursos.length > 0;
+
+  // Re-hidrata si cambia el material (otro curso/concepto o "Generar más").
+  useEffect(() => {
+    const tipos = leerTiposCompletados(courseId, material.concepto ?? null);
+    const inicial: Record<number, boolean> = {};
+    material.recursos.forEach((r, i) => {
+      if (tipos.has(r.tipo)) inicial[i] = true;
+    });
+    setCompletados(inicial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, material.concepto]);
 
   // Confeti cuando el material termina de generar/cargar (una vez por concepto;
   // un refresh lo vuelve a mostrar porque el guard vive en memoria).
@@ -300,9 +361,19 @@ export function GeneratedMaterial({
                   recurso={seleccion}
                   concepto={concepto}
                   courseId={courseId}
-                  onCompletado={() =>
-                    setCompletados((c) => (abierto !== null ? { ...c, [abierto]: true } : c))
-                  }
+                  onCompletado={() => {
+                    if (abierto === null) return;
+                    setCompletados((c) => ({ ...c, [abierto]: true }));
+                    // Persiste el TIPO recién completado (fuente de verdad estable
+                    // ante refresh), uniéndolo a lo que ya hubiera guardado.
+                    const tipo = material.recursos[abierto]?.tipo;
+                    if (tipo) {
+                      const concepto = material.concepto ?? null;
+                      const tipos = leerTiposCompletados(courseId, concepto);
+                      tipos.add(tipo);
+                      guardarTiposCompletados(courseId, concepto, tipos);
+                    }
+                  }}
                 />
               </div>
             </>
