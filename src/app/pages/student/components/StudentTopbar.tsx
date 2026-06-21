@@ -169,8 +169,15 @@ export function StudentTopbar({
               onClick={onToggleProfile}
               className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-muted transition-colors"
             >
-              <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
-                {user.avatar}
+              <div
+                className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold overflow-hidden"
+                style={user.avatarColor ? { background: user.avatarColor } : undefined}
+              >
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  user.avatar
+                )}
               </div>
               <span className="text-sm font-medium hidden md:block">{user.name.split(' ')[0]}</span>
             </button>
@@ -178,8 +185,15 @@ export function StudentTopbar({
               <div className="absolute right-0 top-11 w-64 bg-card border border-border rounded-[12px] shadow-xl z-50 overflow-hidden">
                 <div className="px-4 py-3 bg-primary/5 border-b">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold">
-                      {user.avatar}
+                    <div
+                      className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold overflow-hidden"
+                      style={user.avatarColor ? { background: user.avatarColor } : undefined}
+                    >
+                      {user.avatarUrl ? (
+                        <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                      ) : (
+                        user.avatar
+                      )}
                     </div>
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate">{user.name}</p>

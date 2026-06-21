@@ -42,6 +42,8 @@ export function StudentDashboard() {
     institution: user?.institution ?? '',
     avatar: (user?.firstName?.[0] ?? user?.email?.[0] ?? 'E').toUpperCase(),
     memberSince: '',
+    avatarColor: user?.avatarColor,
+    avatarUrl: user?.avatarUrl,
   };
 
   // Perfil para el modal "Mi Cuenta": añade avatar persistido y recursos reales.

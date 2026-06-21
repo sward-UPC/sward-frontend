@@ -22,6 +22,10 @@ export interface StudentUser {
   institution: string;
   avatar: string;
   memberSince: string;
+  /** Color de avatar persistido (fondo del círculo / anillo). */
+  avatarColor?: string;
+  /** Foto de perfil persistida (data URL). */
+  avatarUrl?: string;
 }
 
 /** Análisis XAI generado por SAKT para el estudiante. */
