@@ -87,6 +87,8 @@ export const ENDPOINTS = {
     courseResources: (moodleCourseId: string) => `/lms/courses/${moodleCourseId}/resources`,
     /** Recomendaciones generadas por el modelo SAKT (ms-recomendacion). */
     generateRecommendations: '/recommendations/generate',
+    /** Material de estudio generado por LLM para el concepto débil (Fase 4). */
+    generateMaterial: '/recommendations/material',
     // Retroalimentación docente→estudiante (ms-trazabilidad).
     feedbackReal: '/dashboard/teacher/feedback',
     // Tendencia semanal histórica de la clase (ms-trazabilidad).
