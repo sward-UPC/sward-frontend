@@ -1,8 +1,9 @@
+import { useSearchParams } from 'react-router';
 import type { StudentTabProps } from '@features/student/useStudentContext';
 import { useStudentDetail } from '@features/teacher/hooks/useStudentDetail';
 import { DomainRadar } from '../../../components/xai/DomainRadar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Sparkles, TrendingUp, BookOpen, Target, Activity, ArrowRight } from 'lucide-react';
+import { Sparkles, TrendingUp, BookOpen, Target, Activity, ArrowRight, ChevronRight } from 'lucide-react';
 
 interface ConceptMasteryItem {
   concepto: string;
@@ -49,6 +50,14 @@ function KpiCard({
 export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTabProps) {
   // Misma fuente real que usa el panel docente, pero pidiendo MI propia data.
   const { enabled, progress, interactions, conceptMastery } = useStudentDetail(estudianteId, courseId);
+
+  // Navegación a la pestaña Recursos (preservando el curso seleccionado en la URL).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const irARecursos = () => {
+    const next = new URLSearchParams(searchParams);
+    next.set('nav', 'recursos');
+    setSearchParams(next);
+  };
 
   // Mientras no haya curso o sigan cargando los conceptos → skeleton.
   const isLoading = !courseId || conceptMastery.isLoading;
@@ -183,17 +192,26 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
           </CardHeader>
           <CardContent className="space-y-3">
             {proximas.map((c, i) => (
-              <div key={c.concepto} className="p-3 bg-muted/40 rounded-[12px]">
+              <button
+                key={c.concepto}
+                type="button"
+                onClick={irARecursos}
+                title="Ir a Recursos para reforzar este tema"
+                className="w-full text-left p-3 bg-muted/40 rounded-[12px] border border-transparent hover:border-primary/40 hover:bg-muted/60 transition-colors group"
+              >
                 <div className="flex items-center justify-between gap-2 mb-1">
-                  <p className="text-sm font-medium">
+                  <p className="text-sm font-medium flex items-center gap-1">
                     {i + 1}. {c.concepto}
                   </p>
-                  <span
-                    className={`text-xs font-semibold ${
-                      c.dominio < 60 ? 'text-warning' : 'text-success'
-                    }`}
-                  >
-                    {c.dominio}%
+                  <span className="flex items-center gap-1 shrink-0">
+                    <span
+                      className={`text-xs font-semibold ${
+                        c.dominio < 60 ? 'text-warning' : 'text-success'
+                      }`}
+                    >
+                      {c.dominio}%
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -203,14 +221,18 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
                     ? 'Estás cerca: con un repaso más lo dominas.'
                     : '¡Buen nivel! Refuérzalo para que quede sólido.'}
                 </p>
-              </div>
+              </button>
             ))}
 
-            <div className="flex items-center gap-2 pt-1 text-sm text-primary font-medium">
+            <button
+              type="button"
+              onClick={irARecursos}
+              className="w-full flex items-center justify-center gap-2 pt-1 pb-0.5 text-sm text-primary font-medium hover:underline"
+            >
               <TrendingUp className="w-4 h-4" />
               <span>Ve a la pestaña Recursos para practicar estos temas</span>
               <ArrowRight className="w-4 h-4" />
-            </div>
+            </button>
           </CardContent>
         </Card>
       </div>

@@ -54,6 +54,8 @@ export interface MaterialGenerado {
   disponible: boolean;
   concepto: string | null;
   recursos: RecursoGenerado[];
+  /** Dominio (0-100) estimado por el SAKT en el concepto débil, para el XAI. */
+  dominio?: number | null;
 }
 
 /**
