@@ -58,6 +58,8 @@ export const ENDPOINTS = {
   interactions: {
     /** Registra el resultado de un quiz generado como interacción (alimenta al SAKT). */
     quizResult: '/interactions/quiz-result',
+    /** Registra práctica/lectura/video completado (práctica → SAKT; vistas → preferencia). */
+    materialCompleted: '/interactions/material-completed',
   },
 
   // EP004 — XAI (Explicabilidad)
