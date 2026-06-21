@@ -23,11 +23,18 @@ export interface RecursoQuiz {
   preguntas: PreguntaQuiz[];
 }
 
-/** Recurso tipo lectura (mini-lección). */
+/** Flashcard (tarjeta de memorización) frente/reverso. */
+export interface Flashcard {
+  frente: string;
+  reverso: string;
+}
+
+/** Recurso tipo lectura (mini-lección + flashcards para memorizar). */
 export interface RecursoLectura {
   tipo: 'lectura';
   titulo: string;
   contenido: string;
+  flashcards?: Flashcard[];
 }
 
 /** Recurso tipo práctica (ejercicios con solución). */
