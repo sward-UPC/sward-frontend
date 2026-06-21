@@ -1,20 +1,39 @@
 /*
- * Animación de cambio de tema (claro ↔ oscuro): reveal circular que se expande
- * desde el botón del toggle, como apagar/encender una lámpara. La expansión la
- * maneja JS (ThemeContext) vía la View Transitions API; aquí solo desactivamos
- * el cross-fade por defecto y fijamos el orden de capas para que el círculo se
- * vea limpio (el tema nuevo encima, revelándose sobre el anterior).
+ * Animación de cambio de tema (claro ↔ oscuro): la oscuridad/luz se PROPAGA
+ * componente por componente desde el botón del toggle, como una onda que va
+ * "infectando" cada card. El stagger por distancia lo calcula el JS
+ * (ThemeContext) inyectando `transition-delay` inline en cada [data-slot="card"];
+ * aquí solo definimos QUÉ propiedades transicionan y por cuánto tiempo.
+ *
+ * La clase `theme-anim` se pone en <html> solo durante el cambio y se quita al
+ * terminar, para no dejar transiciones globales activas en uso normal.
  */
-@supports (view-transition-name: root) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none;
-    mix-blend-mode: normal;
-  }
-  ::view-transition-new(root) {
-    z-index: 1;
-  }
-  ::view-transition-old(root) {
-    z-index: 0;
-  }
+
+/* Base: todo tween suave (sin saltos bruscos) durante el cambio de tema. */
+html.theme-anim * {
+  transition:
+    background-color 650ms ease,
+    border-color 650ms ease,
+    color 650ms ease,
+    fill 650ms ease,
+    stroke 650ms ease;
+}
+
+/* Fondo general de la página. */
+html.theme-anim,
+html.theme-anim body {
+  transition: background-color 650ms ease;
+}
+
+/* Cada card es un "componente" de la onda: el JS le pone su propio delay según
+   su distancia al toggle. Sus descendientes HEREDAN ese delay para moverse en
+   bloque con la card (toda la card se oscurece a la vez cuando la onda llega). */
+html.theme-anim [data-slot="card"],
+html.theme-anim [data-theme-wave] {
+  transition-duration: 650ms;
+}
+html.theme-anim [data-slot="card"] *,
+html.theme-anim [data-theme-wave] * {
+  transition-duration: 650ms;
+  transition-delay: inherit;
 }
