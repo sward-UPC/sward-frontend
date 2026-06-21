@@ -83,13 +83,13 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   // Sin overflow en la cara 3D: un elemento con backface-visibility:hidden y
   // overflow!=visible "aplana" el render y deja ver la cara de atrás (se veía el
   // login detrás del registro). El scroll va en un wrapper interno.
-  const faceBase = "absolute inset-0 rounded-2xl bg-card/95 backdrop-blur-sm shadow-2xl border border-border/50 p-6 sm:p-8 flex flex-col";
+  const faceBase = "absolute inset-0 rounded-2xl bg-card/95 backdrop-blur-sm shadow-2xl border border-border/60 p-6 sm:p-8 flex flex-col";
   const faceStyle: React.CSSProperties = {
     backfaceVisibility: "hidden",
     WebkitBackfaceVisibility: "hidden",
   };
   const mobileLogo = (
-    <div className="flex lg:hidden items-center gap-2.5 mb-5">
+    <div className="flex lg:hidden items-center gap-2.5 mb-6">
       <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
         <span className="text-base font-black text-white">S</span>
       </div>
@@ -98,12 +98,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   );
 
   return (
-    <div className="min-h-screen w-full flex">
+    <div className="min-h-dvh w-full flex">
       <LoginBranding />
 
-      <div className="flex-1 flex items-center justify-center p-3 sm:p-6 relative bg-[#f5f3ff] dark:bg-[#0f1117] overflow-hidden">
-        <div className="absolute top-10 right-10 w-64 h-64 rounded-full opacity-20 blur-3xl pointer-events-none" style={{ background: "radial-gradient(circle, #818cf8, transparent)" }} />
-        <div className="absolute bottom-10 left-10 w-56 h-56 rounded-full opacity-10 blur-3xl pointer-events-none" style={{ background: "radial-gradient(circle, #6366f1, transparent)" }} />
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 relative bg-[#f5f3ff] dark:bg-[#0f1117] overflow-hidden">
+        <div aria-hidden className="absolute -top-16 -right-16 w-72 h-72 rounded-full opacity-15 blur-3xl pointer-events-none" style={{ background: "radial-gradient(circle, #818cf8, transparent)" }} />
 
         <div className="w-full" style={{ maxWidth: 420, height: "min(640px, calc(100dvh - 64px))", perspective: "1200px", position: "relative", zIndex: 1 }}>
           <div style={{ width: "100%", height: "100%", position: "relative", transformStyle: "preserve-3d", transition: "transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)", transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)" }}>
@@ -135,10 +134,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
               {mobileLogo}
               {!regSuccess ? (
-                <div className="flex-1 flex flex-col gap-5">
-                  <div>
-                    <h1 className="text-xl font-bold">Crear cuenta</h1>
-                    <p className="text-sm text-muted-foreground mt-0.5">Únete a la plataforma de aprendizaje adaptativo</p>
+                <div className="flex-1 flex flex-col gap-6">
+                  <div className="space-y-1">
+                    <h1 className="text-2xl font-bold tracking-tight">Crear cuenta</h1>
+                    <p className="text-sm text-muted-foreground">Únete a la plataforma de aprendizaje adaptativo</p>
                   </div>
                   <div className="flex items-center gap-2">
                     {[1, 2].map((s) => (
@@ -148,54 +147,58 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                           {regStep > s ? <CheckCircle2 className="w-4 h-4" /> : s}
                         </div>
                         <span className={`text-xs transition-colors ${regStep === s ? "text-foreground font-medium" : "text-muted-foreground"}`}>{s === 1 ? "Información" : "Acceso"}</span>
-                        {s < 2 && <div className="flex-1 h-px mx-1 rounded-full transition-colors duration-300" style={{ background: regStep > 1 ? "#6366f1" : "#e5e7eb" }} />}
+                        {s < 2 && <div className={`flex-1 h-px mx-1 rounded-full transition-colors duration-300 ${regStep > 1 ? "bg-primary" : "bg-border"}`} />}
                       </div>
                     ))}
                   </div>
                   {regStep === 1 && (
                     <div className="flex flex-col gap-4 flex-1">
-                      <div className="space-y-3.5">
-                        <div className="space-y-1.5">
-                          <label className="text-sm font-medium">Correo institucional</label>
-                          <Field type="email" value={regEmail} onChange={(v: string) => { setRegEmail(v); setRegErrors((e) => ({ ...e, email: "" })); }} placeholder="tu@universidad.edu.pe" icon={Mail} />
-                          {regErrors.email && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.email}</p>}
-                        </div>
+                      <div className="space-y-1.5">
+                        <label className="text-sm font-medium" htmlFor="r-email">Correo institucional</label>
+                        <Field id="r-email" type="email" value={regEmail} autoComplete="email" invalid={!!regErrors.email}
+                          describedBy={regErrors.email ? "r-email-err" : undefined}
+                          onChange={(v: string) => { setRegEmail(v); setRegErrors((e) => ({ ...e, email: "" })); }} placeholder="tu@universidad.edu.pe" icon={Mail} />
+                        {regErrors.email && <p id="r-email-err" role="alert" className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.email}</p>}
                       </div>
-                      <button type="button" onClick={handleRegStep1} className="w-full h-10 rounded-[12px] text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[.98] mt-auto" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
+                      <button type="button" onClick={handleRegStep1} className="w-full h-11 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card mt-auto" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
                         Siguiente <ChevronRight className="w-4 h-4" />
                       </button>
                       <div className="text-center text-sm text-muted-foreground">
                         ¿Ya tienes cuenta?{" "}
-                        <button onClick={flip} className="text-primary font-semibold hover:text-primary/70 transition-colors">Inicia sesión</button>
+                        <button onClick={flip} className="text-primary font-semibold hover:text-primary/70 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded">Inicia sesión</button>
                       </div>
                     </div>
                   )}
                   {regStep === 2 && (
-                    <form onSubmit={handleRegister} className="flex flex-col gap-4 flex-1">
-                      <div className="space-y-3.5">
+                    <form onSubmit={handleRegister} className="flex flex-col gap-4 flex-1" noValidate>
+                      <div className="space-y-4">
                         <div className="space-y-1.5">
-                          <label className="text-sm font-medium">Contraseña</label>
-                          <Field type={showRegPw ? "text" : "password"} value={regPw} onChange={(v: string) => { setRegPw(v); setRegErrors((e) => ({ ...e, pw: "" })); }} placeholder="Mínimo 8 caracteres" icon={Lock}
-                            right={<button type="button" tabIndex={-1} onClick={() => setShowRegPw((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">{showRegPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>} />
-                          {regErrors.pw && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.pw}</p>}
+                          <label className="text-sm font-medium" htmlFor="r-pw">Contraseña</label>
+                          <Field id="r-pw" type={showRegPw ? "text" : "password"} value={regPw} autoComplete="new-password" invalid={!!regErrors.pw}
+                            describedBy={regErrors.pw ? "r-pw-err" : undefined}
+                            onChange={(v: string) => { setRegPw(v); setRegErrors((e) => ({ ...e, pw: "" })); }} placeholder="Mínimo 8 caracteres" icon={Lock}
+                            right={<button type="button" tabIndex={-1} onClick={() => setShowRegPw((p) => !p)} aria-label={showRegPw ? "Ocultar contraseña" : "Mostrar contraseña"} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer">{showRegPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>} />
+                          {regErrors.pw && <p id="r-pw-err" role="alert" className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.pw}</p>}
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-sm font-medium">Confirmar contraseña</label>
-                          <Field type="password" value={regConfirmPw} onChange={(v: string) => { setRegConfirmPw(v); setRegErrors((e) => ({ ...e, confirmPw: "" })); }} placeholder="Repite tu contraseña" icon={Lock} />
-                          {regErrors.confirmPw && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.confirmPw}</p>}
+                          <label className="text-sm font-medium" htmlFor="r-confirm">Confirmar contraseña</label>
+                          <Field id="r-confirm" type={showRegPw ? "text" : "password"} value={regConfirmPw} autoComplete="new-password" invalid={!!regErrors.confirmPw}
+                            describedBy={regErrors.confirmPw ? "r-confirm-err" : undefined}
+                            onChange={(v: string) => { setRegConfirmPw(v); setRegErrors((e) => ({ ...e, confirmPw: "" })); }} placeholder="Repite tu contraseña" icon={Lock} />
+                          {regErrors.confirmPw && <p id="r-confirm-err" role="alert" className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.confirmPw}</p>}
                         </div>
                         {regApiError && (
-                          <div className="flex items-center gap-2 p-2.5 rounded-[10px] bg-destructive/8 border border-destructive/20">
-                            <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0" />
+                          <div role="alert" className="flex items-center gap-2 p-3 rounded-xl bg-destructive/8 border border-destructive/20">
+                            <AlertCircle className="w-4 h-4 text-destructive shrink-0" />
                             <p className="text-xs text-destructive">{regApiError}</p>
                           </div>
                         )}
                       </div>
                       <div className="flex gap-2 mt-auto">
-                        <button type="button" onClick={() => { setRegStep(1); setRegErrors({}); setRegApiError(""); }} className="h-10 px-4 rounded-[12px] text-sm font-medium border border-border text-foreground hover:bg-muted/50 transition-all flex items-center gap-1.5">
+                        <button type="button" onClick={() => { setRegStep(1); setRegErrors({}); setRegApiError(""); }} className="h-11 px-4 rounded-xl text-sm font-medium border border-border text-foreground hover:bg-muted/50 transition-all flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
                           <ArrowLeft className="w-4 h-4" /> Atrás
                         </button>
-                        <button type="submit" disabled={regLoading} className="flex-1 h-10 rounded-[12px] text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[.98] disabled:opacity-70" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
+                        <button type="submit" disabled={regLoading} className="flex-1 h-11 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
                           {regLoading ? <><Spinner /> Creando cuenta...</> : "Crear cuenta"}
                         </button>
                       </div>
