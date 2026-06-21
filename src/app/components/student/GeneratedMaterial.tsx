@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   Wand2,
-  ChevronDown,
   BookOpen,
   PenLine,
   FileQuestion,
@@ -10,9 +9,13 @@ import {
   XCircle,
   RotateCcw,
   ChevronRight,
+  ChevronLeft,
   Brain,
   Lightbulb,
   Trophy,
+  Repeat2,
+  Eye,
+  Check,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -161,12 +164,8 @@ export function GeneratedMaterial({ material, courseId }: GeneratedMaterialProps
 
       {/* Modal con el recurso interactivo */}
       <Dialog open={abierto !== null} onOpenChange={(o) => !o && setAbierto(null)}>
-        <DialogContent
-          className={cn(
-            'max-h-[90vh] overflow-y-auto',
-            seleccion?.tipo === 'video' && 'sm:max-w-2xl',
-          )}
-        >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+
           {seleccion && (
             <>
               <DialogHeader>
@@ -369,68 +368,191 @@ function QuizBody({
   );
 }
 
-/** Mini-lección de lectura generada, con tipografía cómoda de leer. */
+/** Mini-lección de lectura + flashcards para memorizar (se voltean al tocar). */
 function LecturaBody({ recurso }: { recurso: RecursoLectura }) {
   const parrafos = recurso.contenido
     .split('\n')
     .map((p) => p.trim())
     .filter(Boolean);
+  const flashcards = recurso.flashcards ?? [];
+
   return (
-    <div className="space-y-3">
-      {parrafos.map((parrafo, i) => (
-        <p
-          key={i}
-          className={cn(
-            'text-sm leading-relaxed',
-            i === 0 ? 'text-foreground font-medium' : 'text-muted-foreground',
-          )}
-        >
-          {parrafo}
-        </p>
-      ))}
+    <div className="space-y-5">
+      {/* Mini-lección */}
+      <div className="space-y-3">
+        {parrafos.map((parrafo, i) => (
+          <p
+            key={i}
+            className={cn(
+              'text-sm leading-relaxed',
+              i === 0 ? 'text-foreground font-medium' : 'text-muted-foreground',
+            )}
+          >
+            {parrafo}
+          </p>
+        ))}
+      </div>
+
+      {/* Flashcards para memorizar */}
+      {flashcards.length > 0 && (
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2">
+            <Repeat2 className="w-4 h-4 text-violet-600" />
+            <p className="text-sm font-semibold">Flashcards · toca para voltear</p>
+            <Badge variant="secondary" className="text-[10px]">
+              {flashcards.length}
+            </Badge>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {flashcards.map((fc, i) => (
+              <Flashcard key={i} card={fc} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-/** Práctica con ejercicios numerados y solución resaltada y colapsable. */
-function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
-  const [abierto, setAbierto] = useState<number | null>(null);
+/** Tarjeta que se voltea (frente: concepto · reverso: definición). */
+function Flashcard({ card }: { card: { frente: string; reverso: string } }) {
+  const [volteada, setVolteada] = useState(false);
   return (
-    <div className="space-y-2.5">
-      {recurso.ejercicios.map((e, i) => {
-        const open = abierto === i;
-        return (
-          <div key={i} className="rounded-[12px] border overflow-hidden">
-            <div className="p-3 space-y-2">
-              <div className="flex gap-2.5">
-                <span className="w-6 h-6 rounded-full bg-violet-500/10 text-violet-600 text-xs font-bold flex items-center justify-center shrink-0">
-                  {i + 1}
-                </span>
-                <p className="text-sm flex-1">{e.enunciado}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAbierto(open ? null : i)}
-                className="ml-8 inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:underline"
-              >
-                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', open && 'rotate-180')} />
-                {open ? 'Ocultar solución' : 'Ver solución'}
-              </button>
-            </div>
-            {open && (
-              <div className="flex items-start gap-2 px-3 py-2.5 border-t bg-success/[0.06]">
-                <CheckCircle2 className="w-4 h-4 text-success shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-[10px] uppercase tracking-wide font-semibold text-success">
-                    Solución
-                  </p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{e.solucion}</p>
-                </div>
-              </div>
+    <button
+      type="button"
+      onClick={() => setVolteada((v) => !v)}
+      className={cn(
+        'min-h-24 rounded-[12px] border p-3 text-left transition-colors flex flex-col justify-center gap-1',
+        volteada
+          ? 'bg-violet-500/[0.07] border-violet-400/40'
+          : 'bg-background hover:border-violet-400/40',
+      )}
+    >
+      <span className="text-[10px] uppercase tracking-wide font-semibold text-violet-600">
+        {volteada ? 'Definición' : 'Concepto'}
+      </span>
+      <span className="text-sm">{volteada ? card.reverso : card.frente}</span>
+    </button>
+  );
+}
+
+/** Práctica paso a paso: un ejercicio a la vez, con verificación y navegación. */
+function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
+  const total = recurso.ejercicios.length;
+  const [paso, setPaso] = useState(0);
+  // Soluciones reveladas y autoevaluación (¿lo lograste?) por ejercicio.
+  const [revelados, setRevelados] = useState<Record<number, boolean>>({});
+  const [logrados, setLogrados] = useState<Record<number, boolean>>({});
+
+  const e = recurso.ejercicios[paso];
+  const revelado = !!revelados[paso];
+  const resueltos = Object.values(logrados).filter(Boolean).length;
+
+  return (
+    <div className="space-y-4">
+      {/* Progreso por pasos */}
+      <div className="flex items-center gap-1.5">
+        {recurso.ejercicios.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setPaso(i)}
+            className={cn(
+              'h-1.5 flex-1 rounded-full transition-colors',
+              logrados[i]
+                ? 'bg-success'
+                : i === paso
+                  ? 'bg-violet-500'
+                  : 'bg-muted',
             )}
+            title={`Ejercicio ${i + 1}`}
+          />
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          Ejercicio {paso + 1} de {total}
+        </span>
+        <span>{resueltos} resueltos</span>
+      </div>
+
+      {/* Enunciado del paso actual */}
+      <div className="rounded-[12px] border p-4">
+        <div className="flex gap-2.5">
+          <span className="w-7 h-7 rounded-full bg-violet-500/10 text-violet-600 text-sm font-bold flex items-center justify-center shrink-0">
+            {paso + 1}
+          </span>
+          <p className="text-sm flex-1 leading-relaxed">{e.enunciado}</p>
+        </div>
+
+        {!revelado ? (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setRevelados((r) => ({ ...r, [paso]: true }))}
+            className="mt-3 ml-9"
+          >
+            <Eye className="w-3.5 h-3.5 mr-1.5" />
+            Verificar / ver solución
+          </Button>
+        ) : (
+          <div className="mt-3 ml-9 space-y-3">
+            <div className="flex items-start gap-2 rounded-[10px] border bg-success/[0.06] px-3 py-2.5">
+              <CheckCircle2 className="w-4 h-4 text-success shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[10px] uppercase tracking-wide font-semibold text-success">
+                  Solución
+                </p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{e.solucion}</p>
+              </div>
+            </div>
+            {/* Autoevaluación: ¿lo lograste? */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">¿Lo lograste?</span>
+              <Button
+                size="sm"
+                variant={logrados[paso] ? 'default' : 'outline'}
+                onClick={() => setLogrados((l) => ({ ...l, [paso]: true }))}
+                className={cn('h-7', logrados[paso] && 'bg-success hover:bg-success/90')}
+              >
+                <Check className="w-3.5 h-3.5 mr-1" />
+                Sí
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setLogrados((l) => ({ ...l, [paso]: false }))}
+                className="h-7"
+              >
+                Aún no
+              </Button>
+            </div>
           </div>
-        );
-      })}
+        )}
+      </div>
+
+      {/* Navegación entre pasos */}
+      <div className="flex items-center justify-between">
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={paso === 0}
+          onClick={() => setPaso((p) => Math.max(0, p - 1))}
+        >
+          <ChevronLeft className="w-4 h-4 mr-1" />
+          Anterior
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={paso === total - 1}
+          onClick={() => setPaso((p) => Math.min(total - 1, p + 1))}
+        >
+          Siguiente
+          <ChevronRight className="w-4 h-4 ml-1" />
+        </Button>
+      </div>
     </div>
   );
 }
