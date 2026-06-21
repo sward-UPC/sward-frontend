@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { calcularRuta } from '@features/student/gamification';
 import { useStudentStreak } from '@features/student/useStudentStreak';
+import { useAuth } from '@core/auth/useAuth';
 import { useCountUp } from '@features/student/useCountUp';
 
 interface ConceptMasteryItem {
@@ -257,6 +258,11 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
   // Racha GLOBAL (todos los cursos): el mismo número en cualquier curso, no por curso.
   const { data: rachaGlobal } = useStudentStreak(estudianteId);
 
+  // Nombre real del alumno (de la sesión) para el saludo.
+  const { user } = useAuth();
+  const nombre = user?.firstName?.trim() || user?.email?.split('@')[0] || '';
+  const saludo = nombre ? `¡Hola, ${nombre}!` : '¡Hola!';
+
   // Navegación a la pestaña Recursos (preservando el curso seleccionado en la URL).
   const [searchParams, setSearchParams] = useSearchParams();
   const irARecursos = () => {
@@ -291,7 +297,7 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
   if (cm.length === 0) {
     return (
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">¡Hola!</h2>
+        <h2 className="text-xl font-semibold">{saludo}</h2>
         {courseName && (
           <p className="text-sm text-muted-foreground">
             Estás en <strong>{courseName}</strong>.
@@ -333,7 +339,7 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
     <div className="space-y-6">
       {/* 1 · Saludo + contexto */}
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">¡Hola!</h2>
+        <h2 className="text-xl font-semibold tracking-tight">{saludo}</h2>
         <p className="text-sm text-muted-foreground mt-1">
           {courseName ? (
             <>Este es tu resumen de hoy en <strong className="text-foreground">{courseName}</strong>. Sigue así.</>
