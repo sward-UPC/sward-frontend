@@ -388,7 +388,7 @@ function QuizBody({
       </div>
 
       {/* Pregunta actual */}
-      <p className="text-sm font-medium">{p.enunciado}</p>
+      <MiniMarkdown text={p.enunciado} className="text-sm font-medium" />
       <div className="grid gap-1.5">
         {p.opciones.map((opcion, oi) => {
           const seleccionada = elegida === oi;
@@ -749,7 +749,7 @@ function PracticaBody({
           <span className="w-7 h-7 rounded-full bg-violet-500/10 text-violet-600 text-sm font-bold flex items-center justify-center shrink-0">
             {paso + 1}
           </span>
-          <p className="text-sm flex-1 leading-relaxed">{e.enunciado}</p>
+          <MiniMarkdown text={e.enunciado} className="text-sm flex-1 leading-relaxed" />
         </div>
 
         {/* El alumno resuelve aquí (rich text WYSIWYG: negrita/cursiva/código/lista) */}
