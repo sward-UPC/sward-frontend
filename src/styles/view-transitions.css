@@ -1,0 +1,20 @@
+/*
+ * Animación de cambio de tema (claro ↔ oscuro): reveal circular que se expande
+ * desde el botón del toggle, como apagar/encender una lámpara. La expansión la
+ * maneja JS (ThemeContext) vía la View Transitions API; aquí solo desactivamos
+ * el cross-fade por defecto y fijamos el orden de capas para que el círculo se
+ * vea limpio (el tema nuevo encima, revelándose sobre el anterior).
+ */
+@supports (view-transition-name: root) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+  ::view-transition-new(root) {
+    z-index: 1;
+  }
+  ::view-transition-old(root) {
+    z-index: 0;
+  }
+}
