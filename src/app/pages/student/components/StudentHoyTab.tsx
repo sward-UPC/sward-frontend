@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { calcularRuta } from '@features/student/gamification';
 import { useStudentStreak } from '@features/student/useStudentStreak';
+import { useCountUp } from '@features/student/useCountUp';
 
 interface ConceptMasteryItem {
   concepto: string;
@@ -43,9 +44,10 @@ function Reveal({
   );
 }
 
-/** Anillo de progreso (SVG, sin dependencias) con el valor al centro. */
+/** Anillo de progreso (SVG) que se LLENA mientras el número cuenta hacia arriba. */
 function ProgressRing({ value, size = 104, stroke = 9 }: { value: number; size?: number; stroke?: number }) {
-  const v = Math.min(100, Math.max(0, value));
+  const objetivo = Math.min(100, Math.max(0, value));
+  const v = useCountUp(objetivo); // cuenta 0 → objetivo (el aro sigue al número)
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const offset = c - (v / 100) * c;
@@ -54,7 +56,7 @@ function ProgressRing({ value, size = 104, stroke = 9 }: { value: number; size?:
       className="relative shrink-0"
       style={{ width: size, height: size }}
       role="img"
-      aria-label={`Dominio promedio ${v} por ciento`}
+      aria-label={`Dominio promedio ${objetivo} por ciento`}
     >
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} className="fill-none stroke-muted" />
@@ -64,32 +66,105 @@ function ProgressRing({ value, size = 104, stroke = 9 }: { value: number; size?:
           r={r}
           strokeWidth={stroke}
           strokeLinecap="round"
-          className="fill-none stroke-primary transition-[stroke-dashoffset] duration-700 motion-reduce:transition-none"
+          className="fill-none stroke-primary"
           style={{ strokeDasharray: c, strokeDashoffset: offset }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold leading-none">{v}%</span>
+        <span className="text-2xl font-bold leading-none tabular-nums">{v}%</span>
         <span className="text-[10px] text-muted-foreground mt-0.5">dominio</span>
       </div>
     </div>
   );
 }
 
-/** Tarjeta de KPI con su valor real y un subtítulo motivador. */
+/** Barra de la ruta de aprendizaje que se llena y cuenta hacia arriba. */
+function BarraRuta({ completados, total }: { completados: number; total: number }) {
+  const pct = total > 0 ? Math.round((completados / total) * 100) : 0;
+  const pctAnim = useCountUp(pct);
+  const compAnim = useCountUp(completados);
+  const faltan = total - completados;
+  return (
+    <div className="flex-1 min-w-0 space-y-1.5">
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <span className="flex items-center gap-1.5 text-muted-foreground">
+          <Route className="w-4 h-4 text-primary" aria-hidden="true" />
+          Ruta de aprendizaje
+        </span>
+        <span className="font-semibold tabular-nums">
+          {compAnim}/{total}
+        </span>
+      </div>
+      <Progress value={pctAnim} />
+      <p className="text-xs text-muted-foreground">
+        {faltan <= 0
+          ? '¡Ruta completada, excelente!'
+          : `${faltan} ${faltan === 1 ? 'sección' : 'secciones'} para completar tu ruta`}
+      </p>
+    </div>
+  );
+}
+
+/** Card de racha CUSTOM: llama que titila/brilla mientras el número sube. */
+function RachaCard({ racha }: { racha: number }) {
+  const n = useCountUp(racha);
+  const activa = racha > 0;
+  const reduce =
+    typeof window !== 'undefined' &&
+    !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const animarLlama = activa && !reduce;
+  return (
+    <Card className="relative overflow-hidden">
+      <CardContent className="pt-6">
+        <div className="flex items-start gap-3">
+          <div className="relative shrink-0 rounded-[12px] p-2 bg-warning/10 text-warning">
+            {animarLlama && (
+              <span
+                className="absolute inset-0 rounded-[12px] bg-warning/25 blur-md animate-pulse"
+                aria-hidden="true"
+              />
+            )}
+            <Flame
+              className="w-5 h-5 relative"
+              aria-hidden="true"
+              style={
+                animarLlama
+                  ? { animation: 'sward-flame 1.3s ease-in-out infinite', transformOrigin: '50% 90%' }
+                  : undefined
+              }
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm text-muted-foreground">Días de racha</p>
+            <p className="text-2xl font-bold tabular-nums">{n}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {activa ? '¡Sigue conectándote a diario!' : 'Resuelve algo hoy para empezar'}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+      <style>{`@keyframes sward-flame{0%,100%{transform:scale(1) rotate(-3deg)}25%{transform:scale(1.12) rotate(3deg)}50%{transform:scale(.94) rotate(-1deg)}75%{transform:scale(1.07) rotate(2deg)}}`}</style>
+    </Card>
+  );
+}
+
+/** Tarjeta de KPI con su valor real (cuenta hacia arriba) y un subtítulo motivador. */
 function KpiCard({
   icon,
   label,
   value,
+  suffix = '',
   hint,
   accent,
 }: {
   icon: React.ReactNode;
   label: string;
-  value: string;
+  value: number;
+  suffix?: string;
   hint: string;
   accent?: string;
 }) {
+  const n = useCountUp(value);
   return (
     <Card>
       <CardContent className="pt-6">
@@ -99,7 +174,10 @@ function KpiCard({
           </div>
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="text-2xl font-bold tabular-nums">{value}</p>
+            <p className="text-2xl font-bold tabular-nums">
+              {n}
+              {suffix}
+            </p>
             <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>
           </div>
         </div>
@@ -190,8 +268,6 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
 
   const racha = rachaGlobal ?? 0;
   const ruta = calcularRuta(cm);
-  const rutaPct = ruta.total > 0 ? Math.round((ruta.completados / ruta.total) * 100) : 0;
-  const faltan = ruta.total - ruta.completados;
 
   return (
     <div className="space-y-6">
@@ -221,23 +297,7 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
             <CardContent>
               <div className="flex items-center gap-5">
                 <ProgressRing value={avgMastery} />
-                <div className="flex-1 min-w-0 space-y-1.5">
-                  <div className="flex items-center justify-between gap-2 text-sm">
-                    <span className="flex items-center gap-1.5 text-muted-foreground">
-                      <Route className="w-4 h-4 text-primary" />
-                      Ruta de aprendizaje
-                    </span>
-                    <span className="font-semibold tabular-nums">
-                      {ruta.completados}/{ruta.total}
-                    </span>
-                  </div>
-                  <Progress value={rutaPct} />
-                  <p className="text-xs text-muted-foreground">
-                    {faltan <= 0
-                      ? '¡Ruta completada, excelente!'
-                      : `${faltan} ${faltan === 1 ? 'sección' : 'secciones'} para completar tu ruta`}
-                  </p>
-                </div>
+                <BarraRuta completados={ruta.completados} total={ruta.total} />
               </div>
             </CardContent>
           </Card>
@@ -306,17 +366,11 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
       {/* 3 · Métricas reales (cards) */}
       <Reveal delay={80}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <KpiCard
-            icon={<Flame className="w-5 h-5" />}
-            label="Días de racha"
-            value={`${racha}`}
-            hint={racha > 0 ? '¡Sigue conectándote a diario!' : 'Resuelve algo hoy para empezar'}
-            accent="bg-warning/10 text-warning"
-          />
+          <RachaCard racha={racha} />
           <KpiCard
             icon={<BookOpen className="w-5 h-5" />}
             label="Por reforzar"
-            value={`${porReforzar}`}
+            value={porReforzar}
             hint={
               porReforzar === 0
                 ? 'Nada pendiente, ¡genial!'
@@ -327,7 +381,7 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
           <KpiCard
             icon={<Activity className="w-5 h-5" />}
             label="Interacciones"
-            value={`${totalInteractions}`}
+            value={totalInteractions}
             hint="Tu actividad en el curso"
             accent="bg-primary/10 text-primary"
           />
