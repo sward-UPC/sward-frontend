@@ -122,12 +122,9 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
     courseId,
   );
 
-  // Anima los charts (barras crecen, línea se dibuja) salvo si el usuario pidió
-  // reducir movimiento — en cuyo caso se dibujan al instante.
-  const reduceMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const animar = !reduceMotion;
+  // Animación de marca pedida explícitamente: las barras crecen y la línea se dibuja
+  // siempre (igual que Recharts por defecto / el radar; no se gatea con reduce-motion).
+  const animar = true;
 
   // Sin curso seleccionado todavía → skeleton (las queries no corren).
   if (!courseId) {
