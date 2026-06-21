@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { Bold, Italic, Code, List } from 'lucide-react';
 import { cn } from '../ui/utils';
 
@@ -20,6 +20,14 @@ export function RichTextEditor({
   placeholder?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+
+  // Setea el contenido inicial UNA sola vez (imperativo). NO usamos
+  // dangerouslySetInnerHTML porque React lo re-aplicaría en cada render → el cursor
+  // saltaba al inicio al escribir. Con `key={paso}` el padre lo remonta por ejercicio.
+  useEffect(() => {
+    if (ref.current && initialHtml) ref.current.innerHTML = initialHtml;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function emit() {
     const el = ref.current;
@@ -96,7 +104,6 @@ export function RichTextEditor({
           '[&_ul]:list-disc [&_ul]:ml-5 [&_ul]:my-1 [&_b]:font-semibold [&_strong]:font-semibold',
           'empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none',
         )}
-        dangerouslySetInnerHTML={{ __html: initialHtml }}
       />
     </div>
   );
