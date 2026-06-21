@@ -54,12 +54,14 @@ function Spinner() {
 function PrimaryBtn({ onClick, disabled, children }: { onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
   return (
     <button type={onClick ? "button" : "submit"} onClick={onClick} disabled={disabled}
-      className="w-full h-10 rounded-[12px] text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[.98] disabled:opacity-70"
+      className="w-full h-11 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card"
       style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
       {children}
     </button>
   );
 }
+
+const backBtnClass = "flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded";
 
 /* ─── Recovery: Email step ─── */
 interface ForgotEmailProps {
@@ -75,18 +77,20 @@ interface ForgotEmailProps {
 export function ForgotEmailScreen({ recEmail, recEmailErr, recLoading, onRecEmail, onRecEmailErr, onSendCode, onResetRecovery }: ForgotEmailProps) {
   return (
     <div className="flex-1 flex flex-col gap-5">
-      <button onClick={onResetRecovery} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground w-fit">
+      <button onClick={onResetRecovery} className={backBtnClass}>
         <ArrowLeft className="w-3.5 h-3.5" /> Volver
       </button>
       <div>
-        <div className="w-11 h-11 rounded-[12px] bg-primary/10 flex items-center justify-center mb-3"><Mail className="w-5 h-5 text-primary" /></div>
+        <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><Mail className="w-5 h-5 text-primary" /></div>
         <h2 className="font-bold text-lg">Recuperar contraseña</h2>
         <p className="text-sm text-muted-foreground mt-1">Te enviaremos un código de 6 dígitos a tu correo.</p>
       </div>
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Correo electrónico</label>
-        <Field type="email" value={recEmail} onChange={(v: string) => { onRecEmail(v); onRecEmailErr(""); }} placeholder="tu@institución.edu.pe" icon={Mail} />
-        {recEmailErr && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{recEmailErr}</p>}
+        <label className="text-sm font-medium" htmlFor="rec-email">Correo electrónico</label>
+        <Field id="rec-email" type="email" value={recEmail} autoComplete="email" invalid={!!recEmailErr}
+          describedBy={recEmailErr ? "rec-email-err" : undefined}
+          onChange={(v: string) => { onRecEmail(v); onRecEmailErr(""); }} placeholder="tu@institución.edu.pe" icon={Mail} />
+        {recEmailErr && <p id="rec-email-err" role="alert" className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{recEmailErr}</p>}
       </div>
       <PrimaryBtn onClick={onSendCode} disabled={recLoading}>
         {recLoading ? <><Spinner /> Enviando...</> : "Enviar código"}
@@ -111,23 +115,23 @@ interface ForgotCodeProps {
 export function ForgotCodeScreen({ recEmail, otp, otpErr, recLoading, resendTimer, onOtp, onVerifyCode, onResendTimer, onLoginScreen }: ForgotCodeProps) {
   return (
     <div className="flex-1 flex flex-col gap-5">
-      <button onClick={() => onLoginScreen("forgot-email")} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground w-fit">
+      <button onClick={() => onLoginScreen("forgot-email")} className={backBtnClass}>
         <ArrowLeft className="w-3.5 h-3.5" /> Cambiar correo
       </button>
       <div>
-        <div className="w-11 h-11 rounded-[12px] bg-primary/10 flex items-center justify-center mb-3"><ShieldCheck className="w-5 h-5 text-primary" /></div>
+        <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><ShieldCheck className="w-5 h-5 text-primary" /></div>
         <h2 className="font-bold text-lg">Verificación</h2>
         <p className="text-sm text-muted-foreground mt-1">Código enviado a <strong>{recEmail}</strong></p>
       </div>
       <OTPInput value={otp} onChange={onOtp} />
-      {otpErr && <p className="text-xs text-destructive text-center flex justify-center items-center gap-1"><AlertCircle className="w-3 h-3" />{otpErr}</p>}
+      {otpErr && <p role="alert" className="text-xs text-destructive text-center flex justify-center items-center gap-1"><AlertCircle className="w-3 h-3" />{otpErr}</p>}
       <PrimaryBtn onClick={onVerifyCode} disabled={recLoading}>
         {recLoading ? <><Spinner /> Verificando...</> : "Verificar código"}
       </PrimaryBtn>
       <div className="text-center">
         {resendTimer > 0
           ? <p className="text-xs text-muted-foreground">Reenviar en <strong>{resendTimer}s</strong></p>
-          : <button onClick={() => { onResendTimer(60); onOtp(["", "", "", "", "", ""]); }} className="text-xs text-primary flex items-center gap-1 mx-auto"><RotateCcw className="w-3 h-3" />Reenviar código</button>}
+          : <button onClick={() => { onResendTimer(60); onOtp(["", "", "", "", "", ""]); }} className="text-xs font-medium text-primary hover:text-primary/70 transition-colors flex items-center gap-1 mx-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"><RotateCcw className="w-3 h-3" />Reenviar código</button>}
       </div>
       <p className="text-xs text-center text-muted-foreground">Código de prueba: <span className="font-mono font-bold text-foreground">123456</span></p>
     </div>
@@ -152,19 +156,27 @@ export function ForgotNewPassScreen({ newPw, confirmPw, showNewPw, newPwErr, rec
   return (
     <div className="flex-1 flex flex-col gap-5">
       <div>
-        <div className="w-11 h-11 rounded-[12px] bg-primary/10 flex items-center justify-center mb-3"><Lock className="w-5 h-5 text-primary" /></div>
+        <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><Lock className="w-5 h-5 text-primary" /></div>
         <h2 className="font-bold text-lg">Nueva contraseña</h2>
         <p className="text-sm text-muted-foreground mt-1">Mínimo 8 caracteres.</p>
       </div>
       <div className="space-y-3">
-        <Field type={showNewPw ? "text" : "password"} value={newPw}
-          onChange={(v: string) => { onNewPw(v); onNewPwErr(""); }}
-          placeholder="Nueva contraseña" icon={Lock}
-          right={<button type="button" tabIndex={-1} onClick={() => onShowNewPw((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">{showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>}
-        />
-        <PasswordStrength pw={newPw} />
-        <Field type="password" value={confirmPw} onChange={(v: string) => { onConfirmPw(v); onNewPwErr(""); }} placeholder="Confirmar contraseña" icon={Lock} />
-        {newPwErr && <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{newPwErr}</p>}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium" htmlFor="rec-newpw">Nueva contraseña</label>
+          <Field id="rec-newpw" type={showNewPw ? "text" : "password"} value={newPw} autoComplete="new-password" invalid={!!newPwErr}
+            onChange={(v: string) => { onNewPw(v); onNewPwErr(""); }}
+            placeholder="Nueva contraseña" icon={Lock}
+            right={<button type="button" tabIndex={-1} onClick={() => onShowNewPw((p) => !p)} aria-label={showNewPw ? "Ocultar contraseña" : "Mostrar contraseña"} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer">{showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>}
+          />
+          <PasswordStrength pw={newPw} />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium" htmlFor="rec-confirmpw">Confirmar contraseña</label>
+          <Field id="rec-confirmpw" type={showNewPw ? "text" : "password"} value={confirmPw} autoComplete="new-password" invalid={!!newPwErr}
+            describedBy={newPwErr ? "rec-newpw-err" : undefined}
+            onChange={(v: string) => { onConfirmPw(v); onNewPwErr(""); }} placeholder="Confirmar contraseña" icon={Lock} />
+          {newPwErr && <p id="rec-newpw-err" role="alert" className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{newPwErr}</p>}
+        </div>
       </div>
       <PrimaryBtn onClick={onSetNewPw} disabled={recLoading}>
         {recLoading ? <><Spinner /> Guardando...</> : "Guardar contraseña"}
