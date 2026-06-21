@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Wand2,
   BookOpen,
@@ -22,9 +22,11 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { Textarea } from '../ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { cn } from '../ui/utils';
+import { burstConfetti, sideCannons } from './confetti';
+import { MiniMarkdown } from './MiniMarkdown';
+import { RichTextArea } from './RichTextArea';
 import {
   registrarResultadoQuiz,
   verificarEjercicio,
@@ -91,7 +93,19 @@ function LearningHint({ children }: { children: React.ReactNode }) {
  */
 export function GeneratedMaterial({ material, courseId }: GeneratedMaterialProps) {
   const [abierto, setAbierto] = useState<number | null>(null);
-  if (!material.disponible || material.recursos.length === 0) return null;
+  const listo = material.disponible && material.recursos.length > 0;
+
+  // Confeti cuando el material termina de generar (una vez por concepto en la sesión).
+  useEffect(() => {
+    if (!listo) return;
+    const clave = `sward-confetti:${material.concepto ?? 'material'}`;
+    if (sessionStorage.getItem(clave)) return;
+    sessionStorage.setItem(clave, '1');
+    const t = setTimeout(burstConfetti, 250);
+    return () => clearTimeout(t);
+  }, [listo, material.concepto]);
+
+  if (!listo) return null;
   const concepto = material.concepto ?? 'tu concepto más débil';
   const dominio = material.dominio ?? null;
   const seleccion = abierto !== null ? material.recursos[abierto] : null;
@@ -255,6 +269,7 @@ function QuizBody({
 
   async function finalizar() {
     setFinalizado(true);
+    if (pct >= 60) sideCannons();
     setRegistrando(true);
     try {
       await registrarResultadoQuiz({ cursoId: courseId, concepto, totalPreguntas: total, correctas });
@@ -405,41 +420,66 @@ function QuizBody({
   );
 }
 
-/** Mini-lección de lectura + flashcards para memorizar (se voltean al tocar). */
+/**
+ * Lectura con dos modos: "Lección" (texto) y "Flashcards" (tarjetas que se voltean).
+ * Al activar flashcards, la lección se oculta para enfocar la memorización.
+ */
 function LecturaBody({ recurso }: { recurso: RecursoLectura }) {
   const parrafos = recurso.contenido
     .split('\n')
     .map((p) => p.trim())
     .filter(Boolean);
   const flashcards = recurso.flashcards ?? [];
+  const [modo, setModo] = useState<'leccion' | 'flashcards'>('leccion');
 
   return (
-    <div className="space-y-5">
-      {/* Mini-lección */}
-      <div className="space-y-3">
-        {parrafos.map((parrafo, i) => (
-          <p
-            key={i}
-            className={cn(
-              'text-sm leading-relaxed',
-              i === 0 ? 'text-foreground font-medium' : 'text-muted-foreground',
-            )}
-          >
-            {parrafo}
-          </p>
-        ))}
-      </div>
-
-      {/* Flashcards para memorizar */}
+    <div className="space-y-4">
+      {/* Toggle de modo (solo si hay flashcards) */}
       {flashcards.length > 0 && (
-        <div className="space-y-2.5">
-          <div className="flex items-center gap-2">
-            <Repeat2 className="w-4 h-4 text-violet-600" />
-            <p className="text-sm font-semibold">Flashcards · toca para voltear</p>
-            <Badge variant="secondary" className="text-[10px]">
-              {flashcards.length}
-            </Badge>
-          </div>
+        <div className="inline-flex rounded-[10px] border bg-muted/40 p-0.5 text-sm">
+          {(['leccion', 'flashcards'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setModo(m)}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1 transition-colors',
+                modo === m
+                  ? 'bg-background shadow-sm font-medium'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {m === 'leccion' ? (
+                <>
+                  <BookOpen className="w-3.5 h-3.5" /> Lección
+                </>
+              ) : (
+                <>
+                  <Repeat2 className="w-3.5 h-3.5" /> Flashcards ({flashcards.length})
+                </>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {modo === 'leccion' ? (
+        <div className="space-y-3 animate-in fade-in-50 duration-300">
+          {parrafos.map((parrafo, i) => (
+            <p
+              key={i}
+              className={cn(
+                'text-sm leading-relaxed',
+                i === 0 ? 'text-foreground font-medium' : 'text-muted-foreground',
+              )}
+            >
+              {parrafo}
+            </p>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-2.5 animate-in fade-in-50 duration-300">
+          <p className="text-xs text-muted-foreground">Toca una tarjeta para voltearla.</p>
           <div className="grid sm:grid-cols-2 gap-3">
             {flashcards.map((fc, i) => (
               <Flashcard key={i} card={fc} />
@@ -451,24 +491,37 @@ function LecturaBody({ recurso }: { recurso: RecursoLectura }) {
   );
 }
 
-/** Tarjeta que se voltea (frente: concepto · reverso: definición). */
+/** Tarjeta con animación de volteo 3D (frente: concepto · reverso: definición). */
 function Flashcard({ card }: { card: { frente: string; reverso: string } }) {
   const [volteada, setVolteada] = useState(false);
   return (
     <button
       type="button"
       onClick={() => setVolteada((v) => !v)}
-      className={cn(
-        'min-h-24 rounded-[12px] border p-3 text-left transition-colors flex flex-col justify-center gap-1',
-        volteada
-          ? 'bg-violet-500/[0.07] border-violet-400/40'
-          : 'bg-background hover:border-violet-400/40',
-      )}
+      className="h-32 w-full text-left [perspective:1000px]"
     >
-      <span className="text-[10px] uppercase tracking-wide font-semibold text-violet-600">
-        {volteada ? 'Definición' : 'Concepto'}
-      </span>
-      <span className="text-sm">{volteada ? card.reverso : card.frente}</span>
+      <div
+        className={cn(
+          'relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]',
+          volteada && '[transform:rotateY(180deg)]',
+        )}
+      >
+        {/* Frente: concepto */}
+        <div className="absolute inset-0 [backface-visibility:hidden] rounded-[12px] border bg-background p-3 flex flex-col justify-center gap-1">
+          <span className="text-[10px] uppercase tracking-wide font-semibold text-violet-600">
+            Concepto
+          </span>
+          <span className="text-sm font-medium">{card.frente}</span>
+          <span className="text-[10px] text-muted-foreground mt-auto">toca para ver la definición</span>
+        </div>
+        {/* Reverso: definición */}
+        <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-[12px] border border-violet-400/40 bg-violet-500/[0.07] p-3 flex flex-col justify-center gap-1">
+          <span className="text-[10px] uppercase tracking-wide font-semibold text-violet-600">
+            Definición
+          </span>
+          <span className="text-sm">{card.reverso}</span>
+        </div>
+      </div>
     </button>
   );
 }
@@ -502,6 +555,7 @@ function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
         respuesta: texto,
       });
       setVeredicto((m) => ({ ...m, [paso]: r }));
+      if (r.aprobado) burstConfetti();
     } catch {
       setVeredicto((m) => ({
         ...m,
@@ -549,13 +603,12 @@ function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
           <p className="text-sm flex-1 leading-relaxed">{e.enunciado}</p>
         </div>
 
-        {/* El alumno resuelve aquí */}
-        <Textarea
+        {/* El alumno resuelve aquí (rich text con formato) */}
+        <RichTextArea
           value={texto}
-          onChange={(ev) => setRespuestaTexto((r) => ({ ...r, [paso]: ev.target.value }))}
-          placeholder="Escribe tu respuesta…"
+          onChange={(val) => setRespuestaTexto((r) => ({ ...r, [paso]: val }))}
+          placeholder="Escribe tu respuesta… (puedes dar formato: negrita, código, listas)"
           disabled={aprobado}
-          className="min-h-24 text-sm"
         />
 
         {!aprobado ? (
@@ -603,7 +656,7 @@ function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
               >
                 {aprobado ? '¡Correcto!' : 'Casi — sigue intentando'}
               </p>
-              <p className="text-sm text-muted-foreground leading-relaxed">{v.feedback}</p>
+              <MiniMarkdown text={v.feedback} className="text-sm text-muted-foreground" />
             </div>
           </div>
         )}
@@ -661,7 +714,7 @@ function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
               <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
                 Solución
               </p>
-              <p className="text-sm text-muted-foreground leading-relaxed">{e.solucion}</p>
+              <MiniMarkdown text={e.solucion} className="text-sm text-muted-foreground" />
             </div>
           </div>
         )}
