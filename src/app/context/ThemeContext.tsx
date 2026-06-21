@@ -1,4 +1,9 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
+
+/** document.startViewTransition aún no está en los tipos de TS por defecto. */
+type DocWithVT = Document & {
+  startViewTransition?: (cb: () => void) => { ready: Promise<void> };
+};
 
 interface ThemeState {
   darkMode: boolean;
@@ -23,11 +28,62 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [compactMode, setCompactModeState] = useState(false);
   const [language, setLanguageState] = useState<"es" | "en">("es");
 
-  const setDarkMode = (v: boolean) => {
+  // Última posición del puntero: el reveal circular del tema nace justo del
+  // punto que tocaste (el botón de la lámpara). Por defecto, esquina sup. dcha.
+  // (donde suelen estar los toggles del topbar).
+  const lastPointer = useRef({ x: window.innerWidth - 48, y: 24 });
+  useEffect(() => {
+    const onPointer = (e: PointerEvent) => {
+      lastPointer.current = { x: e.clientX, y: e.clientY };
+    };
+    // Captura: corre antes que el onClick del botón, así las coordenadas ya
+    // están listas cuando el handler llama a setDarkMode.
+    window.addEventListener("pointerdown", onPointer, true);
+    return () => window.removeEventListener("pointerdown", onPointer, true);
+  }, []);
+
+  const aplicarTema = (v: boolean) => {
     setDarkModeState(v);
-    const html = document.documentElement;
-    if (v) html.classList.add("dark");
-    else html.classList.remove("dark");
+    document.documentElement.classList.toggle("dark", v);
+  };
+
+  const setDarkMode = (v: boolean) => {
+    const doc = document as DocWithVT;
+    // Sin soporte de View Transitions (Firefox, Safari antiguos) → cambio directo.
+    if (typeof doc.startViewTransition !== "function") {
+      aplicarTema(v);
+      return;
+    }
+
+    const { x, y } = lastPointer.current;
+    // Radio hasta la esquina más lejana, para que el círculo cubra toda la pantalla.
+    const endRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y),
+    );
+
+    const transition = doc.startViewTransition(() => aplicarTema(v));
+    transition.ready
+      .then(() => {
+        document.documentElement.animate(
+          {
+            clipPath: [
+              `circle(0px at ${x}px ${y}px)`,
+              `circle(${endRadius}px at ${x}px ${y}px)`,
+            ],
+          },
+          {
+            duration: 480,
+            easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+            // El tema NUEVO se revela expandiéndose desde el toggle: al oscurecer,
+            // la "oscuridad" se derrama desde la lámpara; al aclarar, la luz.
+            pseudoElement: "::view-transition-new(root)",
+          },
+        );
+      })
+      .catch(() => {
+        // Si la transición se cancela, el tema ya quedó aplicado en el callback.
+      });
   };
 
   const setCompactMode = (v: boolean) => {
