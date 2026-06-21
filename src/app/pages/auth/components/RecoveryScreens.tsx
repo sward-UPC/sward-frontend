@@ -40,7 +40,7 @@ export function OTPInput({ value, onChange }: { value: string[]; onChange: (v: s
         <input key={i} ref={(el) => { inputs.current[i] = el; }} type="text" inputMode="numeric"
           maxLength={1} value={value[i] || ""} onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKey(i, e)}
-          className={`w-10 h-11 text-center rounded-[10px] border-2 outline-none transition-all focus:border-primary ${value[i] ? "border-primary bg-primary/5" : "border-border bg-muted/30"}`}
+          className={`w-10 h-12 text-center rounded-[10px] border-2 outline-none transition-all focus:border-primary ${value[i] ? "border-primary bg-primary/5" : "border-border bg-muted/30"}`}
           style={{ fontSize: 18, fontWeight: 600 }} aria-label={`Dígito ${i + 1}`} />
       ))}
     </div>
@@ -54,7 +54,7 @@ function Spinner() {
 function PrimaryBtn({ onClick, disabled, children }: { onClick?: () => void; disabled?: boolean; children: React.ReactNode }) {
   return (
     <button type={onClick ? "button" : "submit"} onClick={onClick} disabled={disabled}
-      className="w-full h-11 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+      className="w-full h-12 rounded-xl text-base font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card"
       style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
       {children}
     </button>
@@ -76,7 +76,7 @@ interface ForgotEmailProps {
 
 export function ForgotEmailScreen({ recEmail, recEmailErr, recLoading, onRecEmail, onRecEmailErr, onSendCode, onResetRecovery }: ForgotEmailProps) {
   return (
-    <div className="flex-1 flex flex-col gap-5">
+    <div className="flex-1 flex flex-col gap-6">
       <button onClick={onResetRecovery} className={backBtnClass}>
         <ArrowLeft className="w-3.5 h-3.5" /> Volver
       </button>
@@ -114,7 +114,7 @@ interface ForgotCodeProps {
 
 export function ForgotCodeScreen({ recEmail, otp, otpErr, recLoading, resendTimer, onOtp, onVerifyCode, onResendTimer, onLoginScreen }: ForgotCodeProps) {
   return (
-    <div className="flex-1 flex flex-col gap-5">
+    <div className="flex-1 flex flex-col gap-6">
       <button onClick={() => onLoginScreen("forgot-email")} className={backBtnClass}>
         <ArrowLeft className="w-3.5 h-3.5" /> Cambiar correo
       </button>
@@ -154,7 +154,7 @@ interface ForgotNewPassProps {
 
 export function ForgotNewPassScreen({ newPw, confirmPw, showNewPw, newPwErr, recLoading, onNewPw, onConfirmPw, onShowNewPw, onNewPwErr, onSetNewPw }: ForgotNewPassProps) {
   return (
-    <div className="flex-1 flex flex-col gap-5">
+    <div className="flex-1 flex flex-col gap-6">
       <div>
         <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><Lock className="w-5 h-5 text-primary" /></div>
         <h2 className="font-bold text-lg">Nueva contraseña</h2>

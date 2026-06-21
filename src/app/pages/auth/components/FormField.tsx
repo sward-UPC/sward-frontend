@@ -45,7 +45,7 @@ export function FormField({
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
         className={cn(
-          'w-full h-11 rounded-xl border bg-card/80 text-sm transition-all duration-200',
+          'w-full h-12 rounded-xl border bg-card/80 text-sm transition-all duration-200',
           'placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2',
           invalid
             ? 'border-destructive focus-visible:ring-destructive/25 focus-visible:border-destructive'
