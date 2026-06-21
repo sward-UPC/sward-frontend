@@ -300,7 +300,7 @@ export function GeneratedMaterial({
                 </div>
                 {completado ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-[11px] font-medium text-success shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                     Completado
                   </span>
                 ) : (
@@ -319,7 +319,7 @@ export function GeneratedMaterial({
               variant="outline"
               onClick={onRegenerar}
               disabled={regenerando}
-              className="border-violet-400/40 text-violet-700 hover:bg-violet-500/5"
+              className="w-full sm:w-auto border-violet-400/40 text-violet-700 hover:bg-violet-500/5"
             >
               {regenerando ? (
                 <>
@@ -339,7 +339,7 @@ export function GeneratedMaterial({
 
       {/* Modal con el recurso interactivo */}
       <Dialog open={abierto !== null} onOpenChange={(o) => !o && setAbierto(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+        <DialogContent className="sm:max-w-3xl">
 
           {seleccion && (
             <>
@@ -910,7 +910,7 @@ function PracticaBody({
           <span className="w-7 h-7 rounded-full bg-violet-500/10 text-violet-600 text-sm font-bold flex items-center justify-center shrink-0">
             {paso + 1}
           </span>
-          <MiniMarkdown text={e.enunciado} className="text-sm flex-1 leading-relaxed" />
+          <MiniMarkdown text={e.enunciado} className="text-sm flex-1 min-w-0 leading-relaxed" />
         </div>
 
         {/* El alumno resuelve aquí (rich text WYSIWYG: negrita/cursiva/código/lista) */}
@@ -961,7 +961,7 @@ function PracticaBody({
             ) : (
               <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             )}
-            <div>
+            <div className="min-w-0">
               <p
                 className={cn(
                   'text-[10px] uppercase tracking-wide font-semibold',
@@ -990,7 +990,7 @@ function PracticaBody({
             ) : (
               <div className="flex items-start gap-2 rounded-[10px] border border-amber-500/25 bg-amber-500/10 px-3 py-2.5">
                 <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-wide font-semibold text-amber-600">
                     Pista
                   </p>
@@ -1050,7 +1050,7 @@ function PracticaBody({
         {revelada[paso] && (
           <div className="flex items-start gap-2 rounded-[10px] border bg-muted/40 px-3 py-2.5">
             <Eye className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-            <div>
+            <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
                 Solución
               </p>
