@@ -122,6 +122,13 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
     courseId,
   );
 
+  // Anima los charts (barras crecen, línea se dibuja) salvo si el usuario pidió
+  // reducir movimiento — en cuyo caso se dibujan al instante.
+  const reduceMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const animar = !reduceMotion;
+
   // Sin curso seleccionado todavía → skeleton (las queries no corren).
   if (!courseId) {
     return <ProgresoSkeleton />;
@@ -269,7 +276,9 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
                       name="Dominio %"
                       dot={{ r: 3, fill: PRIMARY }}
                       activeDot={{ r: 5 }}
-                      isAnimationActive={false}
+                      isAnimationActive={animar}
+                      animationDuration={900}
+                      animationEasing="ease-out"
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -332,7 +341,14 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
                       cursor={{ fill: 'rgba(79, 70, 229, 0.06)' }}
                       formatter={(v: number) => [`${v}%`, 'Dominio']}
                     />
-                    <Bar dataKey="mastery" name="Dominio %" radius={[0, 6, 6, 0]} isAnimationActive={false}>
+                    <Bar
+                      dataKey="mastery"
+                      name="Dominio %"
+                      radius={[0, 6, 6, 0]}
+                      isAnimationActive={animar}
+                      animationDuration={800}
+                      animationEasing="ease-out"
+                    >
                       {conceptBars.map((c) => (
                         // Resaltamos secciones en riesgo bajando la opacidad (mismo color aprobado).
                         <Cell key={c.concept} fill={PRIMARY} fillOpacity={c.mastery < 55 ? 0.4 : 1} />
