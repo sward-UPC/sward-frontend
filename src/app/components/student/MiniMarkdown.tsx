@@ -21,16 +21,16 @@ export function MiniMarkdown({
   }
   const bloques = text.split(/```/);
   return (
-    <div className={className}>
+    <div className={`${className ?? ''} min-w-0 break-words [overflow-wrap:anywhere]`}>
       {bloques.map((bloque, i) => {
         // Índices impares = dentro de ``` ``` → bloque de código.
         if (i % 2 === 1) {
           return (
             <pre
               key={i}
-              className="my-2 overflow-x-auto rounded-[8px] bg-muted px-3 py-2 text-xs font-mono leading-relaxed"
+              className="my-2 max-w-full overflow-x-auto rounded-[8px] bg-muted px-3 py-2 text-xs font-mono leading-relaxed"
             >
-              <code>{bloque.replace(/^\n/, '').replace(/\n$/, '')}</code>
+              <code className="whitespace-pre">{bloque.replace(/^\n/, '').replace(/\n$/, '')}</code>
             </pre>
           );
         }
@@ -51,7 +51,7 @@ function renderParrafos(texto: string): ReactNode {
     out.push(
       <ul key={key} className="my-1.5 ml-4 list-disc space-y-0.5">
         {lista.map((li, j) => (
-          <li key={j}>{inline(li)}</li>
+          <li key={j} className="break-words">{inline(li)}</li>
         ))}
       </ul>,
     );
@@ -84,7 +84,7 @@ function renderParrafos(texto: string): ReactNode {
     volcarLista(`ul-${i}`);
     if (linea.trim()) {
       out.push(
-        <p key={`p-${i}`} className="my-1 leading-relaxed">
+        <p key={`p-${i}`} className="my-1 leading-relaxed break-words">
           {inline(linea)}
         </p>,
       );
@@ -203,7 +203,7 @@ function inline(texto: string): ReactNode {
     }
     if (parte.startsWith('`') && parte.endsWith('`')) {
       return (
-        <code key={i} className="rounded bg-muted px-1 py-0.5 text-[0.85em] font-mono">
+        <code key={i} className="rounded bg-muted px-1 py-0.5 text-[0.85em] font-mono break-words [overflow-wrap:anywhere]">
           {parte.slice(1, -1)}
         </code>
       );
