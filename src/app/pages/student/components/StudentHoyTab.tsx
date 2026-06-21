@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import type { StudentTabProps } from '@features/student/useStudentContext';
 import { useStudentDetail } from '@features/teacher/hooks/useStudentDetail';
@@ -105,19 +106,45 @@ function BarraRuta({ completados, total }: { completados: number; total: number 
   );
 }
 
-/** Card de racha CUSTOM: llama que titila/brilla mientras el número sube. */
+/**
+ * Card de racha CUSTOM con secuencia de fuego: el número (1) se enciende y cuenta con
+ * colores de fuego, (2) estalla en una llama, y (3) renace como el número final.
+ */
 function RachaCard({ racha }: { racha: number }) {
   const n = useCountUp(racha);
   const activa = racha > 0;
-  // La llama es una animación de marca pedida explícitamente; no se desactiva con
-  // reduce-motion (igual que los charts de Recharts).
-  const animarLlama = activa;
+  const [fase, setFase] = useState<'ignite' | 'flame' | 'final'>('ignite');
+
+  useEffect(() => {
+    if (!activa) {
+      setFase('final');
+      return;
+    }
+    setFase('ignite');
+    const t1 = window.setTimeout(() => setFase('flame'), 750);
+    const t2 = window.setTimeout(() => setFase('final'), 1200);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [racha, activa]);
+
+  // Texto con degradado de fuego (efecto, no parte de la paleta del UI).
+  const fireText: React.CSSProperties = {
+    backgroundImage: 'linear-gradient(180deg,#fbbf24 0%,#f97316 55%,#ef4444 100%)',
+    WebkitBackgroundClip: 'text',
+    backgroundClip: 'text',
+    color: 'transparent',
+    filter: 'drop-shadow(0 0 7px rgba(249,115,22,0.6))',
+  };
+
   return (
     <Card className="relative overflow-hidden">
       <CardContent className="pt-6">
         <div className="flex items-start gap-3">
+          {/* Chip de llama (titila siempre que la racha está viva) */}
           <div className="relative shrink-0 rounded-[12px] p-2 bg-warning/10 text-warning">
-            {animarLlama && (
+            {activa && (
               <span
                 className="absolute inset-0 rounded-[12px] bg-warning/25 blur-md animate-pulse"
                 aria-hidden="true"
@@ -127,22 +154,56 @@ function RachaCard({ racha }: { racha: number }) {
               className="w-5 h-5 relative"
               aria-hidden="true"
               style={
-                animarLlama
+                activa
                   ? { animation: 'sward-flame 1.3s ease-in-out infinite', transformOrigin: '50% 90%' }
                   : undefined
               }
             />
           </div>
+
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">Días de racha</p>
-            <p className="text-2xl font-bold tabular-nums">{n}</p>
+            {/* Zona del número con la secuencia: enciende → llama → número final */}
+            <div className="relative h-8 flex items-center" aria-label={`${racha} días de racha`}>
+              {!activa ? (
+                <span className="text-2xl font-bold tabular-nums">0</span>
+              ) : fase === 'ignite' ? (
+                <span
+                  className="text-2xl font-bold tabular-nums"
+                  style={{ ...fireText, animation: 'ember-flicker .4s ease-in-out infinite' }}
+                >
+                  {n}
+                </span>
+              ) : fase === 'flame' ? (
+                <Flame
+                  className="w-9 h-9 text-orange-500"
+                  aria-hidden="true"
+                  style={{
+                    animation: 'flame-burst .5s ease-out forwards',
+                    filter: 'drop-shadow(0 0 10px rgba(239,68,68,0.7))',
+                  }}
+                />
+              ) : (
+                <span
+                  className="text-2xl font-bold tabular-nums"
+                  style={{ animation: 'number-pop .45s cubic-bezier(.2,1.3,.4,1) both' }}
+                >
+                  {racha}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {activa ? '¡Sigue conectándote a diario!' : 'Resuelve algo hoy para empezar'}
+              {activa ? '¡En llamas! Sigue así a diario' : 'Resuelve algo hoy para empezar'}
             </p>
           </div>
         </div>
       </CardContent>
-      <style>{`@keyframes sward-flame{0%,100%{transform:scale(1) rotate(-3deg)}25%{transform:scale(1.12) rotate(3deg)}50%{transform:scale(.94) rotate(-1deg)}75%{transform:scale(1.07) rotate(2deg)}}`}</style>
+      <style>{`
+        @keyframes sward-flame{0%,100%{transform:scale(1) rotate(-3deg)}25%{transform:scale(1.12) rotate(3deg)}50%{transform:scale(.94) rotate(-1deg)}75%{transform:scale(1.07) rotate(2deg)}}
+        @keyframes ember-flicker{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+        @keyframes flame-burst{0%{transform:scale(.3) translateY(8px);opacity:0}35%{opacity:1}100%{transform:scale(1.7) translateY(-8px);opacity:0}}
+        @keyframes number-pop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+      `}</style>
     </Card>
   );
 }
