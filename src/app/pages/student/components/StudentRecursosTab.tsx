@@ -85,7 +85,7 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
       )}
 
       {/* Generado para ti (LLM) — material nuevo para el concepto débil (Fase 4) */}
-      {material && <GeneratedMaterial material={material} />}
+      {material && courseId && <GeneratedMaterial material={material} courseId={courseId} />}
 
       {/* Todos los recursos del curso, agrupados por sección */}
       <Card>
