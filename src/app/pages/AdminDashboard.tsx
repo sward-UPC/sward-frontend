@@ -49,7 +49,7 @@ export function AdminDashboard() {
             )}
             {dash.activeTab === "usuarios" && (
               <UsersTable
-                users={dash.filteredUsers}
+                users={dash.users}
                 total={dash.usersTotal}
                 isLoading={dash.usersLoading}
                 isError={dash.usersError}

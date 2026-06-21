@@ -1,10 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 
-/** document.startViewTransition aún no está en los tipos de TS por defecto. */
-type DocWithVT = Document & {
-  startViewTransition?: (cb: () => void) => { ready: Promise<void> };
-};
-
 interface ThemeState {
   darkMode: boolean;
   compactMode: boolean;
@@ -47,43 +42,62 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle("dark", v);
   };
 
+  // Ref para limpiar una onda en curso si el usuario vuelve a togglear rápido.
+  const waveCleanup = useRef<{ timer: number; targets: HTMLElement[] } | null>(null);
+
+  /**
+   * Cambia el tema con una onda que se propaga componente por componente desde
+   * el botón del toggle (como una "infección"): cada card se oscurece/aclara
+   * con un retardo proporcional a su distancia al puntero. Es CSS puro (transición
+   * de color con transition-delay por elemento), así funciona en todos los
+   * navegadores y deja la UI interactiva durante el efecto.
+   */
   const setDarkMode = (v: boolean) => {
-    const doc = document as DocWithVT;
-    // Sin soporte de View Transitions (Firefox, Safari antiguos) → cambio directo.
-    if (typeof doc.startViewTransition !== "function") {
-      aplicarTema(v);
-      return;
+    const root = document.documentElement;
+
+    // Si había una onda activa, límpiala antes de empezar otra.
+    if (waveCleanup.current) {
+      window.clearTimeout(waveCleanup.current.timer);
+      waveCleanup.current.targets.forEach((el) => { el.style.transitionDelay = ""; });
+      waveCleanup.current = null;
     }
 
     const { x, y } = lastPointer.current;
-    // Radio hasta la esquina más lejana, para que el círculo cubra toda la pantalla.
-    const endRadius = Math.hypot(
-      Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y),
+    const SPEED = 0.5; // ms de retardo por píxel de distancia (menor = onda más rápida)
+    const MAX_DELAY = 700; // tope para que ningún componente tarde demasiado
+    const DURATION = 650; // debe coincidir con view-transitions.css
+
+    const targets = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-slot="card"], [data-theme-wave]'),
     );
 
-    const transition = doc.startViewTransition(() => aplicarTema(v));
-    transition.ready
-      .then(() => {
-        document.documentElement.animate(
-          {
-            clipPath: [
-              `circle(0px at ${x}px ${y}px)`,
-              `circle(${endRadius}px at ${x}px ${y}px)`,
-            ],
-          },
-          {
-            duration: 480,
-            easing: "cubic-bezier(0.4, 0, 0.2, 1)",
-            // El tema NUEVO se revela expandiéndose desde el toggle: al oscurecer,
-            // la "oscuridad" se derrama desde la lámpara; al aclarar, la luz.
-            pseudoElement: "::view-transition-new(root)",
-          },
-        );
-      })
-      .catch(() => {
-        // Si la transición se cancela, el tema ya quedó aplicado en el callback.
-      });
+    root.classList.add("theme-anim");
+
+    let maxDelay = 0;
+    for (const el of targets) {
+      const r = el.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const dist = Math.hypot(cx - x, cy - y);
+      const delay = Math.min(dist * SPEED, MAX_DELAY);
+      el.style.transitionDelay = `${delay}ms`;
+      if (delay > maxDelay) maxDelay = delay;
+    }
+
+    // Aplica el tema tras un par de frames para que el navegador ya tenga
+    // activas las transiciones (.theme-anim) y los delays inline; así el cambio
+    // de tokens dispara la onda en vez de un salto instantáneo.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => aplicarTema(v));
+    });
+
+    const timer = window.setTimeout(() => {
+      root.classList.remove("theme-anim");
+      targets.forEach((el) => { el.style.transitionDelay = ""; });
+      waveCleanup.current = null;
+    }, maxDelay + DURATION + 100);
+
+    waveCleanup.current = { timer, targets };
   };
 
   const setCompactMode = (v: boolean) => {
