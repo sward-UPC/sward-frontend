@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -54,6 +55,26 @@ function agruparPorSeccion(recursos: CourseResource[]): { seccion: string; items
   return grupos;
 }
 
+/** Entrada con fade/slide sutil y stagger; respeta prefers-reduced-motion. */
+function Reveal({
+  children,
+  delay = 0,
+  className = '',
+}: {
+  children: ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`animate-in fade-in-50 slide-in-from-bottom-2 duration-300 fill-mode-both motion-reduce:animate-none ${className}`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
+
 /** Una sección colapsable del catálogo (colapsada por defecto para no alargar). */
 function CatalogSection({
   seccion,
@@ -68,25 +89,33 @@ function CatalogSection({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const numVistos = items.filter((r) => vistos.has(r.url)).length;
+  const todosVistos = numVistos === items.length && items.length > 0;
 
   return (
-    <div className="rounded-[12px] border overflow-hidden">
+    <div className="rounded-[12px] border overflow-hidden transition-colors hover:border-primary/30">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/40 transition-colors"
+        aria-expanded={open}
+        aria-label={`${seccion}: ${items.length} recurso${items.length === 1 ? '' : 's'}${
+          numVistos > 0 ? `, ${numVistos} visto${numVistos === 1 ? '' : 's'}` : ''
+        }`}
+        className="w-full flex items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
       >
         <ChevronDown
-          className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 motion-reduce:transition-none ${open ? 'rotate-180' : ''}`}
         />
         <span className="text-sm font-medium flex-1 min-w-0 truncate">{seccion}</span>
         {numVistos > 0 && (
-          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-success shrink-0">
-            <Check className="w-3 h-3" />
-            {numVistos}
+          <span
+            className="inline-flex items-center gap-1 text-[11px] font-medium text-success shrink-0 tabular-nums"
+            aria-hidden="true"
+          >
+            <Check className="w-3.5 h-3.5" />
+            {todosVistos ? 'Completa' : `${numVistos}/${items.length}`}
           </span>
         )}
-        <Badge variant="secondary" className="text-[10px] shrink-0">
+        <Badge variant="secondary" className="text-[10px] shrink-0 tabular-nums">
           {items.length}
         </Badge>
       </button>
@@ -100,27 +129,25 @@ function CatalogSection({
                 href={r.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 p-2.5 bg-background rounded-[10px] border hover:border-primary/40 transition-colors group"
-                title="Abrir en Moodle"
+                aria-label={`${r.nombre} — ${tipoLabel(r.tipo)}${visto ? ', visto' : ''}. Abrir en Moodle`}
+                className="flex items-center gap-3 p-2.5 bg-background rounded-[10px] border transition-colors hover:border-primary/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer group"
               >
-                <div className="w-8 h-8 rounded-[8px] bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-[8px] bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   {iconFor(r.tipo)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium truncate">{r.nombre}</p>
-                    <Badge variant="outline" className="text-[10px] shrink-0">
-                      {tipoLabel(r.tipo)}
-                    </Badge>
+                  <p className="text-sm font-medium truncate">{r.nombre}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] text-muted-foreground">{tipoLabel(r.tipo)}</span>
                     {visto && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-success shrink-0">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-success shrink-0">
                         <Check className="w-3 h-3" />
                         Visto
                       </span>
                     )}
                   </div>
                 </div>
-                <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
+                <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0 transition-colors group-hover:text-primary" />
               </a>
             );
           })}
@@ -181,72 +208,106 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
     );
   }
 
+  const totalRecursos = grupos.reduce((acc, g) => acc + g.items.length, 0);
+
   return (
     <div className="space-y-6">
-      {/* Recomendado para ti — motor SAKT real. Mientras el SAKT carga mostramos un
+      {/* Encabezado del tab: orienta sobre qué es accionable vs el catálogo de referencia. */}
+      <div>
+        <h2 className="text-xl font-semibold tracking-tight">Recursos para ti</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Empieza por lo que te recomendamos y, cuando quieras explorar más, abre el catálogo
+          completo del curso.
+        </p>
+      </div>
+
+      {/* 1 · Recomendado para ti — motor SAKT real. Mientras el SAKT carga mostramos un
           skeleton con el header real + mensaje (NO el heurístico) para no enseñar dos
           versiones; solo si el SAKT ya respondió y vino vacío caemos al heurístico. */}
-      {saktLoading ? (
-        <RecommendationsSkeleton />
-      ) : saktItems && saktItems.length > 0 ? (
-        <SaktRecommendations items={saktItems} prefs={preferences} />
-      ) : (
-        <RecommendedResources
-          weak={conceptMastery.data ?? []}
-          recursos={courseResources ?? []}
-          prefs={preferences}
-          title="Recomendado para ti"
-          description="Material elegido según tus secciones flojas y el formato en el que mejor aprendes."
-        />
-      )}
-
-      {/* Generado para ti (LLM) — material nuevo para el concepto débil (Fase 4).
-          Mientras genera (tarda por el LLM) mostramos el skeleton con su header real. */}
-      {materialLoading ? (
-        <GeneratedMaterialSkeleton />
-      ) : (
-        material &&
-        courseId && (
-          <GeneratedMaterial
-            material={material}
-            courseId={courseId}
-            onRegenerar={regenerarMaterial}
-            regenerando={regenerando}
+      <Reveal>
+        {saktLoading ? (
+          <RecommendationsSkeleton />
+        ) : saktItems && saktItems.length > 0 ? (
+          <SaktRecommendations items={saktItems} prefs={preferences} />
+        ) : (
+          <RecommendedResources
+            weak={conceptMastery.data ?? []}
+            recursos={courseResources ?? []}
+            prefs={preferences}
+            title="Recomendado para ti"
+            description="Material elegido según tus secciones flojas y el formato en el que mejor aprendes."
           />
-        )
+        )}
+      </Reveal>
+
+      {/* 2 · Generado para ti (LLM) — material nuevo para el concepto débil (Fase 4).
+          Mientras genera (tarda por el LLM) mostramos el skeleton con su header real. */}
+      {(materialLoading || (material && courseId)) && (
+        <Reveal delay={80}>
+          {materialLoading ? (
+            <GeneratedMaterialSkeleton />
+          ) : (
+            material &&
+            courseId && (
+              <GeneratedMaterial
+                material={material}
+                courseId={courseId}
+                onRegenerar={regenerarMaterial}
+                regenerando={regenerando}
+              />
+            )
+          )}
+        </Reveal>
       )}
 
-      {/* Todos los recursos del curso, por sección colapsable (para no alargar) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Library className="w-5 h-5 text-primary" />
-            Todos los recursos del curso
-          </CardTitle>
-          <CardDescription>
-            El material completo de tu curso, organizado por sección. Toca una sección para abrirla.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {grupos.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">
-              Aún no hay recursos disponibles en este curso.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {grupos.map((g, i) => (
-                <CatalogSection
-                  key={g.seccion}
-                  seccion={g.seccion}
-                  items={g.items}
-                  vistos={vistos}
-                  defaultOpen={i === 0}
-                />
-              ))}
+      {/* 3 · Catálogo de referencia: todos los recursos del curso, por sección colapsable. */}
+      <Reveal delay={160}>
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Library className="w-5 h-5 text-primary" />
+                  Todos los recursos del curso
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  El material completo de tu curso, organizado por sección. Toca una sección para
+                  abrirla.
+                </CardDescription>
+              </div>
+              {totalRecursos > 0 && (
+                <Badge variant="secondary" className="shrink-0 tabular-nums">
+                  {totalRecursos}
+                </Badge>
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            {grupos.length === 0 ? (
+              <div className="flex flex-col items-center text-center gap-2 py-8">
+                <div className="rounded-full bg-muted p-2.5 text-muted-foreground">
+                  <Library className="w-5 h-5" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Aún no hay recursos disponibles en este curso.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {grupos.map((g, i) => (
+                  <CatalogSection
+                    key={g.seccion}
+                    seccion={g.seccion}
+                    items={g.items}
+                    vistos={vistos}
+                    defaultOpen={i === 0}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </Reveal>
     </div>
   );
 }
