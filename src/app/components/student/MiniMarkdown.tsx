@@ -2,8 +2,9 @@ import { Fragment, type ReactNode } from 'react';
 
 /**
  * Renderizador de markdown mínimo y seguro (sin dependencias ni HTML crudo):
- * soporta **negrita**, *cursiva*, `código`, bloques ```código```, listas con "- "
- * y saltos de línea. Pensado para mostrar respuestas/soluciones/feedback con formato.
+ * soporta **negrita**, *cursiva*, `código`, bloques ```código```, listas con "- ",
+ * tablas (GitHub-flavored) y saltos de línea. Pensado para mostrar
+ * respuestas/soluciones/feedback con formato.
  */
 export function MiniMarkdown({
   text,
@@ -39,7 +40,7 @@ export function MiniMarkdown({
   );
 }
 
-/** Agrupa líneas en párrafos y listas (con "- "). */
+/** Agrupa líneas en párrafos, listas (con "- ") y tablas (GitHub-flavored). */
 function renderParrafos(texto: string): ReactNode {
   const lineas = texto.split('\n');
   const out: ReactNode[] = [];
@@ -57,11 +58,28 @@ function renderParrafos(texto: string): ReactNode {
     lista = [];
   };
 
-  lineas.forEach((linea, i) => {
+  for (let i = 0; i < lineas.length; i++) {
+    const linea = lineas[i];
+
+    // ¿Empieza una tabla en esta línea? (encabezado con "|" + separador válido debajo)
+    if (esFilaTabla(linea) && esFilaSeparadora(lineas[i + 1])) {
+      volcarLista(`ul-${i}`);
+      const alineaciones = parsearSeparadora(lineas[i + 1]);
+      const filas: string[] = [];
+      let j = i + 2;
+      while (j < lineas.length && esFilaTabla(lineas[j])) {
+        filas.push(lineas[j]);
+        j++;
+      }
+      out.push(renderTabla(linea, alineaciones, filas, `tabla-${i}`));
+      i = j - 1;
+      continue;
+    }
+
     const m = linea.match(/^\s*[-*]\s+(.*)/);
     if (m) {
       lista.push(m[1]);
-      return;
+      continue;
     }
     volcarLista(`ul-${i}`);
     if (linea.trim()) {
@@ -71,9 +89,105 @@ function renderParrafos(texto: string): ReactNode {
         </p>,
       );
     }
-  });
+  }
   volcarLista('ul-fin');
   return out;
+}
+
+/** ¿La línea parece una fila de tabla? (contiene al menos un "|" con contenido alrededor) */
+function esFilaTabla(linea: string | undefined): boolean {
+  if (linea == null) return false;
+  return linea.includes('|') && linea.trim().length > 0;
+}
+
+/**
+ * ¿La línea es una fila separadora de tabla?
+ * Ej: `|---|---|`, `---|---`, `|:--|:-:|--:|`. Cada celda son guiones con `:` opcionales.
+ */
+function esFilaSeparadora(linea: string | undefined): boolean {
+  if (linea == null || !linea.includes('|')) return false;
+  const celdas = partirCeldas(linea);
+  if (celdas.length === 0) return false;
+  return celdas.every((c) => /^:?-+:?$/.test(c.trim()));
+}
+
+/** Divide una fila de tabla en celdas, tolerando pipes externos opcionales y espacios. */
+function partirCeldas(linea: string): string[] {
+  let s = linea.trim();
+  if (s.startsWith('|')) s = s.slice(1);
+  if (s.endsWith('|')) s = s.slice(0, -1);
+  return s.split('|').map((c) => c.trim());
+}
+
+type Alineacion = 'left' | 'center' | 'right';
+
+/** Deriva la alineación de cada columna a partir de la fila separadora. */
+function parsearSeparadora(linea: string): Alineacion[] {
+  return partirCeldas(linea).map((c) => {
+    const t = c.trim();
+    const izq = t.startsWith(':');
+    const der = t.endsWith(':');
+    if (izq && der) return 'center';
+    if (der) return 'right';
+    return 'left';
+  });
+}
+
+const claseAlineacion: Record<Alineacion, string> = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+};
+
+/** Renderiza una tabla markdown como <table> con estilos del proyecto. */
+function renderTabla(
+  encabezado: string,
+  alineaciones: Alineacion[],
+  filasDatos: string[],
+  key: string,
+): ReactNode {
+  const encabezados = partirCeldas(encabezado);
+  const nCols = encabezados.length;
+  const alinear = (i: number): Alineacion => alineaciones[i] ?? 'left';
+
+  const ajustar = (celdas: string[]): string[] => {
+    const r = celdas.slice(0, nCols);
+    while (r.length < nCols) r.push('');
+    return r;
+  };
+
+  return (
+    <div key={key} className="my-2 overflow-x-auto rounded-[8px] border border-border">
+      <table className="w-full border-collapse text-sm tabular-nums">
+        <thead>
+          <tr>
+            {encabezados.map((celda, c) => (
+              <th
+                key={c}
+                className={`border border-border bg-muted/50 px-3 py-1.5 font-semibold ${claseAlineacion[alinear(c)]}`}
+              >
+                {inline(celda)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {filasDatos.map((fila, r) => (
+            <tr key={r} className="even:bg-muted/20">
+              {ajustar(partirCeldas(fila)).map((celda, c) => (
+                <td
+                  key={c}
+                  className={`border border-border px-3 py-1.5 ${claseAlineacion[alinear(c)]}`}
+                >
+                  {inline(celda)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 /** Formato inline: **negrita**, *cursiva*, `código`. */
