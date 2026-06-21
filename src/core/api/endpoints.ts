@@ -52,6 +52,12 @@ export const ENDPOINTS = {
     completeResource: (id: string) => `/student/resources/${id}/complete`,
   },
 
+  // Interacciones (ms-trazabilidad, ALB `/interactions*`)
+  interactions: {
+    /** Registra el resultado de un quiz generado como interacción (alimenta al SAKT). */
+    quizResult: '/interactions/quiz-result',
+  },
+
   // EP004 — XAI (Explicabilidad)
   xai: {
     attentionHeatmap: '/xai/attention-heatmap',
