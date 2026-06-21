@@ -91,6 +91,8 @@ export const ENDPOINTS = {
     /** Preferencia de formato del estudiante (en qué tipo de recurso rinde mejor). */
     studentPreferences: (studentId: string, courseId: string) =>
       `/students/${studentId}/preferences?courseId=${courseId}`,
+    /** Racha GLOBAL de días consecutivos con actividad (todos los cursos). */
+    studentStreak: (studentId: string) => `/students/${studentId}/streak`,
     // Reporte PDF de la clase (ms-trazabilidad, descarga binaria).
     report: (courseId: string) => `/dashboard/teacher/${courseId}/report`,
     /** Recursos del curso por sección (incl. lecturas) — ms-integracion-lms. */
