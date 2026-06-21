@@ -72,13 +72,13 @@ export function LoginFormFields({
   }
 
   return (
-    <div className="flex-1 flex flex-col gap-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Bienvenido de vuelta</h1>
-        <p className="text-sm text-muted-foreground">Ingresa tus credenciales para continuar</p>
+    <div className="flex-1 flex flex-col gap-8">
+      <div className="space-y-2">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Inicia sesión</h1>
+        <p className="text-sm text-muted-foreground">Ingresa tus credenciales para continuar.</p>
       </div>
 
-      <form onSubmit={onSubmitLogin} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={onSubmitLogin} className="flex flex-col gap-5" noValidate>
         <div className="space-y-1.5">
           <label className="text-sm font-medium" htmlFor="l-email">Correo</label>
           <Field id="l-email" type="email" value={loginEmail} autoComplete="email"
@@ -116,13 +116,13 @@ export function LoginFormFields({
         )}
 
         <button type="submit" disabled={loginLoading}
-          className="w-full h-11 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card mt-1"
+          className="w-full h-12 rounded-xl text-base font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card mt-1"
           style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
           {loginLoading ? <><Spinner /> Verificando...</> : <>Ingresar <ChevronRight className="w-4 h-4" /></>}
         </button>
       </form>
 
-      <div className="text-center text-sm text-muted-foreground mt-auto">
+      <div className="text-center text-sm text-muted-foreground mt-auto pt-2">
         ¿No tienes cuenta?{" "}
         <button onClick={onFlip} className="text-primary font-semibold hover:text-primary/70 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded">Regístrate</button>
       </div>
