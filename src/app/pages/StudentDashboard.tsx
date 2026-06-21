@@ -9,6 +9,9 @@ import { StudentAtencionTab } from './student/components/StudentAtencionTab';
 import { StudentRecursosTab } from './student/components/StudentRecursosTab';
 import { useStudentDashboard } from './student/useStudentDashboard';
 import { useStudentContext } from '@features/student/useStudentContext';
+import { useStudentStreak } from '@features/student/useStudentStreak';
+import { useStudentDetail } from '@features/teacher/hooks/useStudentDetail';
+import { calcularRuta } from '@features/student/gamification';
 import { useAuth } from '@core/auth/useAuth';
 import { useLogout } from '../../core/auth/useLogout';
 
@@ -17,6 +20,13 @@ export function StudentDashboard() {
   const ctx = useStudentContext();
   const { user } = useAuth();
   const logout = useLogout();
+
+  // Gamificación REAL para topbar/sidebar: racha GLOBAL (todos los cursos) y ruta
+  // del curso activo (conceptos dominados). Reemplaza los valores mock.
+  const { data: streakReal } = useStudentStreak(ctx.estudianteId);
+  const { conceptMastery } = useStudentDetail(ctx.estudianteId, ctx.courseId);
+  const streak = streakReal ?? 0;
+  const ruta = calcularRuta(conceptMastery.data ?? []);
 
   // Perfil del estudiante construido desde la sesión real (no mock).
   const studentUser = {
@@ -40,7 +50,7 @@ export function StudentDashboard() {
     <div className="h-screen w-full bg-background flex flex-col overflow-hidden">
       <StudentTopbar
         user={studentUser}
-        streak={dash.streak}
+        streak={streak}
         darkMode={dash.darkMode}
         sidebarOpen={dash.sidebarOpen}
         learningPath={[]}
@@ -65,7 +75,8 @@ export function StudentDashboard() {
         <StudentSidebar
           activeNav={dash.activeNav}
           sidebarOpen={dash.sidebarOpen}
-          streak={dash.streak}
+          streak={streak}
+          ruta={ruta}
           onNavChange={dash.setActiveNav}
           onClose={() => dash.setSidebarOpen(false)}
         />
