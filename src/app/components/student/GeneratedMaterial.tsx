@@ -637,9 +637,11 @@ function Flashcard({ card }: { card: { frente: string; reverso: string } }) {
           )}
         </span>
 
-        <p className={cn('px-2', esFrente ? 'text-base font-semibold' : 'text-sm leading-relaxed')}>
-          {esFrente ? card.frente : card.reverso}
-        </p>
+        <MiniMarkdown
+          inline
+          text={esFrente ? card.frente : card.reverso}
+          className={cn('px-2', esFrente ? 'text-base font-semibold' : 'text-sm leading-relaxed')}
+        />
 
         <span className="absolute bottom-3 inset-x-0 text-[10px] text-muted-foreground">
           {esFrente ? 'toca para ver la definición' : 'toca para volver'}
