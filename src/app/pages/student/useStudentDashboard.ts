@@ -10,15 +10,6 @@ export interface UseStudentDashboardReturn {
   sidebarOpen: boolean;
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 
-  /* resources */
-  selectedSideResource: number | null;
-  setSelectedSideResource: (id: number | null) => void;
-  completedResources: number[];
-  handleCompleteFromTab: (id: number) => void;
-  handleCompleteSideResource: () => void;
-  completedCount: number;
-  totalResources: number;
-
   /* notifications */
   notifications: StudentNotification[];
   unreadCount: number;
@@ -59,8 +50,6 @@ export function useStudentDashboard(): UseStudentDashboardReturn {
   }, [setSearchParams]);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [selectedSideResource, setSelectedSideResource] = useState<number | null>(null);
-  const [completedResources, setCompletedResources] = useState<number[]>([]);
   const [showNotifPopup, setShowNotifPopup] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
@@ -95,29 +84,11 @@ export function useStudentDashboard(): UseStudentDashboardReturn {
     setShowProfilePopup(false);
   };
 
-  const handleCompleteFromTab = (id: number) => setCompletedResources((p) => [...p, id]);
-  const handleCompleteSideResource = () => {
-    if (selectedSideResource) {
-      setCompletedResources((p) => [...p, selectedSideResource]);
-      setSelectedSideResource(null);
-    }
-  };
-
-  const completedCount = 12 + completedResources.length;
-  const totalResources = 18;
-
   return {
     activeNav,
     setActiveNav,
     sidebarOpen,
     setSidebarOpen,
-    selectedSideResource,
-    setSelectedSideResource,
-    completedResources,
-    handleCompleteFromTab,
-    handleCompleteSideResource,
-    completedCount,
-    totalResources,
     notifications,
     unreadCount,
     showNotifPopup,
