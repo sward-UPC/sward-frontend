@@ -5,7 +5,19 @@ import { Fragment, type ReactNode } from 'react';
  * soporta **negrita**, *cursiva*, `código`, bloques ```código```, listas con "- "
  * y saltos de línea. Pensado para mostrar respuestas/soluciones/feedback con formato.
  */
-export function MiniMarkdown({ text, className }: { text: string; className?: string }) {
+export function MiniMarkdown({
+  text,
+  className,
+  inline: soloInline,
+}: {
+  text: string;
+  className?: string;
+  /** Solo formato inline (negrita/cursiva/código) en un <span>, sin párrafos ni listas. */
+  inline?: boolean;
+}) {
+  if (soloInline) {
+    return <span className={className}>{inline(text)}</span>;
+  }
   const bloques = text.split(/```/);
   return (
     <div className={className}>

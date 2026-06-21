@@ -418,7 +418,7 @@ function QuizBody({
               >
                 {String.fromCharCode(65 + oi)}
               </span>
-              <span className="flex-1">{opcion}</span>
+              <MiniMarkdown inline text={opcion} className="flex-1" />
               {mostrarBien && <CheckCircle2 className="w-4 h-4 shrink-0" />}
               {mostrarMal && <XCircle className="w-4 h-4 shrink-0" />}
             </button>
