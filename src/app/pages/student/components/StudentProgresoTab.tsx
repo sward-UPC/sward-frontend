@@ -292,22 +292,47 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
               <BarChart3 className="w-4 h-4 text-primary" aria-hidden="true" />
               Dominio por concepto
             </CardTitle>
-            <CardDescription>Tu tasa de acierto por sección del curso</CardDescription>
+            <CardDescription>
+              Tu tasa de acierto por sección. Pasa el cursor (o toca) una barra para ver el nombre completo y el %.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {conceptBars.length > 0 ? (
-              <div className="h-[240px]">
+              // Barras HORIZONTALES: los nombres de sección (largos) se leen a la
+              // izquierda en vez de amontonarse ilegibles en el eje X.
+              <div style={{ height: Math.max(200, conceptBars.length * 46) }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={conceptBars} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
-                    <XAxis dataKey="concept" stroke={AXIS} tickLine={false} axisLine={false} interval={0} style={{ fontSize: '11px' }} />
-                    <YAxis stroke={AXIS} tickLine={false} axisLine={false} style={{ fontSize: '12px' }} domain={[0, 100]} width={40} />
+                  <BarChart
+                    data={conceptBars}
+                    layout="vertical"
+                    margin={{ top: 4, right: 16, left: 4, bottom: 4 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
+                    <XAxis
+                      type="number"
+                      domain={[0, 100]}
+                      stroke={AXIS}
+                      tickLine={false}
+                      axisLine={false}
+                      style={{ fontSize: '11px' }}
+                      tickFormatter={(v: number) => `${v}%`}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="concept"
+                      stroke={AXIS}
+                      tickLine={false}
+                      axisLine={false}
+                      width={150}
+                      style={{ fontSize: '11px' }}
+                      tickFormatter={(v: string) => (v.length > 22 ? `${v.slice(0, 21)}…` : v)}
+                    />
                     <Tooltip
                       contentStyle={TOOLTIP_STYLE}
                       cursor={{ fill: 'rgba(79, 70, 229, 0.06)' }}
                       formatter={(v: number) => [`${v}%`, 'Dominio']}
                     />
-                    <Bar dataKey="mastery" name="Dominio %" radius={[6, 6, 0, 0]} isAnimationActive={false}>
+                    <Bar dataKey="mastery" name="Dominio %" radius={[0, 6, 6, 0]} isAnimationActive={false}>
                       {conceptBars.map((c) => (
                         // Resaltamos secciones en riesgo bajando la opacidad (mismo color aprobado).
                         <Cell key={c.concept} fill={PRIMARY} fillOpacity={c.mastery < 55 ? 0.4 : 1} />
