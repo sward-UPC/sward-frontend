@@ -51,7 +51,7 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
   const { data: courseResources, isLoading: resourcesLoading } = useCourseResources(moodleCourseId);
   const { data: preferences } = useStudentPreferences(estudianteId, courseId);
   // Motor REAL: el modelo SAKT entrenado. Si no devuelve nada, cae al heurístico.
-  const { data: saktItems } = useSaktRecommendations(estudianteId, courseId);
+  const { data: saktItems, isLoading: saktLoading } = useSaktRecommendations(estudianteId, courseId);
   // Fase 4: material generado por LLM para el concepto débil (best-effort).
   const { data: material } = useGeneratedMaterial(estudianteId, courseId);
 
@@ -71,8 +71,12 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
 
   return (
     <div className="space-y-6">
-      {/* Recomendado para ti — motor SAKT real; si no devuelve nada, heurístico. */}
-      {saktItems && saktItems.length > 0 ? (
+      {/* Recomendado para ti — motor SAKT real. Mientras el SAKT carga mostramos un
+          skeleton (NO el heurístico) para no enseñar dos versiones distintas que
+          confunden; solo si el SAKT ya respondió y vino vacío caemos al heurístico. */}
+      {saktLoading ? (
+        <div className="h-48 rounded-[12px] bg-muted/50 animate-pulse" />
+      ) : saktItems && saktItems.length > 0 ? (
         <SaktRecommendations items={saktItems} />
       ) : (
         <RecommendedResources
