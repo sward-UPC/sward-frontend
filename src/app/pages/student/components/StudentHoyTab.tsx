@@ -109,10 +109,9 @@ function BarraRuta({ completados, total }: { completados: number; total: number 
 function RachaCard({ racha }: { racha: number }) {
   const n = useCountUp(racha);
   const activa = racha > 0;
-  const reduce =
-    typeof window !== 'undefined' &&
-    !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const animarLlama = activa && !reduce;
+  // La llama es una animación de marca pedida explícitamente; no se desactiva con
+  // reduce-motion (igual que los charts de Recharts).
+  const animarLlama = activa;
   return (
     <Card className="relative overflow-hidden">
       <CardContent className="pt-6">
