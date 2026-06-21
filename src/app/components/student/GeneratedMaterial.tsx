@@ -15,21 +15,26 @@ import {
   Trophy,
   Repeat2,
   Eye,
-  Check,
+  Loader2,
+  Sparkles,
+  AlertTriangle,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { Textarea } from '../ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { cn } from '../ui/utils';
 import {
   registrarResultadoQuiz,
+  verificarEjercicio,
   type MaterialGenerado,
   type RecursoGenerado,
   type RecursoQuiz,
   type RecursoLectura,
   type RecursoPractica,
   type RecursoVideo,
+  type VerificacionEjercicio,
 } from '@features/student/material.service';
 
 interface GeneratedMaterialProps {
@@ -216,7 +221,11 @@ function RecursoBody({
   }
 }
 
-/** Quiz interactivo: el alumno elige, se corrige, se explica y se registra al SAKT. */
+/**
+ * Quiz interactivo PASO A PASO (una pregunta a la vez, como la práctica): el alumno
+ * responde, ve al instante si acertó + la explicación, y avanza. Al final, resultado
+ * y registro de la interacción que retroalimenta al modelo SAKT.
+ */
 function QuizBody({
   recurso,
   concepto,
@@ -226,22 +235,26 @@ function QuizBody({
   concepto: string;
   courseId: string;
 }) {
+  const [paso, setPaso] = useState(0);
   const [respuestas, setRespuestas] = useState<Record<number, number>>({});
-  const [enviado, setEnviado] = useState(false);
+  const [finalizado, setFinalizado] = useState(false);
   const [registrando, setRegistrando] = useState(false);
   const [registrado, setRegistrado] = useState(false);
 
   const total = recurso.preguntas.length;
-  const respondidas = Object.keys(respuestas).length;
   const correctas = recurso.preguntas.reduce(
     (acc, p, i) => acc + (respuestas[i] === p.correcta ? 1 : 0),
     0,
   );
-  const todasRespondidas = respondidas === total;
   const pct = Math.round((correctas / total) * 100);
 
-  async function enviar() {
-    setEnviado(true);
+  const p = recurso.preguntas[paso];
+  const elegida = respuestas[paso];
+  const respondida = elegida !== undefined;
+  const esUltima = paso === total - 1;
+
+  async function finalizar() {
+    setFinalizado(true);
     setRegistrando(true);
     try {
       await registrarResultadoQuiz({ cursoId: courseId, concepto, totalPreguntas: total, correctas });
@@ -254,116 +267,140 @@ function QuizBody({
   }
 
   function reiniciar() {
+    setPaso(0);
     setRespuestas({});
-    setEnviado(false);
+    setFinalizado(false);
     setRegistrado(false);
+  }
+
+  // Pantalla de resultado final.
+  if (finalizado) {
+    return (
+      <div className="rounded-[12px] border border-violet-400/30 bg-violet-500/5 p-5 text-center space-y-2">
+        <Trophy className={cn('w-9 h-9 mx-auto', pct >= 60 ? 'text-amber-500' : 'text-muted-foreground')} />
+        <p className="text-xl font-bold">
+          {correctas}/{total} <span className="text-violet-600">· {pct}%</span>
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {registrando
+            ? 'Registrando tu avance…'
+            : registrado
+              ? '✓ Tu resultado alimenta tu modelo de aprendizaje (SAKT)'
+              : pct >= 60
+                ? '¡Bien! Sigue reforzando.'
+                : 'Repasa la lectura y vuelve a intentarlo.'}
+        </p>
+        <Button size="sm" variant="outline" onClick={reiniciar} className="mt-1">
+          <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+          Reintentar
+        </Button>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
-      {/* Progreso de respuestas */}
-      {!enviado && (
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full rounded-full bg-violet-500 transition-all"
-              style={{ width: `${(respondidas / total) * 100}%` }}
+      {/* Progreso por pasos (verde acierto · rojo fallo · violeta actual) */}
+      <div className="flex items-center gap-1.5">
+        {recurso.preguntas.map((q, i) => {
+          const resp = respuestas[i];
+          const estado =
+            resp === undefined ? (i === paso ? 'actual' : 'pend') : resp === q.correcta ? 'bien' : 'mal';
+          return (
+            <button
+              key={i}
+              type="button"
+              disabled={respuestas[i] === undefined && i !== paso}
+              onClick={() => setPaso(i)}
+              className={cn(
+                'h-1.5 flex-1 rounded-full transition-colors',
+                estado === 'bien' && 'bg-success',
+                estado === 'mal' && 'bg-destructive',
+                estado === 'actual' && 'bg-violet-500',
+                estado === 'pend' && 'bg-muted',
+              )}
+              title={`Pregunta ${i + 1}`}
             />
-          </div>
-          <span className="text-[11px] text-muted-foreground tabular-nums">
-            {respondidas}/{total}
-          </span>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>Pregunta {paso + 1} de {total}</span>
+        <span>{correctas} correctas</span>
+      </div>
+
+      {/* Pregunta actual */}
+      <p className="text-sm font-medium">{p.enunciado}</p>
+      <div className="grid gap-1.5">
+        {p.opciones.map((opcion, oi) => {
+          const seleccionada = elegida === oi;
+          const esCorrecta = p.correcta === oi;
+          const mostrarBien = respondida && esCorrecta;
+          const mostrarMal = respondida && seleccionada && !esCorrecta;
+          return (
+            <button
+              key={oi}
+              type="button"
+              disabled={respondida}
+              onClick={() => setRespuestas((r) => ({ ...r, [paso]: oi }))}
+              className={cn(
+                'flex items-center gap-2 rounded-[10px] border px-3 py-2 text-left text-sm transition-colors',
+                !respondida && 'hover:bg-muted/50',
+                mostrarBien && 'border-success/60 bg-success/10 text-success',
+                mostrarMal && 'border-destructive/60 bg-destructive/10 text-destructive',
+                respondida && !mostrarBien && !mostrarMal && 'opacity-60',
+              )}
+            >
+              <span
+                className={cn(
+                  'w-5 h-5 rounded-full border flex items-center justify-center text-[11px] font-semibold shrink-0',
+                  mostrarBien && 'border-success text-success',
+                  mostrarMal && 'border-destructive text-destructive',
+                )}
+              >
+                {String.fromCharCode(65 + oi)}
+              </span>
+              <span className="flex-1">{opcion}</span>
+              {mostrarBien && <CheckCircle2 className="w-4 h-4 shrink-0" />}
+              {mostrarMal && <XCircle className="w-4 h-4 shrink-0" />}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Explicación al responder (XAI pedagógico) */}
+      {respondida && p.explicacion && (
+        <div className="flex items-start gap-2 rounded-[8px] bg-muted/50 px-3 py-2">
+          <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground leading-relaxed">{p.explicacion}</p>
         </div>
       )}
 
-      {recurso.preguntas.map((p, qi) => {
-        const elegida = respuestas[qi];
-        return (
-          <div key={qi} className="space-y-2">
-            <p className="text-sm font-medium">
-              {qi + 1}. {p.enunciado}
-            </p>
-            <div className="grid gap-1.5">
-              {p.opciones.map((opcion, oi) => {
-                const seleccionada = elegida === oi;
-                const esCorrecta = p.correcta === oi;
-                const mostrarBien = enviado && esCorrecta;
-                const mostrarMal = enviado && seleccionada && !esCorrecta;
-                return (
-                  <button
-                    key={oi}
-                    type="button"
-                    disabled={enviado}
-                    onClick={() => setRespuestas((r) => ({ ...r, [qi]: oi }))}
-                    className={cn(
-                      'flex items-center gap-2 rounded-[10px] border px-3 py-2 text-left text-sm transition-colors',
-                      !enviado && seleccionada && 'border-violet-500 bg-violet-500/10',
-                      !enviado && !seleccionada && 'hover:bg-muted/50',
-                      mostrarBien && 'border-success/60 bg-success/10 text-success',
-                      mostrarMal && 'border-destructive/60 bg-destructive/10 text-destructive',
-                      enviado && !mostrarBien && !mostrarMal && 'opacity-60',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'w-5 h-5 rounded-full border flex items-center justify-center text-[11px] font-semibold shrink-0',
-                        seleccionada && !enviado && 'border-violet-500 text-violet-600',
-                        mostrarBien && 'border-success text-success',
-                        mostrarMal && 'border-destructive text-destructive',
-                      )}
-                    >
-                      {String.fromCharCode(65 + oi)}
-                    </span>
-                    <span className="flex-1">{opcion}</span>
-                    {mostrarBien && <CheckCircle2 className="w-4 h-4 shrink-0" />}
-                    {mostrarMal && <XCircle className="w-4 h-4 shrink-0" />}
-                  </button>
-                );
-              })}
-            </div>
-            {/* Explicación (XAI pedagógico): por qué la respuesta correcta */}
-            {enviado && p.explicacion && (
-              <div className="flex items-start gap-2 rounded-[8px] bg-muted/50 px-3 py-2">
-                <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-muted-foreground leading-relaxed">{p.explicacion}</p>
-              </div>
-            )}
-          </div>
-        );
-      })}
-
-      {!enviado ? (
+      {/* Navegación / acción */}
+      <div className="flex items-center justify-between gap-2">
         <Button
           size="sm"
-          disabled={!todasRespondidas}
-          onClick={enviar}
-          className="bg-violet-600 hover:bg-violet-700 w-full"
+          variant="ghost"
+          disabled={paso === 0}
+          onClick={() => setPaso((s) => Math.max(0, s - 1))}
         >
-          {todasRespondidas ? 'Enviar respuestas' : `Responde las ${total} preguntas`}
+          <ChevronLeft className="w-4 h-4 mr-1" />
+          Anterior
         </Button>
-      ) : (
-        <div className="rounded-[12px] border border-violet-400/30 bg-violet-500/5 p-4 text-center space-y-2">
-          <Trophy
-            className={cn('w-8 h-8 mx-auto', pct >= 60 ? 'text-amber-500' : 'text-muted-foreground')}
-          />
-          <p className="text-lg font-bold">
-            {correctas}/{total} <span className="text-violet-600">· {pct}%</span>
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {registrando
-              ? 'Registrando tu avance…'
-              : registrado
-                ? '✓ Tu resultado alimenta tu modelo de aprendizaje (SAKT)'
-                : pct >= 60
-                  ? '¡Bien! Sigue reforzando.'
-                  : 'Repasa la lectura y vuelve a intentarlo.'}
-          </p>
-          <Button size="sm" variant="outline" onClick={reiniciar} className="mt-1">
-            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-            Reintentar
+        {!respondida ? (
+          <span className="text-xs text-muted-foreground">Elige una opción</span>
+        ) : esUltima ? (
+          <Button size="sm" onClick={finalizar} className="bg-violet-600 hover:bg-violet-700">
+            Ver mi resultado
           </Button>
-        </div>
-      )}
+        ) : (
+          <Button size="sm" variant="ghost" onClick={() => setPaso((s) => Math.min(total - 1, s + 1))}>
+            Siguiente
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -436,34 +473,62 @@ function Flashcard({ card }: { card: { frente: string; reverso: string } }) {
   );
 }
 
-/** Práctica paso a paso: un ejercicio a la vez, con verificación y navegación. */
+/**
+ * Práctica paso a paso: el alumno RESUELVE en la plataforma (escribe su respuesta),
+ * la IA la verifica y, si aprueba, avanza. "Ver solución" es solo una pista, con un
+ * aviso de "¿estás seguro?" para que lo intente primero.
+ */
 function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
   const total = recurso.ejercicios.length;
   const [paso, setPaso] = useState(0);
-  // Soluciones reveladas y autoevaluación (¿lo lograste?) por ejercicio.
-  const [revelados, setRevelados] = useState<Record<number, boolean>>({});
-  const [logrados, setLogrados] = useState<Record<number, boolean>>({});
+  const [respuestaTexto, setRespuestaTexto] = useState<Record<number, string>>({});
+  const [veredicto, setVeredicto] = useState<Record<number, VerificacionEjercicio>>({});
+  const [verificando, setVerificando] = useState(false);
+  const [revelada, setRevelada] = useState<Record<number, boolean>>({});
+  const [confirmando, setConfirmando] = useState(false);
 
   const e = recurso.ejercicios[paso];
-  const revelado = !!revelados[paso];
-  const resueltos = Object.values(logrados).filter(Boolean).length;
+  const texto = respuestaTexto[paso] ?? '';
+  const v = veredicto[paso];
+  const aprobado = !!v?.aprobado;
+  const resueltos = recurso.ejercicios.filter((_, i) => veredicto[i]?.aprobado).length;
+
+  async function verificar() {
+    setVerificando(true);
+    try {
+      const r = await verificarEjercicio({
+        enunciado: e.enunciado,
+        solucion: e.solucion,
+        respuesta: texto,
+      });
+      setVeredicto((m) => ({ ...m, [paso]: r }));
+    } catch {
+      setVeredicto((m) => ({
+        ...m,
+        [paso]: { aprobado: false, feedback: 'No pude verificar ahora, inténtalo de nuevo.' },
+      }));
+    } finally {
+      setVerificando(false);
+    }
+  }
+
+  function irA(i: number) {
+    setConfirmando(false);
+    setPaso(i);
+  }
 
   return (
     <div className="space-y-4">
-      {/* Progreso por pasos */}
+      {/* Progreso por pasos (verde si la IA lo aprobó) */}
       <div className="flex items-center gap-1.5">
         {recurso.ejercicios.map((_, i) => (
           <button
             key={i}
             type="button"
-            onClick={() => setPaso(i)}
+            onClick={() => irA(i)}
             className={cn(
               'h-1.5 flex-1 rounded-full transition-colors',
-              logrados[i]
-                ? 'bg-success'
-                : i === paso
-                  ? 'bg-violet-500'
-                  : 'bg-muted',
+              veredicto[i]?.aprobado ? 'bg-success' : i === paso ? 'bg-violet-500' : 'bg-muted',
             )}
             title={`Ejercicio ${i + 1}`}
           />
@@ -471,14 +536,12 @@ function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
       </div>
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>
-          Ejercicio {paso + 1} de {total}
-        </span>
+        <span>Ejercicio {paso + 1} de {total}</span>
         <span>{resueltos} resueltos</span>
       </div>
 
-      {/* Enunciado del paso actual */}
-      <div className="rounded-[12px] border p-4">
+      {/* Enunciado */}
+      <div className="rounded-[12px] border p-4 space-y-3">
         <div className="flex gap-2.5">
           <span className="w-7 h-7 rounded-full bg-violet-500/10 text-violet-600 text-sm font-bold flex items-center justify-center shrink-0">
             {paso + 1}
@@ -486,68 +549,141 @@ function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
           <p className="text-sm flex-1 leading-relaxed">{e.enunciado}</p>
         </div>
 
-        {!revelado ? (
+        {/* El alumno resuelve aquí */}
+        <Textarea
+          value={texto}
+          onChange={(ev) => setRespuestaTexto((r) => ({ ...r, [paso]: ev.target.value }))}
+          placeholder="Escribe tu respuesta…"
+          disabled={aprobado}
+          className="min-h-24 text-sm"
+        />
+
+        {!aprobado ? (
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => setRevelados((r) => ({ ...r, [paso]: true }))}
-            className="mt-3 ml-9"
+            onClick={verificar}
+            disabled={!texto.trim() || verificando}
+            className="bg-violet-600 hover:bg-violet-700"
           >
-            <Eye className="w-3.5 h-3.5 mr-1.5" />
-            Verificar / ver solución
+            {verificando ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                Verificando…
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                Verificar con IA
+              </>
+            )}
           </Button>
-        ) : (
-          <div className="mt-3 ml-9 space-y-3">
-            <div className="flex items-start gap-2 rounded-[10px] border bg-success/[0.06] px-3 py-2.5">
+        ) : null}
+
+        {/* Veredicto de la IA */}
+        {v && (
+          <div
+            className={cn(
+              'flex items-start gap-2 rounded-[10px] border px-3 py-2.5',
+              aprobado
+                ? 'bg-success/[0.06] border-success/30'
+                : 'bg-amber-500/10 border-amber-500/25',
+            )}
+          >
+            {aprobado ? (
               <CheckCircle2 className="w-4 h-4 text-success shrink-0 mt-0.5" />
-              <div>
-                <p className="text-[10px] uppercase tracking-wide font-semibold text-success">
-                  Solución
-                </p>
-                <p className="text-sm text-muted-foreground leading-relaxed">{e.solucion}</p>
-              </div>
+            ) : (
+              <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+            )}
+            <div>
+              <p
+                className={cn(
+                  'text-[10px] uppercase tracking-wide font-semibold',
+                  aprobado ? 'text-success' : 'text-amber-600',
+                )}
+              >
+                {aprobado ? '¡Correcto!' : 'Casi — sigue intentando'}
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{v.feedback}</p>
             </div>
-            {/* Autoevaluación: ¿lo lograste? */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">¿Lo lograste?</span>
-              <Button
-                size="sm"
-                variant={logrados[paso] ? 'default' : 'outline'}
-                onClick={() => setLogrados((l) => ({ ...l, [paso]: true }))}
-                className={cn('h-7', logrados[paso] && 'bg-success hover:bg-success/90')}
+          </div>
+        )}
+
+        {/* Ver solución = pista, con aviso de "¿estás seguro?" */}
+        {!revelada[paso] && !aprobado && (
+          <div>
+            {!confirmando ? (
+              <button
+                type="button"
+                onClick={() => setConfirmando(true)}
+                className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
               >
-                <Check className="w-3.5 h-3.5 mr-1" />
-                Sí
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setLogrados((l) => ({ ...l, [paso]: false }))}
-                className="h-7"
-              >
-                Aún no
-              </Button>
+                <Eye className="w-3.5 h-3.5" />
+                Ver solución (pista)
+              </button>
+            ) : (
+              <div className="flex items-start gap-2 rounded-[10px] border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs text-foreground/90">
+                    ¿Seguro? Aprendes más si lo intentas tú primero y lo verificas con la IA.
+                  </p>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7"
+                      onClick={() => {
+                        setRevelada((r) => ({ ...r, [paso]: true }));
+                        setConfirmando(false);
+                      }}
+                    >
+                      Sí, mostrar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7"
+                      onClick={() => setConfirmando(false)}
+                    >
+                      Mejor lo intento
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {revelada[paso] && (
+          <div className="flex items-start gap-2 rounded-[10px] border bg-muted/40 px-3 py-2.5">
+            <Eye className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                Solución
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{e.solucion}</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Navegación entre pasos */}
+      {/* Navegación */}
       <div className="flex items-center justify-between">
         <Button
           size="sm"
           variant="ghost"
           disabled={paso === 0}
-          onClick={() => setPaso((p) => Math.max(0, p - 1))}
+          onClick={() => irA(Math.max(0, paso - 1))}
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
           Anterior
         </Button>
         <Button
           size="sm"
-          variant="ghost"
+          variant={aprobado && paso < total - 1 ? 'default' : 'ghost'}
           disabled={paso === total - 1}
-          onClick={() => setPaso((p) => Math.min(total - 1, p + 1))}
+          onClick={() => irA(Math.min(total - 1, paso + 1))}
+          className={cn(aprobado && paso < total - 1 && 'bg-violet-600 hover:bg-violet-700')}
         >
           Siguiente
           <ChevronRight className="w-4 h-4 ml-1" />

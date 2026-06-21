@@ -33,6 +33,8 @@ export const ENDPOINTS = {
   // EP003/EP004 — Recomendaciones (ms-recomendacion, ALB `/recommendations*`)
   recommendations: {
     generate: '/recommendations/generate',
+    /** La IA evalúa la respuesta del alumno a un ejercicio de la práctica. */
+    verifyExercise: '/recommendations/verify-exercise',
     list: '/recommendations',
     complete: (id: string) => `/recommendations/${id}/complete`,
     // Heatmap de atención REAL del SAKT (pesos de atención sobre interacciones).
