@@ -430,7 +430,7 @@ function QuizBody({
       {respondida && p.explicacion && (
         <div className="flex items-start gap-2 rounded-[8px] bg-muted/50 px-3 py-2">
           <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-muted-foreground leading-relaxed">{p.explicacion}</p>
+          <MiniMarkdown text={p.explicacion} className="text-xs text-muted-foreground leading-relaxed" />
         </div>
       )}
 
@@ -475,10 +475,6 @@ function LecturaBody({
   concepto: string;
   courseId: string;
 }) {
-  const parrafos = recurso.contenido
-    .split('\n')
-    .map((p) => p.trim())
-    .filter(Boolean);
   const flashcards = recurso.flashcards ?? [];
   const [modo, setModo] = useState<'leccion' | 'flashcards'>('leccion');
 
@@ -514,19 +510,10 @@ function LecturaBody({
       )}
 
       {modo === 'leccion' ? (
-        <div className="space-y-3 animate-in fade-in-50 duration-300">
-          {parrafos.map((parrafo, i) => (
-            <p
-              key={i}
-              className={cn(
-                'text-sm leading-relaxed',
-                i === 0 ? 'text-foreground font-medium' : 'text-muted-foreground',
-              )}
-            >
-              {parrafo}
-            </p>
-          ))}
-        </div>
+        <MiniMarkdown
+          text={recurso.contenido}
+          className="text-sm leading-relaxed text-muted-foreground animate-in fade-in-50 duration-300"
+        />
       ) : (
         <FlashcardDeck flashcards={flashcards} />
       )}
