@@ -2,47 +2,42 @@ import { useState } from "react";
 import { Button } from "../button";
 import { Label } from "../label";
 import { Progress } from "../progress";
-import { User, Mail, Building2, Lock, Eye, EyeOff, Check, Save } from "lucide-react";
+import { User, Mail, Building2, Lock, Eye, EyeOff, Check, Save, Loader2 } from "lucide-react";
 
 interface ProfileEditFormProps {
   name: string;
   email: string;
   institution: string;
-  bio: string;
-  onNameChange: (v: string) => void;
-  onEmailChange: (v: string) => void;
-  onInstitutionChange: (v: string) => void;
-  onBioChange: (v: string) => void;
+  /** Persiste los cambios editables (avatar). Devuelve éxito/falla. */
   onSave: () => void;
   onCancel: () => void;
   savedProfile: boolean;
+  savingProfile?: boolean;
+  saveError?: string;
+  /** Cambia la contraseña contra el backend. Lanza Error con mensaje en falla. */
+  onChangePassword: (current: string, next: string) => Promise<void>;
 }
 
-function FieldInput({
+/** Campo de solo lectura (datos gestionados desde Moodle). */
+function ReadOnlyField({
   id,
   value,
-  onChange,
-  placeholder,
   icon: Icon,
-  type = "text",
 }: {
   id: string;
   value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
   icon: React.ElementType;
-  type?: string;
 }) {
   return (
     <div className="relative">
       <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
       <input
         id={id}
-        type={type}
+        type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full pl-9 pr-4 py-2.5 rounded-[12px] border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+        disabled
+        readOnly
+        className="w-full pl-9 pr-4 py-2.5 rounded-[12px] border border-input bg-muted/50 text-sm text-muted-foreground cursor-not-allowed"
       />
     </div>
   );
@@ -62,14 +57,12 @@ export function ProfileEditForm({
   name,
   email,
   institution,
-  bio,
-  onNameChange,
-  onEmailChange,
-  onInstitutionChange,
-  onBioChange,
   onSave,
   onCancel,
   savedProfile,
+  savingProfile = false,
+  saveError,
+  onChangePassword,
 }: ProfileEditFormProps) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -78,8 +71,10 @@ export function ProfileEditForm({
   const [showNew, setShowNew] = useState(false);
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
-  const handleSavePassword = () => {
+  const handleSavePassword = async () => {
+    setPasswordSaved(false);
     if (!currentPassword || !newPassword || !confirmPassword) {
       setPasswordError("Completa todos los campos.");
       return;
@@ -88,16 +83,32 @@ export function ProfileEditForm({
       setPasswordError("La contraseña debe tener al menos 8 caracteres.");
       return;
     }
+    if (passwordStrength(newPassword) < 75) {
+      setPasswordError("Usa mayúscula, número y al menos 8 caracteres.");
+      return;
+    }
     if (newPassword !== confirmPassword) {
       setPasswordError("Las contraseñas no coinciden.");
       return;
     }
+    if (newPassword === currentPassword) {
+      setPasswordError("La nueva contraseña debe ser distinta de la actual.");
+      return;
+    }
     setPasswordError("");
-    setPasswordSaved(true);
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setTimeout(() => setPasswordSaved(false), 2500);
+    setChangingPassword(true);
+    try {
+      await onChangePassword(currentPassword, newPassword);
+      setPasswordSaved(true);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setPasswordSaved(false), 4000);
+    } catch (e) {
+      setPasswordError(e instanceof Error ? e.message : "No se pudo cambiar la contraseña.");
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const strength = passwordStrength(newPassword);
@@ -117,48 +128,19 @@ export function ProfileEditForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="name">Nombre completo</Label>
-          <FieldInput
-            id="name"
-            value={name}
-            onChange={onNameChange}
-            placeholder="Tu nombre completo"
-            icon={User}
-          />
+          <ReadOnlyField id="name" value={name} icon={User} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="email">Correo electrónico</Label>
-          <FieldInput
-            id="email"
-            value={email}
-            onChange={onEmailChange}
-            placeholder="tu@email.com"
-            icon={Mail}
-            type="email"
-          />
+          <ReadOnlyField id="email" value={email} icon={Mail} />
         </div>
         <div className="space-y-1.5 md:col-span-2">
           <Label htmlFor="institution">Institución</Label>
-          <FieldInput
-            id="institution"
-            value={institution}
-            onChange={onInstitutionChange}
-            placeholder="Nombre de tu institución"
-            icon={Building2}
-          />
+          <ReadOnlyField id="institution" value={institution || "—"} icon={Building2} />
         </div>
-        <div className="space-y-1.5 md:col-span-2">
-          <Label htmlFor="bio">Biografía</Label>
-          <textarea
-            id="bio"
-            value={bio}
-            onChange={(e) => onBioChange(e.target.value)}
-            rows={3}
-            maxLength={200}
-            className="w-full rounded-[12px] border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none transition-colors"
-            placeholder="Cuéntanos un poco sobre ti..."
-          />
-          <p className="text-xs text-muted-foreground text-right">{bio.length}/200</p>
-        </div>
+        <p className="text-xs text-muted-foreground md:col-span-2">
+          Nombre, correo e institución se gestionan desde Moodle y no pueden editarse aquí.
+        </p>
       </div>
 
       {/* Password */}
@@ -203,9 +185,7 @@ export function ProfileEditForm({
           {newPassword && (
             <div className="space-y-1">
               <Progress value={strength} className="h-1.5" />
-              <p className={`text-xs ${strengthColor}`}>
-                Seguridad: {strengthLabel}
-              </p>
+              <p className={`text-xs ${strengthColor}`}>Seguridad: {strengthLabel}</p>
             </div>
           )}
           <input
@@ -218,24 +198,38 @@ export function ProfileEditForm({
           {passwordError && <p className="text-xs text-destructive">{passwordError}</p>}
           {passwordSaved && (
             <p className="text-xs text-success flex items-center gap-1">
-              <Check className="w-3.5 h-3.5" /> Contraseña actualizada
+              <Check className="w-3.5 h-3.5" /> Contraseña actualizada. Vuelve a iniciar sesión en
+              tus otros dispositivos.
             </p>
           )}
-          <Button size="sm" variant="outline" onClick={handleSavePassword} className="w-full">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleSavePassword}
+            disabled={changingPassword}
+            className="w-full gap-2"
+          >
+            {changingPassword && <Loader2 className="w-4 h-4 animate-spin" />}
             Actualizar contraseña
           </Button>
         </div>
       </div>
 
+      {saveError && <p className="text-xs text-destructive">{saveError}</p>}
+
       <div className="flex gap-2 pt-2">
-        <Button onClick={onSave} className="flex-1 gap-2">
-          {savedProfile ? (
+        <Button onClick={onSave} disabled={savingProfile} className="flex-1 gap-2">
+          {savingProfile ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" /> Guardando
+            </>
+          ) : savedProfile ? (
             <>
               <Check className="w-4 h-4" /> Guardado
             </>
           ) : (
             <>
-              <Save className="w-4 h-4" /> Guardar cambios
+              <Save className="w-4 h-4" /> Guardar perfil
             </>
           )}
         </Button>
