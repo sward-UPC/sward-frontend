@@ -3,12 +3,86 @@ import type { StudentTabProps } from '@features/student/useStudentContext';
 import { useStudentDetail } from '@features/teacher/hooks/useStudentDetail';
 import { DomainRadar } from '../../../components/xai/DomainRadar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Sparkles, TrendingUp, BookOpen, Target, Activity, ArrowRight, ChevronRight } from 'lucide-react';
+import { Progress } from '../../../components/ui/progress';
+import { Sparkles, TrendingUp, BookOpen, Target, Activity, ArrowRight, ChevronRight, Flame, Route } from 'lucide-react';
+import { calcularRacha, calcularRuta } from '@features/student/gamification';
 
 interface ConceptMasteryItem {
   concepto: string;
   dominio: number;
   total: number;
+}
+
+/**
+ * Fila de gamificación: racha de días consecutivos con actividad y progreso de
+ * la ruta de aprendizaje. Ambos valores son REALES (calculados de interacciones
+ * y dominio por concepto).
+ */
+function GamificacionRow({
+  racha,
+  ruta,
+}: {
+  racha: number;
+  ruta: { completados: number; total: number };
+}) {
+  const rutaPct = ruta.total > 0 ? Math.round((ruta.completados / ruta.total) * 100) : 0;
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Racha */}
+      <Card>
+        <CardContent className="pt-4 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="shrink-0 rounded-[12px] p-2 bg-warning/10 text-warning">
+              <Flame className="w-5 h-5" />
+            </div>
+            <div>
+              {racha > 0 ? (
+                <>
+                  <p className="text-2xl font-bold leading-tight">
+                    {racha} {racha === 1 ? 'día' : 'días'} de racha
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    ¡Sigue conectándote para no romperla!
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-semibold leading-tight">¡Empieza tu racha hoy!</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Resuelve una actividad para encender la llama 🔥
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Ruta de aprendizaje */}
+      <Card>
+        <CardContent className="pt-4 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="shrink-0 rounded-[12px] p-2 bg-primary/10 text-primary">
+              <Route className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-2xl font-bold leading-tight">
+                Ruta de aprendizaje {ruta.completados}/{ruta.total}
+              </p>
+              <Progress value={rutaPct} className="mt-2" />
+              <p className="text-xs text-muted-foreground mt-1">
+                {ruta.completados >= ruta.total
+                  ? '¡Ruta completada, excelente!'
+                  : `${ruta.total - ruta.completados} ${
+                      ruta.total - ruta.completados === 1 ? 'paso' : 'pasos'
+                    } para completarla`}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 /** Una tarjeta de KPI con su valor real y un subtítulo motivador. */
@@ -127,6 +201,10 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
   // "Lo próximo para ti": 1-2 secciones más flojas (o las de menor dominio).
   const proximas = (weak.length > 0 ? weak : [...cm].sort((a, b) => a.dominio - b.dominio)).slice(0, 2);
 
+  // Gamificación REAL: racha (días consecutivos con interacciones) y ruta (conceptos dominados).
+  const racha = calcularRacha((interactions.data ?? []).map((it) => it.date));
+  const ruta = calcularRuta(cm);
+
   return (
     <div className="space-y-6">
       {/* Saludo + contexto del curso */}
@@ -140,6 +218,9 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
           )}
         </p>
       </div>
+
+      {/* Gamificación: racha + ruta de aprendizaje (data real) */}
+      <GamificacionRow racha={racha} ruta={ruta} />
 
       {/* Franja de 3 KPIs reales */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
