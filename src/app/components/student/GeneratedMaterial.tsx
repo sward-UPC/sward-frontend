@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Wand2,
   BookOpen,
@@ -44,6 +45,20 @@ import {
 interface GeneratedMaterialProps {
   material: MaterialGenerado;
   courseId: string;
+  onRegenerar?: () => void;
+  regenerando?: boolean;
+}
+
+/**
+ * Invalida las queries de progreso/dominio para que la barra de conocimiento, la
+ * racha y los indicadores SUBAN en vivo cuando el alumno completa un recurso.
+ */
+function useInvalidarProgreso() {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: ['teacher', 'student-detail'] });
+    qc.invalidateQueries({ queryKey: ['student-streak'] });
+  };
 }
 
 // Conceptos cuyo confeti de "material listo" ya se mostró. En memoria (no
@@ -130,7 +145,12 @@ function LearningHint({ children }: { children: React.ReactNode }) {
  * el XAI (porqué, según el dominio estimado por el SAKT) y hints de aprendizaje. El
  * quiz registra la interacción que retroalimenta al modelo SAKT.
  */
-export function GeneratedMaterial({ material, courseId }: GeneratedMaterialProps) {
+export function GeneratedMaterial({
+  material,
+  courseId,
+  onRegenerar,
+  regenerando,
+}: GeneratedMaterialProps) {
   const [abierto, setAbierto] = useState<number | null>(null);
   const listo = material.disponible && material.recursos.length > 0;
 
@@ -219,6 +239,31 @@ export function GeneratedMaterial({ material, courseId }: GeneratedMaterialProps
             );
           })}
         </div>
+
+        {/* Generar más material fresco (otro set para el mismo concepto débil) */}
+        {onRegenerar && (
+          <div className="flex justify-center pt-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onRegenerar}
+              disabled={regenerando}
+              className="border-violet-400/40 text-violet-700 hover:bg-violet-500/5"
+            >
+              {regenerando ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Generando más…
+                </>
+              ) : (
+                <>
+                  <Wand2 className="w-3.5 h-3.5 mr-1.5" />
+                  Generar más material
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
 
       {/* Modal con el recurso interactivo */}
@@ -294,6 +339,7 @@ function QuizBody({
   const [finalizado, setFinalizado] = useState(false);
   const [registrando, setRegistrando] = useState(false);
   const [registrado, setRegistrado] = useState(false);
+  const invalidarProgreso = useInvalidarProgreso();
 
   const total = recurso.preguntas.length;
   const correctas = recurso.preguntas.reduce(
@@ -316,6 +362,7 @@ function QuizBody({
     try {
       await registrarResultadoQuiz({ cursoId: courseId, concepto, totalPreguntas: total, correctas });
       setRegistrado(true);
+      invalidarProgreso(); // la barra de dominio/racha sube en vivo
     } catch {
       // Best-effort: si falla el registro, el alumno igual ve su resultado.
     } finally {
@@ -477,6 +524,7 @@ function LecturaBody({
 }) {
   const flashcards = recurso.flashcards ?? [];
   const [modo, setModo] = useState<'leccion' | 'flashcards'>('leccion');
+  const invalidarProgreso = useInvalidarProgreso();
 
   return (
     <div className="space-y-4">
@@ -522,9 +570,9 @@ function LecturaBody({
         <CompletarRecurso
           label="¡Listo, lo entendí!"
           onComplete={() =>
-            registrarMaterialCompletado({ cursoId: courseId, concepto, tipo: 'lectura' }).catch(
-              () => {},
-            )
+            registrarMaterialCompletado({ cursoId: courseId, concepto, tipo: 'lectura' })
+              .then(() => invalidarProgreso())
+              .catch(() => {})
           }
         />
       </div>
@@ -676,6 +724,7 @@ function PracticaBody({
   const [pistaVisible, setPistaVisible] = useState<Record<number, boolean>>({});
   const [revelada, setRevelada] = useState<Record<number, boolean>>({});
   const [confirmando, setConfirmando] = useState(false);
+  const invalidarProgreso = useInvalidarProgreso();
 
   const e = recurso.ejercicios[paso];
   const texto = respuestaText[paso] ?? '';
@@ -699,7 +748,9 @@ function PracticaBody({
           concepto,
           tipo: 'practica',
           aprobado: true,
-        }).catch(() => {});
+        })
+          .then(() => invalidarProgreso())
+          .catch(() => {});
         // Confeti al resolver; si con este quedan TODOS resueltos, celebración grande.
         const aprobadosAhora = recurso.ejercicios.filter(
           (_, i) => i === paso || veredicto[i]?.aprobado,
@@ -937,15 +988,16 @@ function VideoBody({
   concepto: string;
   courseId: string;
 }) {
+  const invalidarProgreso = useInvalidarProgreso();
   return (
     <div className="space-y-3">
       <YouTubePlayer videoId={recurso.video_id} title={recurso.titulo} />
       <CompletarRecurso
         label="Marcar como visto"
         onComplete={() =>
-          registrarMaterialCompletado({ cursoId: courseId, concepto, tipo: 'video' }).catch(
-            () => {},
-          )
+          registrarMaterialCompletado({ cursoId: courseId, concepto, tipo: 'video' })
+            .then(() => invalidarProgreso())
+            .catch(() => {})
         }
       />
     </div>
