@@ -6,10 +6,12 @@ import { useStudentPreferences } from '@features/teacher/hooks/useStudentPrefere
 import { tipoLabel } from '@features/teacher/services/personalRecommendations';
 import type { CourseResource } from '@features/teacher/services/teacher.service';
 import { useSaktRecommendations } from '@features/student/useSaktRecommendations';
+import { useGeneratedMaterial } from '@features/student/useGeneratedMaterial';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
 import { RecommendedResources } from '../../../components/teacher/RecommendedResources';
 import { SaktRecommendations } from '../../../components/student/SaktRecommendations';
+import { GeneratedMaterial } from '../../../components/student/GeneratedMaterial';
 
 /** Ícono según el tipo de módulo de Moodle (lecturas, quizzes, prácticas...). */
 function iconFor(tipo: string) {
@@ -50,6 +52,8 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
   const { data: preferences } = useStudentPreferences(estudianteId, courseId);
   // Motor REAL: el modelo SAKT entrenado. Si no devuelve nada, cae al heurístico.
   const { data: saktItems } = useSaktRecommendations(estudianteId, courseId);
+  // Fase 4: material generado por LLM para el concepto débil (best-effort).
+  const { data: material } = useGeneratedMaterial(estudianteId, courseId);
 
   const vistos = new Set(preferences?.recursos_vistos ?? []);
   const grupos = agruparPorSeccion(courseResources ?? []);
@@ -79,6 +83,9 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
           description="Material elegido según tus secciones flojas y el formato en el que mejor aprendes."
         />
       )}
+
+      {/* Generado para ti (LLM) — material nuevo para el concepto débil (Fase 4) */}
+      {material && <GeneratedMaterial material={material} />}
 
       {/* Todos los recursos del curso, agrupados por sección */}
       <Card>
