@@ -73,10 +73,14 @@ export interface MaterialGenerado {
 export async function generarMaterial(
   estudianteId: string,
   cursoId: string,
+  refrescar = false,
+  formatoPreferido?: string | null,
 ): Promise<MaterialGenerado> {
   const { data } = await apiClient.post<MaterialGenerado>(ENDPOINTS.teacher.generateMaterial, {
     estudianteId,
     cursoId,
+    refrescar,
+    formatoPreferido: formatoPreferido ?? null,
   });
   return data;
 }

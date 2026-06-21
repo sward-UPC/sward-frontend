@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
   ExternalLink,
@@ -17,6 +18,7 @@ import { tipoLabel } from '@features/teacher/services/personalRecommendations';
 import type { CourseResource } from '@features/teacher/services/teacher.service';
 import { useSaktRecommendations } from '@features/student/useSaktRecommendations';
 import { useGeneratedMaterial } from '@features/student/useGeneratedMaterial';
+import { generarMaterial } from '@features/student/material.service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
 import { RecommendedResources } from '../../../components/teacher/RecommendedResources';
@@ -138,10 +140,32 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
   const { conceptMastery } = useStudentDetail(estudianteId, courseId);
   const { data: courseResources, isLoading: resourcesLoading } = useCourseResources(moodleCourseId);
   const { data: preferences } = useStudentPreferences(estudianteId, courseId);
+  // Formato en el que el alumno rinde/consume mejor → el material lo enfatiza.
+  const formatoPref = preferences?.tipo_fuerte ?? preferences?.formato_mas_consumido ?? null;
   // Motor REAL: el modelo SAKT entrenado. Si no devuelve nada, cae al heurístico.
   const { data: saktItems, isLoading: saktLoading } = useSaktRecommendations(estudianteId, courseId);
   // Fase 4: material generado por LLM para el concepto débil (best-effort).
-  const { data: material, isLoading: materialLoading } = useGeneratedMaterial(estudianteId, courseId);
+  const { data: material, isLoading: materialLoading } = useGeneratedMaterial(
+    estudianteId,
+    courseId,
+    formatoPref,
+  );
+
+  // "Generar más": regenera material fresco (salta cache) y reemplaza el mostrado.
+  const queryClient = useQueryClient();
+  const [regenerando, setRegenerando] = useState(false);
+  async function regenerarMaterial() {
+    if (!estudianteId || !courseId) return;
+    setRegenerando(true);
+    try {
+      const nuevo = await generarMaterial(estudianteId, courseId, true, formatoPref);
+      queryClient.setQueryData(['generated-material', estudianteId, courseId], nuevo);
+    } catch {
+      // best-effort
+    } finally {
+      setRegenerando(false);
+    }
+  }
 
   const vistos = new Set(preferences?.recursos_vistos ?? []);
   const grupos = agruparPorSeccion(courseResources ?? []);
@@ -181,7 +205,15 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
       {materialLoading ? (
         <GeneratedMaterialSkeleton />
       ) : (
-        material && courseId && <GeneratedMaterial material={material} courseId={courseId} />
+        material &&
+        courseId && (
+          <GeneratedMaterial
+            material={material}
+            courseId={courseId}
+            onRegenerar={regenerarMaterial}
+            regenerando={regenerando}
+          />
+        )
       )}
 
       {/* Todos los recursos del curso, por sección colapsable (para no alargar) */}
