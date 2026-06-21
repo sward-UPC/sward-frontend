@@ -10,9 +10,10 @@ export interface PreguntaQuiz {
   explicacion: string;
 }
 
-/** Ejercicio de práctica con su solución. */
+/** Ejercicio de práctica con su pista y su solución. */
 export interface EjercicioPractica {
   enunciado: string;
+  pista?: string;
   solucion: string;
 }
 
@@ -100,6 +101,26 @@ export async function verificarEjercicio(params: {
     params,
   );
   return data;
+}
+
+/**
+ * Registra un recurso generado completado (práctica/lectura/video) como interacción.
+ * - práctica → calificada (alimenta el SAKT, según `aprobado`).
+ * - lectura/video → vista (señal de preferencia de formato).
+ * Best-effort: el estudiante_id lo toma el backend del JWT.
+ */
+export async function registrarMaterialCompletado(params: {
+  cursoId: string;
+  concepto: string;
+  tipo: 'practica' | 'lectura' | 'video';
+  aprobado?: boolean;
+}): Promise<void> {
+  await apiClient.post(ENDPOINTS.interactions.materialCompleted, {
+    curso_id: params.cursoId,
+    concepto: params.concepto,
+    tipo: params.tipo,
+    aprobado: params.aprobado ?? true,
+  });
 }
 
 /** Resultado de registrar un quiz respondido. */

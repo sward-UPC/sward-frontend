@@ -29,6 +29,7 @@ import { MiniMarkdown } from './MiniMarkdown';
 import { RichTextArea } from './RichTextArea';
 import {
   registrarResultadoQuiz,
+  registrarMaterialCompletado,
   verificarEjercicio,
   type MaterialGenerado,
   type RecursoGenerado,
@@ -80,8 +81,14 @@ const TIPO_META: Record<
   },
 };
 
-/** Botón para marcar un recurso como completado; lanza confeti de celebración. */
-function CompletarRecurso({ label = '¡Listo, lo completé!' }: { label?: string }) {
+/** Botón para marcar un recurso como completado; confeti + registra la interacción. */
+function CompletarRecurso({
+  label = '¡Listo, lo completé!',
+  onComplete,
+}: {
+  label?: string;
+  onComplete?: () => void;
+}) {
   const [hecho, setHecho] = useState(false);
   if (hecho) {
     return (
@@ -97,6 +104,7 @@ function CompletarRecurso({ label = '¡Listo, lo completé!' }: { label?: string
       onClick={() => {
         setHecho(true);
         burstConfetti();
+        onComplete?.();
       }}
     >
       <CheckCircle2 className="w-4 h-4 mr-1.5" />
@@ -256,11 +264,11 @@ function RecursoBody({
     case 'quiz':
       return <QuizBody recurso={recurso} concepto={concepto} courseId={courseId} />;
     case 'lectura':
-      return <LecturaBody recurso={recurso} />;
+      return <LecturaBody recurso={recurso} concepto={concepto} courseId={courseId} />;
     case 'practica':
-      return <PracticaBody recurso={recurso} />;
+      return <PracticaBody recurso={recurso} concepto={concepto} courseId={courseId} />;
     case 'video':
-      return <VideoBody recurso={recurso} />;
+      return <VideoBody recurso={recurso} concepto={concepto} courseId={courseId} />;
     default:
       return null;
   }
@@ -300,7 +308,9 @@ function QuizBody({
 
   async function finalizar() {
     setFinalizado(true);
+    // Confeti al COMPLETAR el quiz (siempre); más fuerte si aprobó.
     if (pct >= 60) sideCannons();
+    else burstConfetti();
     setRegistrando(true);
     try {
       await registrarResultadoQuiz({ cursoId: courseId, concepto, totalPreguntas: total, correctas });
@@ -452,10 +462,18 @@ function QuizBody({
 }
 
 /**
- * Lectura con dos modos: "Lección" (texto) y "Flashcards" (tarjetas que se voltean).
+ * Lectura con dos modos: "Lección" (texto) y "Flashcards" (una por vez, navegable).
  * Al activar flashcards, la lección se oculta para enfocar la memorización.
  */
-function LecturaBody({ recurso }: { recurso: RecursoLectura }) {
+function LecturaBody({
+  recurso,
+  concepto,
+  courseId,
+}: {
+  recurso: RecursoLectura;
+  concepto: string;
+  courseId: string;
+}) {
   const parrafos = recurso.contenido
     .split('\n')
     .map((p) => p.trim())
@@ -509,71 +527,103 @@ function LecturaBody({ recurso }: { recurso: RecursoLectura }) {
           ))}
         </div>
       ) : (
-        <div className="space-y-2.5 animate-in fade-in-50 duration-300">
-          <p className="text-xs text-muted-foreground">Toca una tarjeta para voltearla.</p>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {flashcards.map((fc, i) => (
-              <Flashcard key={i} card={fc} />
-            ))}
-          </div>
-        </div>
+        <FlashcardDeck flashcards={flashcards} />
       )}
 
       <div className="pt-1">
-        <CompletarRecurso label="¡Listo, lo entendí!" />
+        <CompletarRecurso
+          label="¡Listo, lo entendí!"
+          onComplete={() =>
+            registrarMaterialCompletado({ cursoId: courseId, concepto, tipo: 'lectura' }).catch(
+              () => {},
+            )
+          }
+        />
       </div>
     </div>
   );
 }
 
-/** Tarjeta con animación de volteo 3D (frente: concepto · reverso: definición).
- *
- * Usa estilos inline (igual que el flip del login): las clases arbitrarias de
- * Tailwind NO emiten el prefijo -webkit-, así que en Safari la cara de atrás se
- * veía espejada. Con backfaceVisibility + WebkitBackfaceVisibility inline se oculta
- * bien. Las caras NO llevan overflow (eso "aplana" el 3D y deja ver el reverso). */
-function Flashcard({ card }: { card: { frente: string; reverso: string } }) {
-  const [volteada, setVolteada] = useState(false);
-  const cara: React.CSSProperties = {
-    backfaceVisibility: 'hidden',
-    WebkitBackfaceVisibility: 'hidden',
-  };
+/** Mazo de flashcards: una por vez, con anterior/siguiente y volteo. */
+function FlashcardDeck({ flashcards }: { flashcards: { frente: string; reverso: string }[] }) {
+  const [idx, setIdx] = useState(0);
+  const total = flashcards.length;
+
   return (
-    <button
-      type="button"
-      onClick={() => setVolteada((v) => !v)}
-      className="h-32 w-full text-left"
-      style={{ perspective: '1000px' }}
-    >
+    <div className="space-y-3 animate-in fade-in-50 duration-300">
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>
+          Tarjeta {idx + 1} de {total}
+        </span>
+        <span>toca para voltear</span>
+      </div>
+
+      {/* key fuerza el re-montaje al cambiar de tarjeta → siempre arranca en "Concepto" */}
+      <Flashcard key={idx} card={flashcards[idx]} />
+
+      <div className="flex items-center justify-between">
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={idx === 0}
+          onClick={() => setIdx((i) => Math.max(0, i - 1))}
+        >
+          <ChevronLeft className="w-4 h-4 mr-1" />
+          Anterior
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={idx === total - 1}
+          onClick={() => setIdx((i) => Math.min(total - 1, i + 1))}
+        >
+          Siguiente
+          <ChevronRight className="w-4 h-4 ml-1" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** Tarjeta con volteo SIN backface-visibility (que fallaba/espejaba en Safari y en
+ * el flip del login): se rota a 90° (canto, invisible) y a mitad de la animación se
+ * cambia la cara, luego vuelve a 0°. Solo se renderiza una cara → nunca hay espejo. */
+function Flashcard({ card }: { card: { frente: string; reverso: string } }) {
+  const [lado, setLado] = useState<'frente' | 'reverso'>('frente');
+  const [girando, setGirando] = useState(false);
+
+  function voltear() {
+    if (girando) return;
+    setGirando(true);
+    // A los 150ms (tarjeta de canto) se cambia la cara; a los 300ms termina.
+    window.setTimeout(() => setLado((l) => (l === 'frente' ? 'reverso' : 'frente')), 150);
+    window.setTimeout(() => setGirando(false), 300);
+  }
+
+  const esFrente = lado === 'frente';
+  return (
+    <button type="button" onClick={voltear} className="h-36 w-full text-left">
       <div
-        className="relative h-full w-full"
+        className={cn(
+          'h-full w-full rounded-[12px] border p-4 flex flex-col justify-center gap-1.5',
+          esFrente ? 'bg-background' : 'border-violet-400/40 bg-violet-500/[0.07]',
+        )}
         style={{
-          transformStyle: 'preserve-3d',
-          transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-          transform: volteada ? 'rotateY(180deg)' : 'rotateY(0deg)',
+          transition: 'transform 0.3s ease',
+          transform: girando ? 'rotateY(90deg)' : 'rotateY(0deg)',
         }}
       >
-        {/* Frente: concepto */}
-        <div
-          className="absolute inset-0 rounded-[12px] border bg-background p-3 flex flex-col justify-center gap-1"
-          style={cara}
-        >
-          <span className="text-[10px] uppercase tracking-wide font-semibold text-violet-600">
-            Concepto
+        <span className="text-[10px] uppercase tracking-wide font-semibold text-violet-600">
+          {esFrente ? 'Concepto' : 'Definición'}
+        </span>
+        <span className={cn('text-sm', esFrente && 'font-medium')}>
+          {esFrente ? card.frente : card.reverso}
+        </span>
+        {esFrente && (
+          <span className="text-[10px] text-muted-foreground mt-auto">
+            toca para ver la definición
           </span>
-          <span className="text-sm font-medium">{card.frente}</span>
-          <span className="text-[10px] text-muted-foreground mt-auto">toca para ver la definición</span>
-        </div>
-        {/* Reverso: definición */}
-        <div
-          className="absolute inset-0 rounded-[12px] border border-violet-400/40 bg-violet-500/[0.07] p-3 flex flex-col justify-center gap-1"
-          style={{ ...cara, transform: 'rotateY(180deg)' }}
-        >
-          <span className="text-[10px] uppercase tracking-wide font-semibold text-violet-600">
-            Definición
-          </span>
-          <span className="text-sm">{card.reverso}</span>
-        </div>
+        )}
       </div>
     </button>
   );
@@ -584,12 +634,21 @@ function Flashcard({ card }: { card: { frente: string; reverso: string } }) {
  * la IA la verifica y, si aprueba, avanza. "Ver solución" es solo una pista, con un
  * aviso de "¿estás seguro?" para que lo intente primero.
  */
-function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
+function PracticaBody({
+  recurso,
+  concepto,
+  courseId,
+}: {
+  recurso: RecursoPractica;
+  concepto: string;
+  courseId: string;
+}) {
   const total = recurso.ejercicios.length;
   const [paso, setPaso] = useState(0);
   const [respuestaTexto, setRespuestaTexto] = useState<Record<number, string>>({});
   const [veredicto, setVeredicto] = useState<Record<number, VerificacionEjercicio>>({});
   const [verificando, setVerificando] = useState(false);
+  const [pistaVisible, setPistaVisible] = useState<Record<number, boolean>>({});
   const [revelada, setRevelada] = useState<Record<number, boolean>>({});
   const [confirmando, setConfirmando] = useState(false);
 
@@ -609,6 +668,13 @@ function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
       });
       setVeredicto((m) => ({ ...m, [paso]: r }));
       if (r.aprobado) {
+        // Registra la práctica resuelta como interacción calificada (alimenta al SAKT).
+        registrarMaterialCompletado({
+          cursoId: courseId,
+          concepto,
+          tipo: 'practica',
+          aprobado: true,
+        }).catch(() => {});
         // Confeti al resolver; si con este quedan TODOS resueltos, celebración grande.
         const aprobadosAhora = recurso.ejercicios.filter(
           (_, i) => i === paso || veredicto[i]?.aprobado,
@@ -721,7 +787,33 @@ function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
           </div>
         )}
 
-        {/* Ver solución = pista, con aviso de "¿estás seguro?" */}
+        {/* Pista: ayuda ligera SIN aviso (distinta de la solución) */}
+        {e.pista && !aprobado && (
+          <div className="space-y-2">
+            {!pistaVisible[paso] ? (
+              <button
+                type="button"
+                onClick={() => setPistaVisible((p) => ({ ...p, [paso]: true }))}
+                className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 hover:underline"
+              >
+                <Lightbulb className="w-3.5 h-3.5" />
+                Pista
+              </button>
+            ) : (
+              <div className="flex items-start gap-2 rounded-[10px] border border-amber-500/25 bg-amber-500/10 px-3 py-2.5">
+                <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-amber-600">
+                    Pista
+                  </p>
+                  <MiniMarkdown text={e.pista} className="text-sm text-muted-foreground" />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Ver solución = la respuesta completa, CON aviso de "¿estás seguro?" */}
         {!revelada[paso] && !aprobado && (
           <div>
             {!confirmando ? (
@@ -731,7 +823,7 @@ function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
                 className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
               >
                 <Eye className="w-3.5 h-3.5" />
-                Ver solución (pista)
+                Ver solución
               </button>
             ) : (
               <div className="flex items-start gap-2 rounded-[10px] border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
@@ -807,7 +899,15 @@ function PracticaBody({ recurso }: { recurso: RecursoPractica }) {
 }
 
 /** Video real de YouTube embebido. */
-function VideoBody({ recurso }: { recurso: RecursoVideo }) {
+function VideoBody({
+  recurso,
+  concepto,
+  courseId,
+}: {
+  recurso: RecursoVideo;
+  concepto: string;
+  courseId: string;
+}) {
   return (
     <div className="space-y-3">
       <div className="relative w-full overflow-hidden rounded-[10px] bg-black aspect-video">
@@ -820,7 +920,14 @@ function VideoBody({ recurso }: { recurso: RecursoVideo }) {
           loading="lazy"
         />
       </div>
-      <CompletarRecurso label="Marcar como visto" />
+      <CompletarRecurso
+        label="Marcar como visto"
+        onComplete={() =>
+          registrarMaterialCompletado({ cursoId: courseId, concepto, tipo: 'video' }).catch(
+            () => {},
+          )
+        }
+      />
     </div>
   );
 }
