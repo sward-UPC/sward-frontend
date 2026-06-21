@@ -22,8 +22,25 @@ interface MeResponse {
   nombre: string | null;
   apellido: string | null;
   moodle_user_id: number | null;
+  avatar_color: string | null;
+  avatar_url: string | null;
   rol: string | null;
   permisos: string[];
+}
+
+function mapMeResponse(data: MeResponse): User {
+  const backendRol = data.rol ?? 'estudiante';
+  return {
+    id: data.id,
+    email: data.correo,
+    firstName: data.nombre ?? data.correo.split('@')[0],
+    lastName: data.apellido ?? '',
+    role: ROLE_MAP[backendRol] ?? ('student' as UserRole),
+    institution: '',
+    avatarUrl: data.avatar_url ?? undefined,
+    avatarColor: data.avatar_color ?? undefined,
+    createdAt: new Date().toISOString(),
+  };
 }
 
 /** Autentica al usuario y persiste los tokens JWT en localStorage. */
@@ -67,14 +84,28 @@ export async function logout(): Promise<void> {
 /** Retorna el perfil completo del usuario autenticado usando GET /users/me. */
 export async function me(): Promise<User> {
   const { data } = await apiClient.get<MeResponse>(ENDPOINTS.users.profile);
-  const backendRol = data.rol ?? 'estudiante';
-  return {
-    id: data.id,
-    email: data.correo,
-    firstName: data.nombre ?? data.correo.split('@')[0],
-    lastName: data.apellido ?? '',
-    role: ROLE_MAP[backendRol] ?? ('student' as UserRole),
-    institution: '',
-    createdAt: new Date().toISOString(),
-  };
+  return mapMeResponse(data);
+}
+
+/**
+ * Actualiza los campos personalizables del perfil (avatar). Nombre, correo,
+ * institución y rol son de solo lectura (provienen de Moodle) y no se envían.
+ */
+export async function updateProfile(payload: {
+  avatar_color?: string | null;
+  avatar_url?: string | null;
+}): Promise<User> {
+  const { data } = await apiClient.put<MeResponse>(ENDPOINTS.users.updateProfile, payload);
+  return mapMeResponse(data);
+}
+
+/**
+ * Cambia la contraseña del usuario autenticado. Tras el éxito el backend
+ * invalida todas las sesiones (logout en todos los dispositivos).
+ */
+export async function changePassword(payload: {
+  password_actual: string;
+  password_nueva: string;
+}): Promise<void> {
+  await apiClient.post(ENDPOINTS.auth.changePassword, payload);
 }

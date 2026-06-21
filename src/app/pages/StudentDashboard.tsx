@@ -11,6 +11,7 @@ import { useStudentDashboard } from './student/useStudentDashboard';
 import { useStudentContext } from '@features/student/useStudentContext';
 import { useStudentStreak } from '@features/student/useStudentStreak';
 import { useStudentDetail } from '@features/teacher/hooks/useStudentDetail';
+import { useStudentPreferences } from '@features/teacher/hooks/useStudentPreferences';
 import { calcularRuta } from '@features/student/gamification';
 import { useAuth } from '@core/auth/useAuth';
 import { useLogout } from '../../core/auth/useLogout';
@@ -28,6 +29,11 @@ export function StudentDashboard() {
   const streak = streakReal ?? 0;
   const ruta = calcularRuta(conceptMastery.data ?? []);
 
+  // Recursos completados REALES del estudiante en el curso activo
+  // (recursos_vistos de ms-trazabilidad). Alimenta el badge del perfil.
+  const { data: preferences } = useStudentPreferences(ctx.estudianteId, ctx.courseId);
+  const recursosCompletados = preferences?.recursos_vistos?.length ?? 0;
+
   // Perfil del estudiante construido desde la sesión real (no mock).
   const studentUser = {
     name: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || user?.email || 'Estudiante',
@@ -36,6 +42,14 @@ export function StudentDashboard() {
     institution: user?.institution ?? '',
     avatar: (user?.firstName?.[0] ?? user?.email?.[0] ?? 'E').toUpperCase(),
     memberSince: '',
+  };
+
+  // Perfil para el modal "Mi Cuenta": añade avatar persistido y recursos reales.
+  const profileUser = {
+    ...studentUser,
+    avatarColor: user?.avatarColor,
+    avatarUrl: user?.avatarUrl,
+    recursosCompletados,
   };
 
   // Props reales que recibe cada tab (su propio id + curso activo).
@@ -113,7 +127,7 @@ export function StudentDashboard() {
       <ProfileDialog
         open={dash.showProfileDialog}
         onClose={() => dash.setShowProfileDialog(false)}
-        user={studentUser}
+        user={profileUser}
         initialTab={dash.profileDialogTab}
       />
     </div>

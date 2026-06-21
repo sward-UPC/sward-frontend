@@ -16,6 +16,7 @@ import {
   downloadKnowledgeMapCsv,
 } from '@features/teacher/services/reports';
 import { useLogout } from '../../../core/auth/useLogout';
+import { useAuth } from '@core/auth/useAuth';
 import { TeacherTopbar } from './components/TeacherTopbar';
 import { TeacherSidebar } from './components/TeacherSidebar';
 import { TeacherMetricsCards } from './components/TeacherMetricsCards';
@@ -107,6 +108,7 @@ interface GeneratedReport {
 
 export function TeacherDashboard() {
   const dash = useTeacherDashboard();
+  const { user } = useAuth();
   const logout = useLogout();
 
   // Historial REAL de reportes generados en esta sesión (no mock).
@@ -507,9 +509,9 @@ export function TeacherDashboard() {
           email: dash.teacher.email,
           role: dash.teacher.role,
           institution: dash.teacher.department,
-          avatar: dash.teacher.avatar,
+          avatarColor: user?.avatarColor,
+          avatarUrl: user?.avatarUrl,
           memberSince: 'Marzo 2025',
-          bio: `Docente del área de ${dash.teacher.department}. Cursos: ${dash.teacher.courses}.`,
         }}
         initialTab={dash.profileDialogTab}
       />

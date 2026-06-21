@@ -83,9 +83,9 @@ export function AdminDashboard() {
           email: user?.email ?? "",
           role: "Administrador",
           institution: "SWARD Platform",
-          avatar: user ? (user.firstName ?? user.email).charAt(0).toUpperCase() : "A",
+          avatarColor: user?.avatarColor,
+          avatarUrl: user?.avatarUrl,
           memberSince: "2025",
-          bio: "Administrador de la plataforma SWARD.",
         }}
         initialTab={dash.profileDialogTab}
       />

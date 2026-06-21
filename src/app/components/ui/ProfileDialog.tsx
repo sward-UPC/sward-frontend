@@ -1,18 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 import { ProfileStats } from "./profile/ProfileStats";
 import { ProfileEditForm } from "./profile/ProfileEditForm";
 import { ProfileAchievements } from "./profile/ProfileAchievements";
+import { compressImageToDataUrl, dataUrlBytes, MAX_AVATAR_BYTES } from "./profile/avatarImage";
+import { changePassword, updateProfile } from "@features/auth/services/auth.service";
+import { useAuth } from "@core/auth/useAuth";
 
 interface UserProfile {
   name: string;
   email: string;
   institution: string;
   role: string;
-  avatar: string;
   memberSince: string;
-  bio?: string;
+  avatarColor?: string;
+  avatarUrl?: string;
+  /** Conteo real de recursos completados (solo estudiante). */
+  recursosCompletados?: number;
 }
 
 interface ProfileDialogProps {
@@ -22,32 +27,75 @@ interface ProfileDialogProps {
   initialTab?: "profile" | "settings";
 }
 
-export function ProfileDialog({ open, onClose, user, initialTab = "profile" }: ProfileDialogProps) {
-  // Profile state
-  const [name, setName] = useState(user.name);
-  const [email, setEmail] = useState(user.email);
-  const [institution, setInstitution] = useState(user.institution);
-  const [bio, setBio] = useState(
-    user.bio || "Estudiante apasionado por la Inteligencia Artificial y el Machine Learning."
-  );
-  const [avatarColor, setAvatarColor] = useState("#4F46E5");
-  const [savedProfile, setSavedProfile] = useState(false);
+const DEFAULT_AVATAR_COLOR = "#4F46E5";
 
-  // Notification toggles
+export function ProfileDialog({ open, onClose, user, initialTab = "profile" }: ProfileDialogProps) {
+  const { updateUser } = useAuth();
+
+  // Estado editable del perfil (avatar). El resto es read-only (Moodle).
+  const [avatarColor, setAvatarColor] = useState(user.avatarColor ?? DEFAULT_AVATAR_COLOR);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(user.avatarUrl);
+  const [savedProfile, setSavedProfile] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
+
+  // Re-sincroniza el estado local cuando cambia el usuario o se reabre el modal.
+  useEffect(() => {
+    if (open) {
+      setAvatarColor(user.avatarColor ?? DEFAULT_AVATAR_COLOR);
+      setAvatarUrl(user.avatarUrl);
+      setSaveError("");
+      setAvatarError("");
+      setSavedProfile(false);
+    }
+  }, [open, user.avatarColor, user.avatarUrl]);
+
+  // Settings (tab "Configuración") — sin cambios funcionales por ahora.
   const [notifLearning, setNotifLearning] = useState(true);
   const [notifRecommend, setNotifRecommend] = useState(true);
   const [notifAchieve, setNotifAchieve] = useState(true);
   const [notifEmail, setNotifEmail] = useState(false);
-
-  // Privacy toggles
   const [showProgress, setShowProgress] = useState(true);
   const [shareData, setShareData] = useState(true);
   const [twoFactor, setTwoFactor] = useState(false);
   const [savedSettings, setSavedSettings] = useState(false);
 
-  const handleSaveProfile = () => {
-    setSavedProfile(true);
-    setTimeout(() => setSavedProfile(false), 2500);
+  const handleAvatarFileSelected = async (file: File) => {
+    setAvatarError("");
+    setUploadingAvatar(true);
+    try {
+      const dataUrl = await compressImageToDataUrl(file);
+      if (dataUrlBytes(dataUrl) > MAX_AVATAR_BYTES) {
+        setAvatarError("La imagen es demasiado grande incluso tras comprimir. Usa otra foto.");
+        return;
+      }
+      setAvatarUrl(dataUrl);
+    } catch (e) {
+      setAvatarError(e instanceof Error ? e.message : "No se pudo procesar la imagen.");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setSaveError("");
+    setSavingProfile(true);
+    try {
+      await updateProfile({ avatar_color: avatarColor, avatar_url: avatarUrl ?? null });
+      updateUser({ avatarColor, avatarUrl: avatarUrl ?? undefined });
+      setSavedProfile(true);
+      setTimeout(() => setSavedProfile(false), 2500);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "No se pudo guardar el perfil.");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleChangePassword = async (current: string, next: string) => {
+    await changePassword({ password_actual: current, password_nueva: next });
   };
 
   const handleSaveSettings = () => {
@@ -81,24 +129,27 @@ export function ProfileDialog({ open, onClose, user, initialTab = "profile" }: P
           {/* PERFIL */}
           <TabsContent value="profile" className="px-6 py-5 space-y-6">
             <ProfileStats
-              name={name}
+              name={user.name}
               role={user.role}
               memberSince={user.memberSince}
               avatarColor={avatarColor}
+              avatarUrl={avatarUrl}
+              recursosCompletados={user.recursosCompletados}
+              uploadingAvatar={uploadingAvatar}
+              avatarError={avatarError}
               onAvatarColorChange={setAvatarColor}
+              onAvatarFileSelected={handleAvatarFileSelected}
             />
             <ProfileEditForm
-              name={name}
-              email={email}
-              institution={institution}
-              bio={bio}
-              onNameChange={setName}
-              onEmailChange={setEmail}
-              onInstitutionChange={setInstitution}
-              onBioChange={setBio}
+              name={user.name}
+              email={user.email}
+              institution={user.institution}
               onSave={handleSaveProfile}
               onCancel={onClose}
               savedProfile={savedProfile}
+              savingProfile={savingProfile}
+              saveError={saveError}
+              onChangePassword={handleChangePassword}
             />
           </TabsContent>
 

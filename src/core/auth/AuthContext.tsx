@@ -12,6 +12,8 @@ interface AuthContextValue {
   login: (response: LoginResponse) => Promise<void>;
   /** Revoca el token en el servidor y limpia la sesión local. */
   logout: () => Promise<void>;
+  /** Actualiza campos del usuario en sesión (p. ej. avatar tras editar perfil). */
+  updateUser: (patch: Partial<User>) => void;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -51,6 +53,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  const updateUser = useCallback((patch: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
   const logout = useCallback(async () => {
     // Revoca el token en el servidor (blacklist en Redis). Best-effort: aunque
     // falle (p. ej. token ya vencido), igual limpiamos la sesión local.
@@ -74,8 +80,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       role: user?.role ?? null,
       login,
       logout,
+      updateUser,
     }),
-    [user, token, login, logout]
+    [user, token, login, logout, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
