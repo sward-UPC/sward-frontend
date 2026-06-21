@@ -5,7 +5,8 @@ import { DomainRadar } from '../../../components/xai/DomainRadar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Progress } from '../../../components/ui/progress';
 import { Sparkles, TrendingUp, BookOpen, Target, Activity, ArrowRight, ChevronRight, Flame, Route } from 'lucide-react';
-import { calcularRacha, calcularRuta } from '@features/student/gamification';
+import { calcularRuta } from '@features/student/gamification';
+import { useStudentStreak } from '@features/student/useStudentStreak';
 
 interface ConceptMasteryItem {
   concepto: string;
@@ -125,6 +126,9 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
   // Misma fuente real que usa el panel docente, pero pidiendo MI propia data.
   const { enabled, progress, interactions, conceptMastery } = useStudentDetail(estudianteId, courseId);
 
+  // Racha GLOBAL (todos los cursos): el mismo número en cualquier curso, no por curso.
+  const { data: rachaGlobal } = useStudentStreak(estudianteId);
+
   // Navegación a la pestaña Recursos (preservando el curso seleccionado en la URL).
   const [searchParams, setSearchParams] = useSearchParams();
   const irARecursos = () => {
@@ -201,8 +205,8 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
   // "Lo próximo para ti": 1-2 secciones más flojas (o las de menor dominio).
   const proximas = (weak.length > 0 ? weak : [...cm].sort((a, b) => a.dominio - b.dominio)).slice(0, 2);
 
-  // Gamificación REAL: racha (días consecutivos con interacciones) y ruta (conceptos dominados).
-  const racha = calcularRacha((interactions.data ?? []).map((it) => it.date));
+  // Gamificación REAL: racha GLOBAL (del backend, todos los cursos) y ruta (conceptos dominados del curso).
+  const racha = rachaGlobal ?? 0;
   const ruta = calcularRuta(cm);
 
   return (
