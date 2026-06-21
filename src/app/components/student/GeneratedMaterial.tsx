@@ -26,7 +26,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { cn } from '../ui/utils';
 import { burstConfetti, sideCannons } from './confetti';
 import { MiniMarkdown } from './MiniMarkdown';
-import { RichTextArea } from './RichTextArea';
+import { RichTextEditor } from './RichTextEditor';
+import { YouTubePlayer } from './YouTubePlayer';
 import {
   registrarResultadoQuiz,
   registrarMaterialCompletado,
@@ -677,7 +678,10 @@ function PracticaBody({
 }) {
   const total = recurso.ejercicios.length;
   const [paso, setPaso] = useState(0);
-  const [respuestaTexto, setRespuestaTexto] = useState<Record<number, string>>({});
+  // Guardamos el HTML (para re-mostrar con formato al volver) y el texto plano (para
+  // la IA y validar que haya contenido).
+  const [respuestaHtml, setRespuestaHtml] = useState<Record<number, string>>({});
+  const [respuestaText, setRespuestaText] = useState<Record<number, string>>({});
   const [veredicto, setVeredicto] = useState<Record<number, VerificacionEjercicio>>({});
   const [verificando, setVerificando] = useState(false);
   const [pistaVisible, setPistaVisible] = useState<Record<number, boolean>>({});
@@ -685,7 +689,7 @@ function PracticaBody({
   const [confirmando, setConfirmando] = useState(false);
 
   const e = recurso.ejercicios[paso];
-  const texto = respuestaTexto[paso] ?? '';
+  const texto = respuestaText[paso] ?? '';
   const v = veredicto[paso];
   const aprobado = !!v?.aprobado;
   const resueltos = recurso.ejercicios.filter((_, i) => veredicto[i]?.aprobado).length;
@@ -761,11 +765,15 @@ function PracticaBody({
           <p className="text-sm flex-1 leading-relaxed">{e.enunciado}</p>
         </div>
 
-        {/* El alumno resuelve aquí (rich text con formato) */}
-        <RichTextArea
-          value={texto}
-          onChange={(val) => setRespuestaTexto((r) => ({ ...r, [paso]: val }))}
-          placeholder="Escribe tu respuesta… (puedes dar formato: negrita, código, listas)"
+        {/* El alumno resuelve aquí (rich text WYSIWYG: negrita/cursiva/código/lista) */}
+        <RichTextEditor
+          key={paso}
+          initialHtml={respuestaHtml[paso] ?? ''}
+          onChange={(html, text) => {
+            setRespuestaHtml((r) => ({ ...r, [paso]: html }));
+            setRespuestaText((r) => ({ ...r, [paso]: text }));
+          }}
+          placeholder="Escribe tu respuesta…"
           disabled={aprobado}
         />
 
@@ -942,16 +950,7 @@ function VideoBody({
 }) {
   return (
     <div className="space-y-3">
-      <div className="relative w-full overflow-hidden rounded-[10px] bg-black aspect-video">
-        <iframe
-          className="absolute inset-0 w-full h-full"
-          src={`https://www.youtube-nocookie.com/embed/${recurso.video_id}`}
-          title={recurso.titulo}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          loading="lazy"
-        />
-      </div>
+      <YouTubePlayer videoId={recurso.video_id} title={recurso.titulo} />
       <CompletarRecurso
         label="Marcar como visto"
         onComplete={() =>
