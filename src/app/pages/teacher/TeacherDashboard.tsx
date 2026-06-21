@@ -335,7 +335,7 @@ export function TeacherDashboard() {
                 {/* TAB: ESTUDIANTES */}
                 {dash.activeTab === 'estudiantes' && (
                   <StudentRiskTable
-                    sortedStudents={dash.sortedStudents}
+                    students={dash.students}
                     riskFilter={dash.riskFilter}
                     setRiskFilter={dash.setRiskFilter}
                     onViewStudent={dash.setSelectedStudent}
