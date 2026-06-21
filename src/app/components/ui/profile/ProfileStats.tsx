@@ -63,20 +63,28 @@ export function ProfileStats({
       {/* Avatar */}
       <div className="flex items-center gap-5">
         <div className="relative">
+          {/* Anillo de color: siempre visible, conviva con o sin foto. */}
           <div
-            className="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md overflow-hidden"
+            className="w-20 h-20 rounded-full p-[3px] shadow-md transition-colors"
             style={{ background: avatarColor }}
           >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
-            ) : (
-              initials
-            )}
-            {uploadingAvatar && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
-                <Loader2 className="w-6 h-6 text-white animate-spin" />
-              </div>
-            )}
+            <div className="w-full h-full rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden bg-background relative">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+              ) : (
+                <div
+                  className="w-full h-full flex items-center justify-center transition-colors"
+                  style={{ background: avatarColor }}
+                >
+                  {initials}
+                </div>
+              )}
+              {uploadingAvatar && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                </div>
+              )}
+            </div>
           </div>
           <button
             type="button"

@@ -286,7 +286,7 @@ export function GeneratedMaterial({
                 type="button"
                 onClick={() => setAbierto(i)}
                 aria-label={`${meta.label}: ${recurso.titulo}${completado ? ' (completado)' : ''}`}
-                className="flex items-center gap-3 p-3 bg-background rounded-[12px] border text-left hover:border-violet-400/50 hover:shadow-sm transition-all group"
+                className="flex items-center gap-3 p-3 bg-background rounded-[12px] border text-left hover:border-violet-400/50 hover:shadow-sm transition-all group w-full min-w-0"
               >
                 <div className="w-10 h-10 rounded-[10px] bg-violet-500/10 text-violet-600 flex items-center justify-center shrink-0">
                   <Icon className="w-5 h-5" />
