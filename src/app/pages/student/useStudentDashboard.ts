@@ -49,7 +49,13 @@ export function useStudentDashboard(): UseStudentDashboardReturn {
     });
   }, [setSearchParams]);
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // El sidebar es persistente en desktop (abierto/expandido por defecto) pero un
+  // drawer en móvil (oculto por defecto, se abre con el botón hamburguesa). El
+  // estado inicial depende del ancho: en móvil (< md/768px) arranca CERRADO para
+  // que no tape el contenido al cargar.
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => (typeof window === 'undefined' ? true : window.innerWidth >= 768),
+  );
   const [showNotifPopup, setShowNotifPopup] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);

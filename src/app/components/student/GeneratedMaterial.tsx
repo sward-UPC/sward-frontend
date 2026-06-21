@@ -66,6 +66,47 @@ function useInvalidarProgreso() {
 // pero navegar entre tabs no lo repita en bucle.
 const confettiMostrado = new Set<string>();
 
+// --- Persistencia de recursos completados -----------------------------------
+// El badge "Completado" debe SOBREVIVIR a un refresh. La fuente de verdad
+// persistida es el set de TIPOS completados (no índices): un material tiene a lo
+// más un quiz, una lectura, etc., así que el tipo es estable aunque el orden de
+// los recursos cambie levemente. Clave estable por curso + concepto.
+
+/** Clave de localStorage para los completados de un material. */
+function claveCompletados(courseId: string, concepto: string | null): string {
+  return `sward:completados:${courseId}:${concepto ?? ''}`;
+}
+
+/** Lee el set de TIPOS completados desde localStorage (robusto, SSR-safe). */
+function leerTiposCompletados(courseId: string, concepto: string | null): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = window.localStorage.getItem(claveCompletados(courseId, concepto));
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? new Set(arr.filter((t): t is string => typeof t === 'string')) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+/** Persiste el set de TIPOS completados en localStorage (robusto, SSR-safe). */
+function guardarTiposCompletados(
+  courseId: string,
+  concepto: string | null,
+  tipos: Set<string>,
+): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(
+      claveCompletados(courseId, concepto),
+      JSON.stringify([...tipos]),
+    );
+  } catch {
+    // Best-effort: si localStorage no está disponible, no rompemos la UI.
+  }
+}
+
 /** Metadatos de presentación + hint de aprendizaje por tipo de recurso. */
 const TIPO_META: Record<
   RecursoGenerado['tipo'],
@@ -152,8 +193,28 @@ export function GeneratedMaterial({
   regenerando,
 }: GeneratedMaterialProps) {
   const [abierto, setAbierto] = useState<number | null>(null);
-  const [completados, setCompletados] = useState<Record<number, boolean>>({});
+  // Render por índice, pero hidratado desde el set de TIPOS persistido: marcamos
+  // como completado cada índice cuyo recurso sea de un tipo ya completado.
+  const [completados, setCompletados] = useState<Record<number, boolean>>(() => {
+    const tipos = leerTiposCompletados(courseId, material.concepto ?? null);
+    const inicial: Record<number, boolean> = {};
+    material.recursos.forEach((r, i) => {
+      if (tipos.has(r.tipo)) inicial[i] = true;
+    });
+    return inicial;
+  });
   const listo = material.disponible && material.recursos.length > 0;
+
+  // Re-hidrata si cambia el material (otro curso/concepto o "Generar más").
+  useEffect(() => {
+    const tipos = leerTiposCompletados(courseId, material.concepto ?? null);
+    const inicial: Record<number, boolean> = {};
+    material.recursos.forEach((r, i) => {
+      if (tipos.has(r.tipo)) inicial[i] = true;
+    });
+    setCompletados(inicial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, material.concepto]);
 
   // Confeti cuando el material termina de generar/cargar (una vez por concepto;
   // un refresh lo vuelve a mostrar porque el guard vive en memoria).
@@ -239,7 +300,7 @@ export function GeneratedMaterial({
                 </div>
                 {completado ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-[11px] font-medium text-success shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                     Completado
                   </span>
                 ) : (
@@ -258,7 +319,7 @@ export function GeneratedMaterial({
               variant="outline"
               onClick={onRegenerar}
               disabled={regenerando}
-              className="border-violet-400/40 text-violet-700 hover:bg-violet-500/5"
+              className="w-full sm:w-auto border-violet-400/40 text-violet-700 hover:bg-violet-500/5"
             >
               {regenerando ? (
                 <>
@@ -278,7 +339,7 @@ export function GeneratedMaterial({
 
       {/* Modal con el recurso interactivo */}
       <Dialog open={abierto !== null} onOpenChange={(o) => !o && setAbierto(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+        <DialogContent className="sm:max-w-3xl">
 
           {seleccion && (
             <>
@@ -300,9 +361,19 @@ export function GeneratedMaterial({
                   recurso={seleccion}
                   concepto={concepto}
                   courseId={courseId}
-                  onCompletado={() =>
-                    setCompletados((c) => (abierto !== null ? { ...c, [abierto]: true } : c))
-                  }
+                  onCompletado={() => {
+                    if (abierto === null) return;
+                    setCompletados((c) => ({ ...c, [abierto]: true }));
+                    // Persiste el TIPO recién completado (fuente de verdad estable
+                    // ante refresh), uniéndolo a lo que ya hubiera guardado.
+                    const tipo = material.recursos[abierto]?.tipo;
+                    if (tipo) {
+                      const concepto = material.concepto ?? null;
+                      const tipos = leerTiposCompletados(courseId, concepto);
+                      tipos.add(tipo);
+                      guardarTiposCompletados(courseId, concepto, tipos);
+                    }
+                  }}
                 />
               </div>
             </>
@@ -839,7 +910,7 @@ function PracticaBody({
           <span className="w-7 h-7 rounded-full bg-violet-500/10 text-violet-600 text-sm font-bold flex items-center justify-center shrink-0">
             {paso + 1}
           </span>
-          <MiniMarkdown text={e.enunciado} className="text-sm flex-1 leading-relaxed" />
+          <MiniMarkdown text={e.enunciado} className="text-sm flex-1 min-w-0 leading-relaxed" />
         </div>
 
         {/* El alumno resuelve aquí (rich text WYSIWYG: negrita/cursiva/código/lista) */}
@@ -890,7 +961,7 @@ function PracticaBody({
             ) : (
               <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             )}
-            <div>
+            <div className="min-w-0">
               <p
                 className={cn(
                   'text-[10px] uppercase tracking-wide font-semibold',
@@ -919,7 +990,7 @@ function PracticaBody({
             ) : (
               <div className="flex items-start gap-2 rounded-[10px] border border-amber-500/25 bg-amber-500/10 px-3 py-2.5">
                 <Lightbulb className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                <div>
+                <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-wide font-semibold text-amber-600">
                     Pista
                   </p>
@@ -979,7 +1050,7 @@ function PracticaBody({
         {revelada[paso] && (
           <div className="flex items-start gap-2 rounded-[10px] border bg-muted/40 px-3 py-2.5">
             <Eye className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-            <div>
+            <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
                 Solución
               </p>
