@@ -18,9 +18,27 @@ const ThemeContext = createContext<ThemeState>({
   setLanguage: () => {},
 });
 
+// Persistencia de apariencia en localStorage (sobrevive recargas).
+const LS_DARK = "sward:dark";
+const LS_COMPACT = "sward:compact";
+const _ls = (k: string): boolean => {
+  try {
+    return localStorage.getItem(k) === "1";
+  } catch {
+    return false;
+  }
+};
+const _setLs = (k: string, v: boolean): void => {
+  try {
+    localStorage.setItem(k, v ? "1" : "0");
+  } catch {
+    // ignorado (modo privado / sin localStorage)
+  }
+};
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [darkMode, setDarkModeState] = useState(false);
-  const [compactMode, setCompactModeState] = useState(false);
+  const [darkMode, setDarkModeState] = useState(() => _ls(LS_DARK));
+  const [compactMode, setCompactModeState] = useState(() => _ls(LS_COMPACT));
   const [language, setLanguageState] = useState<"es" | "en">("es");
 
   // Última posición del puntero: el reveal circular del tema nace justo del
@@ -40,6 +58,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const aplicarTema = (v: boolean) => {
     setDarkModeState(v);
     document.documentElement.classList.toggle("dark", v);
+    _setLs(LS_DARK, v);
   };
 
   // Ref para limpiar una onda en curso si el usuario vuelve a togglear rápido.
@@ -105,6 +124,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const html = document.documentElement;
     if (v) html.classList.add("compact");
     else html.classList.remove("compact");
+    _setLs(LS_COMPACT, v);
   };
 
   const setLanguage = (v: "es" | "en") => {
