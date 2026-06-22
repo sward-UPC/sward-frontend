@@ -213,7 +213,78 @@ export function StudentRiskTable({
               )}
             </div>
           ) : (
-            <div className="border rounded-[12px] overflow-x-auto">
+            <>
+            {/* MÓVIL: tarjetas apiladas (la tabla no cabe en pantallas chicas) */}
+            <div className="sm:hidden space-y-2">
+              {paged.map((student) => (
+                <button
+                  key={student.id}
+                  type="button"
+                  onClick={() => onViewStudent(student.id)}
+                  className="w-full text-left rounded-[12px] border p-3 hover:bg-muted/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full mt-1 shrink-0 ${getRiskColor(student.riskLevel)}`}
+                      aria-hidden
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm truncate">{student.name}</p>
+                        {student.registrado === false && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground border-muted-foreground/30 shrink-0">
+                            No registrado
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{student.email}</p>
+                    </div>
+                    {getRiskBadge(student.riskLevel)}
+                  </div>
+
+                  {/* Métricas */}
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Dominio</p>
+                      <p className={`text-sm font-semibold ${getMasteryColor(student.avgMastery)}`}>{student.avgMastery}%</p>
+                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden mt-1">
+                        <div
+                          className={`h-full rounded-full ${getMasteryBar(student.avgMastery)}`}
+                          style={{ width: `${Math.max(0, Math.min(100, student.avgMastery))}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Engagement</p>
+                      <p className={`text-sm font-semibold ${getMasteryColor(student.engagement)}`}>{student.engagement}%</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">En riesgo</p>
+                      <p className="text-sm font-semibold">
+                        {student.conceptsAtRisk > 0 ? (
+                          <span className="text-destructive">{student.conceptsAtRisk}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Acciones */}
+                  <div className="mt-3 flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => onViewStudent(student.id)}>
+                      <Eye className="w-3.5 h-3.5 mr-1.5" /> Ver
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => onFeedback({ id: student.id, name: student.name })}>
+                      <MessageSquare className="w-3.5 h-3.5 mr-1.5" /> Mensaje
+                    </Button>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* DESKTOP/TABLET: tabla */}
+            <div className="hidden sm:block border rounded-[12px] overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -308,6 +379,7 @@ export function StudentRiskTable({
                 </TableBody>
               </Table>
             </div>
+            </>
           )}
 
           {/* Pie: leyenda + paginación */}
