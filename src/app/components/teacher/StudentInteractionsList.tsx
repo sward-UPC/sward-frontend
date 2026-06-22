@@ -19,7 +19,7 @@ export function StudentInteractionsList({ interactions }: StudentInteractionsLis
           {interactions.map((interaction) => {
             const inner = (
               <>
-                <div className="mt-1">
+                <div className="mt-0.5 shrink-0">
                   {interaction.result === 'Completado' ? (
                     <CheckCircle2 className="w-5 h-5 text-success" />
                   ) : (
@@ -27,20 +27,24 @@ export function StudentInteractionsList({ interactions }: StudentInteractionsLis
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{interaction.resource}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="outline" className="text-xs">
-                      {interaction.concept}
+                  {/* Fila superior: recurso + fecha (la fecha ya incluye la hora) */}
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-medium truncate min-w-0">{interaction.resource}</p>
+                    <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1.5 whitespace-nowrap">
+                      {interaction.date}
+                      {interaction.url && <ExternalLink className="w-3.5 h-3.5 text-primary" />}
+                    </span>
+                  </div>
+                  {/* Fila inferior: concepto (trunca) + hora; envuelve si no cabe */}
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <Badge variant="outline" className="text-xs max-w-full">
+                      <span className="truncate">{interaction.concept}</span>
                     </Badge>
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1 shrink-0">
                       <Clock className="w-3 h-3" />
                       {interaction.time}
                     </span>
                   </div>
-                </div>
-                <div className="text-xs text-muted-foreground shrink-0 flex items-center gap-1.5">
-                  {interaction.date}
-                  {interaction.url && <ExternalLink className="w-3.5 h-3.5 text-primary" />}
                 </div>
               </>
             );

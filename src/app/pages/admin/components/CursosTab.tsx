@@ -78,7 +78,7 @@ export function CursosTab() {
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className="font-semibold text-sm">{c.nombre}</p>
                     {c.estado === "activo"
-                      ? <Badge className="text-xs gap-1 shrink-0 border-transparent bg-emerald-500 text-white"><CheckCircle2 className="w-3 h-3" />Activo</Badge>
+                      ? <Badge variant="success" className="text-xs gap-1 shrink-0"><CheckCircle2 className="w-3 h-3" />Activo</Badge>
                       : <Badge variant="outline" className="text-xs text-muted-foreground shrink-0">Inactivo</Badge>}
                   </div>
                   <p className="text-xs text-muted-foreground font-mono">{c.codigo}</p>
