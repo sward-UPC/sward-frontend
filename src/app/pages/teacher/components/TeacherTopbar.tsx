@@ -1,13 +1,15 @@
+import { useState } from 'react';
 import { Button } from '../../../components/ui/button';
 import {
   Bell, X, AlertTriangle, CheckCircle, Info,
   User, Settings, ChevronRight, Moon, Sun, LogOut, ChevronLeft, Menu,
 } from 'lucide-react';
-import type { Alert, TeacherProfile } from '@core/types';
+import type { TeacherProfile } from '@core/types';
+import type { AppNotification } from '@features/notifications/notifications.service';
 
 interface TeacherTopbarProps {
   teacher: TeacherProfile;
-  notifications: Alert[];
+  notifications: AppNotification[];
   unreadCount: number;
   darkMode: boolean;
   setDarkMode: (v: boolean) => void;
@@ -15,7 +17,8 @@ interface TeacherTopbarProps {
   setShowNotifPopup: (v: boolean) => void;
   notifRef: React.RefObject<HTMLDivElement>;
   markAllRead: () => void;
-  dismissNotification: (id: number) => void;
+  markRead: (id: string) => void;
+  dismissNotification: (id: string) => void;
   showProfilePopup: boolean;
   setShowProfilePopup: (v: boolean) => void;
   profileRef: React.RefObject<HTMLDivElement>;
@@ -44,6 +47,7 @@ export function TeacherTopbar({
   setShowNotifPopup,
   notifRef,
   markAllRead,
+  markRead,
   dismissNotification,
   showProfilePopup,
   setShowProfilePopup,
@@ -54,6 +58,7 @@ export function TeacherTopbar({
   sidebarOpen,
   onToggleSidebar,
 }: TeacherTopbarProps) {
+  const [expandedNotif, setExpandedNotif] = useState<string | null>(null);
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="flex h-14 items-center justify-between px-4 gap-3">
@@ -109,24 +114,32 @@ export function TeacherTopbar({
                   {notifications.length === 0 ? (
                     <div className="py-8 text-center text-sm text-muted-foreground">Sin notificaciones</div>
                   ) : (
-                    notifications.map((n) => (
+                    notifications.map((n) => {
+                      const expanded = expandedNotif === n.id;
+                      return (
                       <div key={n.id} className={`px-4 py-3 border-b last:border-b-0 ${!n.read ? 'bg-primary/5' : ''}`}>
                         <div className="flex items-start gap-2">
                           {getNotifIcon(n.type)}
-                          <div className="flex-1 min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => { setExpandedNotif(expanded ? null : n.id); if (!n.read) markRead(n.id); }}
+                            className="flex-1 min-w-0 text-left"
+                          >
                             <p className="text-sm font-medium">{n.title}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{n.message}</p>
+                            <p className={`text-xs text-muted-foreground mt-0.5 leading-relaxed whitespace-pre-line ${expanded ? '' : 'line-clamp-2'}`}>{n.message}</p>
                             <p className="text-xs text-muted-foreground mt-1">{n.time}</p>
-                          </div>
+                          </button>
                           <button
                             onClick={() => dismissNotification(n.id)}
+                            aria-label="Descartar"
                             className="text-muted-foreground hover:text-foreground shrink-0"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
                 {notifications.length > 0 && (
