@@ -24,6 +24,7 @@ interface MeResponse {
   moodle_user_id: number | null;
   avatar_color: string | null;
   avatar_url: string | null;
+  notif_logros?: boolean;
   rol: string | null;
   permisos: string[];
 }
@@ -113,4 +114,15 @@ export async function changePassword(payload: {
 /** Elimina (desactiva) la cuenta del usuario autenticado. */
 export async function deleteAccount(): Promise<void> {
   await apiClient.delete(ENDPOINTS.users.deleteAccount);
+}
+
+/** Lee el perfil crudo del backend (incluye preferencias). */
+export async function getMyProfileRaw(): Promise<MeResponse> {
+  const { data } = await apiClient.get<MeResponse>(ENDPOINTS.users.profile);
+  return data;
+}
+
+/** Actualiza las preferencias de notificación del usuario. */
+export async function updateNotificationPrefs(notifLogros: boolean): Promise<void> {
+  await apiClient.put(ENDPOINTS.users.preferences, { notif_logros: notifLogros });
 }

@@ -5,7 +5,7 @@ import { ProfileStats } from "./profile/ProfileStats";
 import { ProfileEditForm } from "./profile/ProfileEditForm";
 import { ProfileAchievements } from "./profile/ProfileAchievements";
 import { compressImageToDataUrl, dataUrlBytes, MAX_AVATAR_BYTES } from "./profile/avatarImage";
-import { changePassword, updateProfile, deleteAccount } from "@features/auth/services/auth.service";
+import { changePassword, updateProfile, deleteAccount, getMyProfileRaw, updateNotificationPrefs } from "@features/auth/services/auth.service";
 import { getNotifications } from "@features/notifications/notifications.service";
 import { useAuth } from "@core/auth/useAuth";
 
@@ -53,12 +53,18 @@ export function ProfileDialog({ open, onClose, user, initialTab = "profile" }: P
     }
   }, [open, user.avatarColor, user.avatarUrl]);
 
-  // Settings (tab "Configuración") — preferencias de notificaciones.
-  const [notifLearning, setNotifLearning] = useState(true);
-  const [notifRecommend, setNotifRecommend] = useState(true);
-  const [notifAchieve, setNotifAchieve] = useState(true);
+  // Settings (tab "Configuración") — preferencia de notificaciones de logros.
+  const [notifLogros, setNotifLogros] = useState(true);
   const [savedSettings, setSavedSettings] = useState(false);
   const [exportingData, setExportingData] = useState(false);
+
+  // Carga la preferencia real al abrir el modal.
+  useEffect(() => {
+    if (!open) return;
+    getMyProfileRaw()
+      .then((p) => setNotifLogros(p.notif_logros ?? true))
+      .catch(() => {});
+  }, [open]);
 
   const handleAvatarFileSelected = async (file: File) => {
     setAvatarError("");
@@ -96,7 +102,12 @@ export function ProfileDialog({ open, onClose, user, initialTab = "profile" }: P
     await changePassword({ password_actual: current, password_nueva: next });
   };
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
+    try {
+      await updateNotificationPrefs(notifLogros);
+    } catch {
+      // best-effort; el toggle queda con el valor elegido localmente
+    }
     setSavedSettings(true);
     setTimeout(() => setSavedSettings(false), 2500);
   };
@@ -202,12 +213,8 @@ export function ProfileDialog({ open, onClose, user, initialTab = "profile" }: P
           {/* CONFIGURACIÓN */}
           <TabsContent value="settings" className="px-6 py-5 space-y-6">
             <ProfileAchievements
-              notifLearning={notifLearning}
-              notifRecommend={notifRecommend}
-              notifAchieve={notifAchieve}
-              onToggleNotifLearning={() => setNotifLearning((v) => !v)}
-              onToggleNotifRecommend={() => setNotifRecommend((v) => !v)}
-              onToggleNotifAchieve={() => setNotifAchieve((v) => !v)}
+              notifLogros={notifLogros}
+              onToggleNotifLogros={() => setNotifLogros((v) => !v)}
               onExportData={handleExportData}
               onDeleteAccount={handleDeleteAccount}
               exportingData={exportingData}
