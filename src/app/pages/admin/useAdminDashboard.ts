@@ -3,7 +3,9 @@ import { useSearchParams } from "react-router";
 import { useTheme } from "../../context/ThemeContext";
 import { useAdminUsers } from "../../../features/admin/hooks/useAdminUsers";
 import { useUpdateUserStatus } from "../../../features/admin/hooks/useUpdateUserStatus";
-import type { AdminTab, AdminNotification, AdminUser, UserStatus } from "../../../core/types/admin.types";
+import { useNotifications } from "@features/notifications/useNotifications";
+import type { AppNotification } from "@features/notifications/notifications.service";
+import type { AdminTab, AdminUser, UserStatus } from "../../../core/types/admin.types";
 
 export interface UseAdminDashboardReturn {
   // State
@@ -17,7 +19,7 @@ export interface UseAdminDashboardReturn {
   usersTotal: number;
   usersLoading: boolean;
   usersError: boolean;
-  notifs: AdminNotification[];
+  notifs: AppNotification[];
   showNotifPopup: boolean;
   showProfilePopup: boolean;
   showProfileDialog: boolean;
@@ -35,7 +37,9 @@ export interface UseAdminDashboardReturn {
   setUserSearch: (v: string) => void;
   setRoleFilter: (v: string) => void;
   setStatusFilter: (v: string) => void;
-  setNotifs: React.Dispatch<React.SetStateAction<AdminNotification[]>>;
+  markAllRead: () => void;
+  markRead: (id: string) => void;
+  dismissNotif: (id: string) => void;
   setShowNotifPopup: (v: boolean) => void;
   setShowProfilePopup: (v: boolean) => void;
   setShowProfileDialog: (v: boolean) => void;
@@ -64,7 +68,7 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
   const [userSearch, setUserSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [notifs, setNotifs] = useState<AdminNotification[]>([]);
+  const notif = useNotifications();
   const [showNotifPopup, setShowNotifPopup] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
@@ -81,8 +85,6 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
 
   const users = usersData?.items ?? [];
   const usersTotal = usersData?.total ?? 0;
-
-  const unread = notifs.filter((n) => !n.read).length;
 
   useEffect(() => {
     function handle(e: MouseEvent) {
@@ -136,14 +138,14 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
     usersTotal,
     usersLoading,
     usersError,
-    notifs,
+    notifs: notif.notifications,
     showNotifPopup,
     showProfilePopup,
     showProfileDialog,
     profileDialogTab,
     modelRetrain,
     retrainDone,
-    unread,
+    unread: notif.unreadCount,
     darkMode,
     notifRef,
     profileRef,
@@ -152,7 +154,9 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
     setUserSearch,
     setRoleFilter,
     setStatusFilter,
-    setNotifs,
+    markAllRead: notif.markAllRead,
+    markRead: notif.markRead,
+    dismissNotif: notif.dismiss,
     setShowNotifPopup,
     setShowProfilePopup,
     setShowProfileDialog,

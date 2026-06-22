@@ -1,12 +1,13 @@
+import { useState } from "react";
 import { Button } from "../../../components/ui/button";
 import {
   LogOut, Bell, X, Info, AlertTriangle, Settings,
   ChevronRight, Moon, Sun, User, XCircle, ChevronLeft, Menu,
 } from "lucide-react";
-import type { AdminNotification } from "../../../../core/types/admin.types";
+import type { AppNotification } from "@features/notifications/notifications.service";
 
 interface AdminTopbarProps {
-  notifs: AdminNotification[];
+  notifs: AppNotification[];
   unread: number;
   showNotifPopup: boolean;
   showProfilePopup: boolean;
@@ -21,7 +22,8 @@ interface AdminTopbarProps {
   onToggleNotif: () => void;
   onToggleProfile: () => void;
   onMarkAllRead: () => void;
-  onDismissNotif: (id: number) => void;
+  onMarkRead: (id: string) => void;
+  onDismissNotif: (id: string) => void;
   onOpenProfile: (tab: "profile" | "settings") => void;
   onLogout: () => void;
 }
@@ -39,9 +41,10 @@ export function AdminTopbar({
   notifRef, profileRef, sidebarOpen,
   adminName = "Administrador", adminEmail = "",
   onToggleSidebar, onToggleDark, onToggleNotif, onToggleProfile,
-  onMarkAllRead, onDismissNotif, onOpenProfile, onLogout,
+  onMarkAllRead, onMarkRead, onDismissNotif, onOpenProfile, onLogout,
 }: AdminTopbarProps) {
   const initials = adminName.charAt(0).toUpperCase();
+  const [expandedNotif, setExpandedNotif] = useState<string | null>(null);
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="flex h-14 items-center justify-between px-4 gap-3">
@@ -86,21 +89,30 @@ export function AdminTopbar({
                   )}
                 </div>
                 <div className="max-h-64 overflow-y-auto">
-                  {notifs.map((n) => (
-                    <div key={n.id} className={`px-4 py-3 border-b last:border-b-0 ${!n.read ? "bg-primary/5" : ""}`}>
-                      <div className="flex items-start gap-2">
-                        {getNotifIcon(n.type)}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium">{n.title}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{n.time}</p>
+                  {notifs.length === 0
+                    ? <div className="py-8 text-center text-sm text-muted-foreground">Sin notificaciones</div>
+                    : notifs.map((n) => {
+                      const expanded = expandedNotif === n.id;
+                      return (
+                      <div key={n.id} className={`px-4 py-3 border-b last:border-b-0 ${!n.read ? "bg-primary/5" : ""}`}>
+                        <div className="flex items-start gap-2">
+                          {getNotifIcon(n.type)}
+                          <button
+                            type="button"
+                            onClick={() => { setExpandedNotif(expanded ? null : n.id); if (!n.read) onMarkRead(n.id); }}
+                            className="flex-1 min-w-0 text-left"
+                          >
+                            <p className="text-sm font-medium">{n.title}</p>
+                            <p className={`text-xs text-muted-foreground mt-0.5 whitespace-pre-line ${expanded ? "" : "line-clamp-2"}`}>{n.message}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{n.time}</p>
+                          </button>
+                          <button onClick={() => onDismissNotif(n.id)} aria-label="Descartar" className="text-muted-foreground hover:text-foreground shrink-0">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
-                        <button onClick={() => onDismissNotif(n.id)} className="text-muted-foreground hover:text-foreground">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
                       </div>
-                    </div>
-                  ))}
+                      );
+                    })}
                 </div>
               </div>
             )}
