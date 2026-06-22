@@ -81,6 +81,7 @@ export function StudentDashboard() {
         onToggleNotif={() => { dash.setShowNotifPopup(!dash.showNotifPopup); dash.setShowProfilePopup(false); }}
         onToggleProfile={() => { dash.setShowProfilePopup(!dash.showProfilePopup); dash.setShowNotifPopup(false); }}
         onMarkAllRead={dash.markAllRead}
+        onMarkRead={dash.markRead}
         onDismissNotification={dash.dismissNotification}
         onClearNotifications={dash.clearNotifications}
         onOpenProfile={dash.openProfile}

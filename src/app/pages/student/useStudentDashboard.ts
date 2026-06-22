@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
 import { useTheme } from '../../context/ThemeContext';
-import type { NavItem, StudentNotification } from '@core/types';
+import type { NavItem } from '@core/types';
+import { useNotifications } from '@features/notifications/useNotifications';
+import type { AppNotification } from '@features/notifications/notifications.service';
 
 export interface UseStudentDashboardReturn {
   /* navigation */
@@ -11,12 +13,13 @@ export interface UseStudentDashboardReturn {
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 
   /* notifications */
-  notifications: StudentNotification[];
+  notifications: AppNotification[];
   unreadCount: number;
   showNotifPopup: boolean;
   setShowNotifPopup: React.Dispatch<React.SetStateAction<boolean>>;
   markAllRead: () => void;
-  dismissNotification: (id: number) => void;
+  markRead: (id: string) => void;
+  dismissNotification: (id: string) => void;
   clearNotifications: () => void;
   notifRef: React.RefObject<HTMLDivElement>;
 
@@ -60,13 +63,13 @@ export function useStudentDashboard(): UseStudentDashboardReturn {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [profileDialogTab, setProfileDialogTab] = useState<'profile' | 'settings'>('profile');
-  const [notifications, setNotifications] = useState<StudentNotification[]>([]);
+
+  // Notificaciones REALES del usuario (ms-usuarios) con polling. Reemplaza el mock.
+  const notif = useNotifications();
 
   const { darkMode, setDarkMode } = useTheme();
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -81,9 +84,7 @@ export function useStudentDashboard(): UseStudentDashboardReturn {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const markAllRead = () => setNotifications((p) => p.map((n) => ({ ...n, read: true })));
-  const dismissNotification = (id: number) => setNotifications((p) => p.filter((n) => n.id !== id));
-  const clearNotifications = () => setNotifications([]);
+  const clearNotifications = () => notif.notifications.forEach((n) => notif.dismiss(n.id));
   const openProfile = (tab: 'profile' | 'settings') => {
     setProfileDialogTab(tab);
     setShowProfileDialog(true);
@@ -95,12 +96,13 @@ export function useStudentDashboard(): UseStudentDashboardReturn {
     setActiveNav,
     sidebarOpen,
     setSidebarOpen,
-    notifications,
-    unreadCount,
+    notifications: notif.notifications,
+    unreadCount: notif.unreadCount,
     showNotifPopup,
     setShowNotifPopup,
-    markAllRead,
-    dismissNotification,
+    markAllRead: notif.markAllRead,
+    markRead: notif.markRead,
+    dismissNotification: notif.dismiss,
     clearNotifications,
     notifRef,
     showProfilePopup,
