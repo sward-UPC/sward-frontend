@@ -42,7 +42,7 @@ export function ProfileAchievements({
   onCancel,
   savedSettings,
 }: ProfileAchievementsProps) {
-  const { darkMode, compactMode, language, setDarkMode, setCompactMode, setLanguage } = useTheme();
+  const { darkMode, compactMode, setDarkMode, setCompactMode } = useTheme();
 
   const notificationItems = [
     { label: "Alertas de aprendizaje", desc: "Bajo rendimiento o conceptos en riesgo", value: notifLearning, set: onToggleNotifLearning },
@@ -116,35 +116,6 @@ export function ProfileAchievements({
             </p>
           </div>
           <Toggle checked={compactMode} onChange={() => setCompactMode(!compactMode)} label="Vista compacta" />
-        </div>
-
-        <div className="flex items-center justify-between py-2 border-t border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-[10px] bg-muted flex items-center justify-center">
-              <Globe className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Idioma de la interfaz</p>
-              <p className="text-xs text-muted-foreground">
-                Actualmente: {language === "es" ? "Español" : "English"}
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-1.5 p-1 bg-muted rounded-[10px]">
-            {(["es", "en"] as const).map((lang) => (
-              <button
-                key={lang}
-                onClick={() => setLanguage(lang)}
-                className={`px-3 py-1 text-xs rounded-lg font-medium transition-all ${
-                  language === lang
-                    ? "bg-card shadow-sm text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {lang === "es" ? "ES" : "EN"}
-              </button>
-            ))}
-          </div>
         </div>
       </section>
 
