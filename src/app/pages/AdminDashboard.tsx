@@ -28,8 +28,9 @@ export function AdminDashboard() {
         onToggleDark={() => dash.setDarkMode(!dash.darkMode)}
         onToggleNotif={() => { dash.setShowNotifPopup(!dash.showNotifPopup); dash.setShowProfilePopup(false); }}
         onToggleProfile={() => { dash.setShowProfilePopup(!dash.showProfilePopup); dash.setShowNotifPopup(false); }}
-        onMarkAllRead={() => dash.setNotifs((p) => p.map((n) => ({ ...n, read: true })))}
-        onDismissNotif={(id) => dash.setNotifs((p) => p.filter((x) => x.id !== id))}
+        onMarkAllRead={dash.markAllRead}
+        onMarkRead={dash.markRead}
+        onDismissNotif={dash.dismissNotif}
         onOpenProfile={dash.openProfile}
         onLogout={logout}
       />
