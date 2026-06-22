@@ -113,6 +113,19 @@ function buildRecomendaciones(
   return recs;
 }
 
+// Colores de los charts vía tokens del tema → adaptan a claro/oscuro.
+const CHART_GRID = "var(--color-border)";
+const CHART_AXIS = "var(--color-muted-foreground)";
+const CHART_PRIMARY = "var(--color-primary)";
+const CHART_TOOLTIP = {
+  backgroundColor: "var(--color-card)",
+  border: "1px solid var(--color-border)",
+  borderRadius: "12px",
+  color: "var(--color-foreground)",
+};
+/** Acorta nombres largos de sección en el eje X (el tooltip muestra el completo). */
+const truncarEtiqueta = (s: string) => (s.length > 12 ? `${s.slice(0, 11)}…` : s);
+
 export function StudentDetailView({ student, courseId, moodleCourseId, onClose, onSendFeedback }: StudentDetailViewProps) {
   // Datos REALES (ms-trazabilidad) cuando hay UUID + curso; si no, cae al mock.
   const { enabled, progress, interactions, attention, conceptMastery, weeklyProgress } =
@@ -203,36 +216,36 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
         )}
 
         {/* Métricas Principales */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Dominio Promedio</p>
-                <p className="text-2xl font-bold text-destructive">{avgMastery}%</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-1">Dominio Promedio</p>
+                <p className="text-xl sm:text-2xl font-bold text-destructive">{avgMastery}%</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Engagement</p>
-                <p className="text-2xl font-bold">{student.engagement}%</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-1">Engagement</p>
+                <p className="text-xl sm:text-2xl font-bold">{student.engagement}%</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Conceptos en Riesgo</p>
-                <p className="text-2xl font-bold text-destructive">{student.conceptsAtRisk}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-1">Conceptos en Riesgo</p>
+                <p className="text-xl sm:text-2xl font-bold text-destructive">{student.conceptsAtRisk}</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-1">Última Actividad</p>
-                <p className="text-sm font-medium">{student.lastActivity}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-1">Última Actividad</p>
+                <p className="text-sm font-medium break-words">{student.lastActivity}</p>
               </div>
             </CardContent>
           </Card>
@@ -247,18 +260,12 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
           <CardContent>
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={evolution}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="week" stroke="#6B7280" style={{ fontSize: "12px" }} />
-                  <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#FFFFFF",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: "12px",
-                    }}
-                  />
-                  <Line type="monotone" dataKey="mastery" stroke="#4F46E5" strokeWidth={2} name="Dominio %" />
+                <LineChart data={evolution} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
+                  <XAxis dataKey="week" stroke={CHART_AXIS} style={{ fontSize: "11px" }} />
+                  <YAxis stroke={CHART_AXIS} style={{ fontSize: "11px" }} domain={[0, 100]} width={32} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} labelStyle={{ color: "var(--color-foreground)" }} />
+                  <Line type="monotone" dataKey="mastery" stroke={CHART_PRIMARY} strokeWidth={2} name="Dominio %" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -304,18 +311,18 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
           <CardContent>
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={conceptBars}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="concept" stroke="#6B7280" style={{ fontSize: "12px" }} />
-                  <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} domain={[0, 100]} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#FFFFFF",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: "12px",
-                    }}
+                <BarChart data={conceptBars} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
+                  <XAxis
+                    dataKey="concept"
+                    stroke={CHART_AXIS}
+                    style={{ fontSize: "11px" }}
+                    interval={0}
+                    tickFormatter={truncarEtiqueta}
                   />
-                  <Bar dataKey="mastery" fill="#4F46E5" name="Dominio %" />
+                  <YAxis stroke={CHART_AXIS} style={{ fontSize: "11px" }} domain={[0, 100]} width={32} />
+                  <Tooltip contentStyle={CHART_TOOLTIP} labelStyle={{ color: "var(--color-foreground)" }} cursor={{ fill: "var(--color-muted)" }} />
+                  <Bar dataKey="mastery" fill={CHART_PRIMARY} name="Dominio %" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -375,12 +382,12 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
         )}
 
         {/* Acciones */}
-        <div className="flex gap-2 pt-4 border-t">
+        <div className="flex flex-col-reverse sm:flex-row gap-2 pt-4 border-t">
           <Button className="flex-1" onClick={onSendFeedback}>
             <MessageSquare className="w-4 h-4 mr-2" />
             Enviar Retroalimentación
           </Button>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} className="sm:w-auto">
             Cerrar
           </Button>
         </div>
