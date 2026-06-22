@@ -4,12 +4,8 @@ import { Check, Save, Bell, Monitor, Moon, Sun, Globe, Download, Smartphone, Tra
 import { useTheme } from "../../../context/ThemeContext";
 
 interface ProfileAchievementsProps {
-  notifLearning: boolean;
-  notifRecommend: boolean;
-  notifAchieve: boolean;
-  onToggleNotifLearning: () => void;
-  onToggleNotifRecommend: () => void;
-  onToggleNotifAchieve: () => void;
+  notifLogros: boolean;
+  onToggleNotifLogros: () => void;
   onExportData: () => void;
   onDeleteAccount: () => void;
   exportingData?: boolean;
@@ -19,12 +15,8 @@ interface ProfileAchievementsProps {
 }
 
 export function ProfileAchievements({
-  notifLearning,
-  notifRecommend,
-  notifAchieve,
-  onToggleNotifLearning,
-  onToggleNotifRecommend,
-  onToggleNotifAchieve,
+  notifLogros,
+  onToggleNotifLogros,
   onExportData,
   onDeleteAccount,
   exportingData = false,
@@ -35,9 +27,7 @@ export function ProfileAchievements({
   const { darkMode, compactMode, setDarkMode, setCompactMode } = useTheme();
 
   const notificationItems = [
-    { label: "Alertas de aprendizaje", desc: "Bajo rendimiento o conceptos en riesgo", value: notifLearning, set: onToggleNotifLearning },
-    { label: "Nuevas recomendaciones", desc: "Cuando SAKT genera recursos personalizados", value: notifRecommend, set: onToggleNotifRecommend },
-    { label: "Logros y progreso", desc: "Hitos alcanzados y mejoras de dominio", value: notifAchieve, set: onToggleNotifAchieve },
+    { label: "Logros y progreso", desc: "Hitos alcanzados: rachas y recursos completados", value: notifLogros, set: onToggleNotifLogros },
   ];
 
   return (
