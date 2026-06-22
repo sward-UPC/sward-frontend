@@ -75,12 +75,14 @@ export async function generarMaterial(
   cursoId: string,
   refrescar = false,
   formatoPreferido?: string | null,
+  evitarConcepto?: string | null,
 ): Promise<MaterialGenerado> {
   const { data } = await apiClient.post<MaterialGenerado>(ENDPOINTS.teacher.generateMaterial, {
     estudianteId,
     cursoId,
     refrescar,
     formatoPreferido: formatoPreferido ?? null,
+    evitarConcepto: evitarConcepto ?? null,
   });
   return data;
 }

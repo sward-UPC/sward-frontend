@@ -90,6 +90,17 @@ function leerTiposCompletados(courseId: string, concepto: string | null): Set<st
   }
 }
 
+/** Borra los completados persistidos de un material (al "Generar más" = contenido
+ * nuevo, los badges no deben arrastrarse). */
+export function limpiarTiposCompletados(courseId: string, concepto: string | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(claveCompletados(courseId, concepto));
+  } catch {
+    // best-effort
+  }
+}
+
 /** Persiste el set de TIPOS completados en localStorage (robusto, SSR-safe). */
 function guardarTiposCompletados(
   courseId: string,
