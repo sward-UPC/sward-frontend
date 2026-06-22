@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
 import type {
-  Alert,
   StudentProgress,
   TeacherTab,
   TeacherProfile,
@@ -11,15 +10,16 @@ import type {
 import { useAuth } from '@core/auth/useAuth';
 import { useTeacherCourses } from '@features/teacher/hooks/useTeacherCourses';
 import { useTeacherStudents } from '@features/teacher/hooks/useTeacherStudents';
-import { useTeacherAlerts } from '@features/teacher/hooks/useTeacherAlerts';
 import { useClassTrend } from '@features/teacher/hooks/useClassTrend';
+import { useNotifications } from '@features/notifications/useNotifications';
+import type { AppNotification } from '@features/notifications/notifications.service';
 import { useTheme } from '../../context/ThemeContext';
 
 export interface UseTeacherDashboardReturn {
   /* data */
   students: StudentProgress[];
   teacher: TeacherProfile;
-  notifications: Alert[];
+  notifications: AppNotification[];
   trendData: ClassTrendDataPoint[];
   engagementData: EngagementDataPoint[];
 
@@ -69,7 +69,8 @@ export interface UseTeacherDashboardReturn {
   setShowNotifPopup: (v: boolean) => void;
   notifRef: React.RefObject<HTMLDivElement>;
   markAllRead: () => void;
-  dismissNotification: (id: number) => void;
+  markRead: (id: string) => void;
+  dismissNotification: (id: string) => void;
   clearNotifications: () => void;
 
   /* profile popup */
@@ -140,7 +141,10 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [profileDialogTab, setProfileDialogTab] = useState<'profile' | 'settings'>('profile');
-  const [notifications, setNotifications] = useState<Alert[]>([]);
+
+  // Notificaciones REALES del docente (tabla notificaciones): alertas de riesgo
+  // de sus alumnos. Reemplaza el feed de /xai/alerts (que no persistía el leído).
+  const notif = useNotifications();
 
   const { darkMode, setDarkMode } = useTheme();
   const { user } = useAuth();
@@ -166,14 +170,8 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
   const students: StudentProgress[] = realStudents ?? [];
   const usingRealData = students.length > 0;
 
-  // Alertas (ms-xai) y tendencia (ms-trazabilidad) reales, sin fallback.
-  const { data: realAlerts } = useTeacherAlerts(effectiveCourseId);
+  // Tendencia (ms-trazabilidad) real, sin fallback.
   const { data: realTrend } = useClassTrend(effectiveCourseId);
-
-  // Las alertas reales son la fuente de las notificaciones; sin alertas → vacío.
-  useEffect(() => {
-    setNotifications(realAlerts ?? []);
-  }, [realAlerts]);
 
   const trendData: ClassTrendDataPoint[] = realTrend ?? [];
   const engagementData: EngagementDataPoint[] = students.map((s) => ({
@@ -210,16 +208,14 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const markAllRead = () => setNotifications((p) => p.map((n) => ({ ...n, read: true })));
-  const dismissNotification = (id: number) => setNotifications((p) => p.filter((n) => n.id !== id));
-  const clearNotifications = () => setNotifications([]);
+  const clearNotifications = () => notif.notifications.forEach((n) => notif.dismiss(n.id));
   const openProfile = (tab: 'profile' | 'settings') => {
     setProfileDialogTab(tab);
     setShowProfileDialog(true);
     setShowProfilePopup(false);
   };
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notif.unreadCount;
   const highRiskCount = students.filter((s) => s.riskLevel === 'high').length;
   const mediumRiskCount = students.filter((s) => s.riskLevel === 'medium').length;
   const lowRiskCount = students.filter((s) => s.riskLevel === 'low').length;
@@ -243,7 +239,7 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
   return {
     students,
     teacher,
-    notifications,
+    notifications: notif.notifications,
     trendData,
     engagementData,
 
@@ -286,8 +282,9 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
     showNotifPopup,
     setShowNotifPopup,
     notifRef,
-    markAllRead,
-    dismissNotification,
+    markAllRead: notif.markAllRead,
+    markRead: notif.markRead,
+    dismissNotification: notif.dismiss,
     clearNotifications,
 
     showProfilePopup,

@@ -168,6 +168,7 @@ export function TeacherDashboard() {
         setShowNotifPopup={dash.setShowNotifPopup}
         notifRef={dash.notifRef}
         markAllRead={dash.markAllRead}
+        markRead={dash.markRead}
         dismissNotification={dash.dismissNotification}
         showProfilePopup={dash.showProfilePopup}
         setShowProfilePopup={dash.setShowProfilePopup}
