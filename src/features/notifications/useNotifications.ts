@@ -22,8 +22,13 @@ export function useNotifications(enabled = true) {
     queryKey: KEY,
     queryFn: getNotifications,
     enabled,
-    staleTime: 1000 * 30,
-    refetchInterval: 1000 * 45,
+    staleTime: 1000 * 8,
+    // Polling corto (~15s) + refetch al volver a la pestaña/recuperar conexión:
+    // se siente casi en tiempo real sin push. Para push real ver SSE/WebSocket.
+    refetchInterval: 1000 * 15,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: KEY });
