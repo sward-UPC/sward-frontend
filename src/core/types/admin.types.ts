@@ -151,9 +151,19 @@ export interface ApiSystemMetrics {
 
 export interface ApiModelConfig {
   version: string;
-  tasa_aprendizaje: number;
+  tasa_aprendizaje: number | null;
   umbral_confianza_xai: number;
-  ventana_contexto: number;
-  dimension_embedding: number;
+  ventana_contexto: number | null;
+  dimension_embedding: number | null;
   ultimo_reentrenamiento: string | null;
+  // Estado/métricas reales del artefacto entrenado (vía ms-recomendacion → S3).
+  datos_disponibles: boolean;
+  modelo_real: boolean;
+  test_auc: number | null;
+  n_conceptos: number | null;
+  n_heads: number | null;
+  n_layers: number | null;
+  n_estudiantes: number | null;
+  n_muestras: number | null;
+  epochs: number | null;
 }
