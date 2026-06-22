@@ -4,7 +4,9 @@ import {
   Bell, X, CheckCircle, AlertTriangle, Info, Settings,
   ChevronRight, Moon, Sun, Flame, User, LogOut, ChevronLeft, Menu,
 } from 'lucide-react';
-import type { StudentNotification, StudentUser, LearningPathStep } from '@core/types';
+import { useState } from 'react';
+import type { StudentUser, LearningPathStep } from '@core/types';
+import type { AppNotification } from '@features/notifications/notifications.service';
 
 interface StudentTopbarProps {
   user: StudentUser;
@@ -12,7 +14,7 @@ interface StudentTopbarProps {
   darkMode: boolean;
   sidebarOpen: boolean;
   learningPath: LearningPathStep[];
-  notifications: StudentNotification[];
+  notifications: AppNotification[];
   unreadCount: number;
   showNotifPopup: boolean;
   showProfilePopup: boolean;
@@ -23,7 +25,8 @@ interface StudentTopbarProps {
   onToggleNotif: () => void;
   onToggleProfile: () => void;
   onMarkAllRead: () => void;
-  onDismissNotification: (id: number) => void;
+  onMarkRead: (id: string) => void;
+  onDismissNotification: (id: string) => void;
   onClearNotifications: () => void;
   onOpenProfile: (tab: 'profile' | 'settings') => void;
   onLogout: () => void;
@@ -54,11 +57,14 @@ export function StudentTopbar({
   onToggleNotif,
   onToggleProfile,
   onMarkAllRead,
+  onMarkRead,
   onDismissNotification,
   onClearNotifications,
   onOpenProfile,
   onLogout,
 }: StudentTopbarProps) {
+  // Notificación expandida en el popup (para leer el mensaje completo de una retro).
+  const [expandedNotif, setExpandedNotif] = useState<string | null>(null);
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="flex h-14 items-center justify-between px-4 gap-3">
@@ -133,24 +139,40 @@ export function StudentTopbar({
                 <div className="max-h-72 overflow-y-auto">
                   {notifications.length === 0
                     ? <div className="py-8 text-center text-sm text-muted-foreground">Sin notificaciones</div>
-                    : notifications.map((n) => (
+                    : notifications.map((n) => {
+                      const expanded = expandedNotif === n.id;
+                      return (
                       <div key={n.id} className={`px-4 py-3 border-b last:border-b-0 ${!n.read ? 'bg-primary/5' : ''}`}>
                         <div className="flex items-start gap-2">
                           {getNotifIcon(n.type)}
-                          <div className="flex-1 min-w-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setExpandedNotif(expanded ? null : n.id);
+                              if (!n.read) onMarkRead(n.id);
+                            }}
+                            className="flex-1 min-w-0 text-left"
+                          >
                             <p className="text-sm font-medium">{n.title}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{n.message}</p>
+                            <p className={`text-xs text-muted-foreground mt-0.5 leading-relaxed whitespace-pre-line ${expanded ? '' : 'line-clamp-2'}`}>
+                              {n.message}
+                            </p>
+                            {!expanded && n.message.length > 90 && (
+                              <span className="text-[11px] text-primary mt-0.5 inline-block">Ver más</span>
+                            )}
                             <p className="text-xs text-muted-foreground mt-1">{n.time}</p>
-                          </div>
+                          </button>
                           <button
                             onClick={() => onDismissNotification(n.id)}
+                            aria-label="Descartar notificación"
                             className="text-muted-foreground hover:text-foreground shrink-0"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                 </div>
                 {notifications.length > 0 && (
                   <div className="px-4 py-2 border-t">
