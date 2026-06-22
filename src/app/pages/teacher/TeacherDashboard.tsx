@@ -2,6 +2,7 @@ import { StudentDetailView } from '../../components/teacher/StudentDetailView';
 import { FeedbackDialog } from '../../components/teacher/FeedbackDialog';
 import { ProfileDialog } from '../../components/ui/ProfileDialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend,
@@ -36,6 +37,12 @@ function getRiskColor(level: string) {
 function getMasteryColor(v: number) {
   return v >= 80 ? 'text-success' : v >= 60 ? 'text-warning' : 'text-destructive';
 }
+
+/** Cuántos estudiantes mostrar en la "Vista Rápida" del resumen antes de mandar
+ *  a la tabla completa. */
+const VISTA_RAPIDA_LIMITE = 8;
+/** Orden de prioridad por riesgo (alto primero) para la vista rápida. */
+const RISK_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 };
 
 /** Estado de error: el backend no respondió. Nunca se muestra data ficticia. */
 function DashboardError() {
@@ -303,31 +310,45 @@ export function TeacherDashboard() {
 
                     <Card>
                       <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-sm">Vista Rápida — Todos los Estudiantes</CardTitle>
-                          <button onClick={() => dash.setActiveTab('estudiantes')} className="text-xs text-primary hover:underline flex items-center gap-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <CardTitle className="text-sm flex items-center gap-2 min-w-0">
+                            <span className="truncate">Vista Rápida — Estudiantes</span>
+                            <Badge variant="secondary" className="shrink-0 tabular-nums">{dash.students.length}</Badge>
+                          </CardTitle>
+                          <button onClick={() => dash.setActiveTab('estudiantes')} className="text-xs text-primary hover:underline flex items-center gap-1 shrink-0">
                             Ver tabla completa <ChevronRight className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-2">
-                        {dash.students.map((s) => (
-                          <div
-                            key={s.id}
-                            className="flex items-center gap-3 p-2.5 rounded-[10px] hover:bg-muted/50 transition-colors cursor-pointer"
-                            onClick={() => dash.setSelectedStudent(s.id)}
+                        {[...dash.students]
+                          .sort((a, b) => RISK_ORDER[a.riskLevel] - RISK_ORDER[b.riskLevel])
+                          .slice(0, VISTA_RAPIDA_LIMITE)
+                          .map((s) => (
+                            <div
+                              key={s.id}
+                              className="flex items-center gap-3 p-2.5 rounded-[10px] hover:bg-muted/50 transition-colors cursor-pointer"
+                              onClick={() => dash.setSelectedStudent(s.id)}
+                            >
+                              <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${getRiskColor(s.riskLevel)}`} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{s.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{s.lastActivity}</p>
+                              </div>
+                              <div className="flex items-center gap-3 shrink-0">
+                                <span className={`text-sm font-semibold ${getMasteryColor(s.avgMastery)}`}>{s.avgMastery}%</span>
+                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                              </div>
+                            </div>
+                          ))}
+                        {dash.students.length > VISTA_RAPIDA_LIMITE && (
+                          <button
+                            onClick={() => dash.setActiveTab('estudiantes')}
+                            className="w-full text-center text-xs text-primary hover:underline py-1.5"
                           >
-                            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${getRiskColor(s.riskLevel)}`} />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{s.name}</p>
-                              <p className="text-xs text-muted-foreground">{s.lastActivity}</p>
-                            </div>
-                            <div className="flex items-center gap-3 shrink-0">
-                              <span className={`text-sm font-semibold ${getMasteryColor(s.avgMastery)}`}>{s.avgMastery}%</span>
-                              <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-                            </div>
-                          </div>
-                        ))}
+                            Ver los {dash.students.length - VISTA_RAPIDA_LIMITE} estudiantes restantes
+                          </button>
+                        )}
                       </CardContent>
                     </Card>
                   </div>
