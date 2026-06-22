@@ -226,11 +226,11 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
               ))}
             </div>
           )}
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Button
               onClick={handleRetrain}
               disabled={modelRetrain || retrain.isPending}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto justify-center"
               variant={retrainDone ? "outline" : "default"}
             >
               {modelRetrain || retrain.isPending
@@ -241,7 +241,7 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
             </Button>
             <Button
               variant="outline"
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto justify-center"
               onClick={() => {
                 if (!metrics) return;
                 const csv = [
