@@ -298,6 +298,7 @@ export function TeacherDashboard() {
                       highRiskStudents={dash.students.filter((s) => s.riskLevel === 'high')}
                       onViewStudent={(id) => { dash.setActiveTab('estudiantes'); dash.setSelectedStudent(id); }}
                       onFeedback={dash.setFeedbackStudent}
+                      onViewAll={() => { dash.setRiskFilter('high'); dash.setActiveTab('estudiantes'); }}
                     />
 
                     <Card>
