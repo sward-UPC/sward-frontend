@@ -3,7 +3,7 @@ import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import {
   Cpu, Server, Database, Activity, Zap, Lock,
-  CheckCircle2, RefreshCw, Download,
+  CheckCircle2, RefreshCw, Download, AlertTriangle,
 } from "lucide-react";
 import { useSystemMetrics } from "../../../../features/admin/hooks/useSystemMetrics";
 import { useModelConfig, useTriggerRetrain } from "../../../../features/admin/hooks/useModelConfig";
@@ -125,18 +125,49 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
     },
   ];
 
+  const numOr = (v: number | null | undefined, suf = "") =>
+    v === null || v === undefined ? "—" : `${v}${suf}`;
+
   const modelParams = modelConfig
     ? [
-        { label: "Versión del modelo", value: modelConfig.version, tag: "Producción" },
-        { label: "Último reentrenamiento", value: formatDate(modelConfig.ultimo_reentrenamiento), tag: "Exitoso" },
-        { label: "Tasa de aprendizaje", value: String(modelConfig.tasa_aprendizaje), tag: "Optimizado" },
+        {
+          label: "Versión del modelo",
+          value: modelConfig.version,
+          tag: modelConfig.modelo_real ? "Real" : "Simulado",
+        },
+        {
+          label: "Último reentrenamiento",
+          value: formatDate(modelConfig.ultimo_reentrenamiento),
+          tag: "Real (S3)",
+        },
+        {
+          label: "AUC (validación)",
+          value: modelConfig.test_auc !== null ? modelConfig.test_auc.toFixed(4) : "—",
+          tag: "Métrica",
+        },
+        { label: "Conceptos (skills)", value: numOr(modelConfig.n_conceptos), tag: "Datos" },
+        { label: "Ventana de contexto (seq_len)", value: numOr(modelConfig.ventana_contexto), tag: "Arquitectura" },
+        { label: "Dimensión de embedding", value: numOr(modelConfig.dimension_embedding), tag: "Arquitectura" },
+        {
+          label: "Atención (cabezas × capas)",
+          value: `${numOr(modelConfig.n_heads)} × ${numOr(modelConfig.n_layers)}`,
+          tag: "Arquitectura",
+        },
+        {
+          label: "Entrenado con",
+          value: `${numOr(modelConfig.n_estudiantes)} estud · ${numOr(modelConfig.n_muestras)} secs`,
+          tag: "Dataset",
+        },
+        {
+          label: "Tasa de aprendizaje",
+          value: modelConfig.tasa_aprendizaje !== null ? String(modelConfig.tasa_aprendizaje) : "—",
+          tag: "Hiperparámetro",
+        },
         {
           label: "Umbral de confianza XAI",
           value: `${Math.round(modelConfig.umbral_confianza_xai * 100)}%`,
           tag: "Configurable",
         },
-        { label: "Ventana de contexto", value: `${modelConfig.ventana_contexto} interacciones`, tag: "Fijo" },
-        { label: "Dimensión de embedding", value: String(modelConfig.dimension_embedding), tag: "Fijo" },
       ]
     : [];
 
@@ -203,10 +234,19 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
             <Zap className="w-4 h-4 text-warning" /> Configuración del Modelo XAI (SAKT)
           </CardTitle>
           <CardDescription className="text-xs">
-            Parámetros del modelo de Knowledge Tracing con Explicabilidad
+            Datos reales del modelo SAKT entrenado (leídos del artefacto en S3)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {!configLoading && modelConfig && !modelConfig.datos_disponibles && (
+            <div className="flex items-start gap-2 p-3 rounded-[10px] bg-warning/10 border border-warning/30 text-xs">
+              <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+              <span className="text-muted-foreground">
+                No se pudo leer la metadata del modelo. El servicio de recomendación
+                probablemente está apagado (modo dev); enciéndelo para ver fecha y métricas reales.
+              </span>
+            </div>
+          )}
           {configLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[...Array(6)].map((_, i) => (
@@ -255,7 +295,12 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
                   `disco_total_gb,${metrics.disco_total_gb}`,
                   `uptime_segundos,${metrics.uptime_segundos}`,
                   modelConfig ? `modelo_version,${modelConfig.version}` : "",
-                  modelConfig ? `tasa_aprendizaje,${modelConfig.tasa_aprendizaje}` : "",
+                  modelConfig ? `modelo_real,${modelConfig.modelo_real}` : "",
+                  modelConfig ? `ultimo_reentrenamiento,${modelConfig.ultimo_reentrenamiento ?? ""}` : "",
+                  modelConfig ? `test_auc,${modelConfig.test_auc ?? ""}` : "",
+                  modelConfig ? `seq_len,${modelConfig.ventana_contexto ?? ""}` : "",
+                  modelConfig ? `dimension_embedding,${modelConfig.dimension_embedding ?? ""}` : "",
+                  modelConfig ? `tasa_aprendizaje,${modelConfig.tasa_aprendizaje ?? ""}` : "",
                   modelConfig ? `umbral_xai,${modelConfig.umbral_confianza_xai}` : "",
                 ]
                   .filter(Boolean)
