@@ -54,6 +54,9 @@ export function construirRecursosRecomendados(
 ): RecursoRecomendado[] {
   const formatoConsumido = prefs?.formato_mas_consumido || '';
   const vistos = new Set(prefs?.recursos_vistos ?? []);
+  // Si rinde mejor con actividades de práctica (quiz/tarea/taller), lideramos con
+  // práctica en vez de "estudiar primero". Así el orden refleja su preferencia.
+  const prefierePractica = !!prefs?.tipo_fuerte && TIPOS_PRACTICA.has(prefs.tipo_fuerte);
   const recs: RecursoRecomendado[] = [];
   const usados = new Set<string>();
 
@@ -83,25 +86,29 @@ export function construirRecursosRecomendados(
       );
     const practica = candidatos.filter((r) => TIPOS_PRACTICA.has(r.tipo));
 
-    const elegidos: RecursoRecomendado[] = [];
-    if (estudio[0]) {
-      elegidos.push({
-        concepto: c.concepto,
-        dominio: c.dominio,
-        recurso: estudio[0],
-        rol: 'estudiar',
-        motivo: explicarEstudio(c, estudio[0], formatoConsumido),
-      });
-    }
-    if (practica[0]) {
-      elegidos.push({
-        concepto: c.concepto,
-        dominio: c.dominio,
-        recurso: practica[0],
-        rol: 'practicar',
-        motivo: explicarPractica(c, practica[0]),
-      });
-    }
+    const itemEstudio: RecursoRecomendado | null = estudio[0]
+      ? {
+          concepto: c.concepto,
+          dominio: c.dominio,
+          recurso: estudio[0],
+          rol: 'estudiar',
+          motivo: explicarEstudio(c, estudio[0], formatoConsumido),
+        }
+      : null;
+    const itemPractica: RecursoRecomendado | null = practica[0]
+      ? {
+          concepto: c.concepto,
+          dominio: c.dominio,
+          recurso: practica[0],
+          rol: 'practicar',
+          motivo: explicarPractica(c, practica[0], prefierePractica),
+        }
+      : null;
+
+    // Orden según preferencia: si rinde mejor practicando, la práctica va primero.
+    const elegidos: RecursoRecomendado[] = (
+      prefierePractica ? [itemPractica, itemEstudio] : [itemEstudio, itemPractica]
+    ).filter((e): e is RecursoRecomendado => e !== null);
     // Si la sección no tiene ni estudio ni práctica clara, recomendá lo que haya.
     if (elegidos.length === 0) {
       const r = candidatos[0];
@@ -131,6 +138,9 @@ function explicarEstudio(c: ConceptMastery, r: CourseResource, formatoConsumido:
   return `${base} estudia este(a) ${tipoLabel(r.tipo).toLowerCase()} para afianzar el concepto.`;
 }
 
-function explicarPractica(c: ConceptMastery, r: CourseResource): string {
+function explicarPractica(c: ConceptMastery, r: CourseResource, prefierePractica = false): string {
+  if (prefierePractica) {
+    return `Empieza practicando con este(a) ${tipoLabel(r.tipo).toLowerCase()} de ${c.concepto} — es el formato en el que rindes mejor.`;
+  }
   return `Y luego aplica lo aprendido con este(a) ${tipoLabel(r.tipo).toLowerCase()} de ${c.concepto}.`;
 }
