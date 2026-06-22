@@ -24,6 +24,14 @@ export const ENDPOINTS = {
     updateStatus: (id: string) => `/admin/users/${id}/status`,
   },
 
+  // Notificaciones del usuario autenticado (ms-usuarios, ALB `/notifications*`)
+  notifications: {
+    list: '/notifications',
+    read: (id: string) => `/notifications/${id}/read`,
+    readAll: '/notifications/read-all',
+    remove: (id: string) => `/notifications/${id}`,
+  },
+
   // EP002 — Integración Moodle
   moodle: {
     sync: '/moodle/sync',
