@@ -103,15 +103,8 @@ export function LoginBranding() {
 
       {/* Logo */}
       <div className="flex items-center gap-2.5 relative z-10">
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{
-            background: "rgba(255,255,255,0.16)",
-            backdropFilter: "blur(8px)",
-            border: "1px solid rgba(255,255,255,0.28)",
-          }}
-        >
-          <span className="text-base font-black text-white">S</span>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white">
+          <span className="text-base font-black text-indigo-700">S</span>
         </div>
         <span className="font-bold text-lg tracking-tight text-white">SWARD</span>
       </div>
@@ -162,13 +155,8 @@ export function LoginBranding() {
             { icon: GraduationCap, label: "Adaptativo", desc: "Recursos ajustados a tu nivel real, en tiempo real" },
             { icon: ShieldCheck, label: "Trazable", desc: "Cada decisión del modelo es auditable y transparente" },
           ].map(({ icon: Icon, label, desc }) => (
-            <div key={label} className="flex items-start gap-3.5 py-3.5 border-b border-white/10">
-              <div
-                className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 mt-0.5"
-                style={{ background: "rgba(165,180,252,0.12)", border: "1px solid rgba(165,180,252,0.22)" }}
-              >
-                <Icon className="w-[18px] h-[18px] text-indigo-200" strokeWidth={1.75} />
-              </div>
+            <div key={label} className="flex items-start gap-3 py-3.5 border-b border-white/10">
+              <Icon className="w-[18px] h-[18px] text-indigo-300 shrink-0 mt-0.5" strokeWidth={1.75} />
               <div className="min-w-0">
                 <p className="text-white text-sm" style={{ fontWeight: 600 }}>{label}</p>
                 <p className="text-indigo-200/65" style={{ fontSize: "0.8rem", lineHeight: 1.4 }}>{desc}</p>
