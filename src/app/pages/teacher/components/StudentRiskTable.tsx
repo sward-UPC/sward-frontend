@@ -18,7 +18,7 @@ interface StudentRiskTableProps {
   riskFilter: string;
   setRiskFilter: (v: string) => void;
   onViewStudent: (id: number) => void;
-  onFeedback: (student: { id: number; name: string }) => void;
+  onFeedback: (student: { id: number; name: string; estudianteId?: string }) => void;
 }
 
 const PAGE_SIZE = 12;
@@ -275,7 +275,7 @@ export function StudentRiskTable({
                     <Button variant="outline" size="sm" className="flex-1" onClick={() => onViewStudent(student.id)}>
                       <Eye className="w-3.5 h-3.5 mr-1.5" /> Ver
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => onFeedback({ id: student.id, name: student.name })}>
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => onFeedback({ id: student.id, name: student.name, estudianteId: student.estudianteId })}>
                       <MessageSquare className="w-3.5 h-3.5 mr-1.5" /> Mensaje
                     </Button>
                   </div>
@@ -368,7 +368,7 @@ export function StudentRiskTable({
                             variant="ghost"
                             size="icon"
                             aria-label={`Enviar retroalimentación a ${student.name}`}
-                            onClick={() => onFeedback({ id: student.id, name: student.name })}
+                            onClick={() => onFeedback({ id: student.id, name: student.name, estudianteId: student.estudianteId })}
                           >
                             <MessageSquare className="w-4 h-4" />
                           </Button>
