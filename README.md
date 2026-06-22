@@ -1,184 +1,144 @@
 # SWARD Frontend
 
-**Sistema Web Distribuido de Recomendación Adaptativa y Explicable**
+**SWARD** (Sistema Web de Recomendación Adaptativa y Explicable de Recursos Educativos) es la
+interfaz web de una plataforma educativa adaptativa. A partir de la trazabilidad de la actividad
+del estudiante y de un modelo de *Deep Knowledge Tracing* (SAKT), SWARD recomienda recursos
+personalizados, explica sus decisiones mediante técnicas de IA Explicable (XAI) y ofrece a los
+docentes paneles de seguimiento y control sobre el progreso de su clase.
 
-Aplicación web del proyecto de tesis **TP202610051** (UPC – Lima, Perú). SWARD personaliza el recorrido de aprendizaje de cada estudiante usando el modelo de Knowledge Tracing SAKT (Self-Attentive Knowledge Tracing), genera recomendaciones de recursos adaptativas y expone las decisiones del modelo con técnicas XAI (Explicabilidad de IA) para estudiantes, docentes y administradores.
-
----
-
-## Stack
-
-| Capa | Tecnología | Versión |
-|---|---|---|
-| Framework | React + TypeScript | 18.x / 5.x |
-| Build | Vite | 6.x |
-| Estilos | Tailwind CSS v4 | 4.x |
-| Componentes UI | shadcn/ui (Radix UI) | — |
-| Routing | React Router v7 | 7.x |
-| Data fetching | @tanstack/react-query | 5.x |
-| HTTP client | Axios | 1.x |
-| Formularios | react-hook-form | 7.x |
-| Gráficos | Recharts | 2.x |
-| Animaciones | Motion (ex Framer Motion) | 12.x |
-| Gestor de paquetes | pnpm | — |
-
-> MUI (`@mui/material`, `@emotion/*`) fue eliminado. La UI unifica exclusivamente en shadcn/ui + Tailwind.
+Este repositorio contiene únicamente el **frontend**: una SPA en React que consume la API de los
+microservicios de SWARD y se despliega en **GitHub Pages**.
 
 ---
 
-## Estado de implementación
+## Stack tecnológico
 
-### Implementado con datos mock
-
-| Épica PRD | Vista | Estado |
-|---|---|---|
-| EP001 | Login (`/login`) | UI completa, auth con mock |
-| EP001 | Register (`/register`) | UI completa, sin validación backend |
-| EP003 | StudentDashboard — Inicio, Aprendizaje, Progreso, Recursos | UI completa, datos mock inline |
-| EP004 | XAI — AttentionHeatmap, KnowledgeGraph, XAIExplanation, DomainRadar | Componentes funcionales, datos mock |
-| EP005 | TeacherDashboard — Resumen, Estudiantes, Análisis, Reportes | UI completa, datos mock |
-| EP006 | AdminDashboard — Usuarios, Cursos, Sistema, Logs | UI completa, datos mock |
-
-### Pendiente de integración
-
-| Épica PRD | Descripción |
-|---|---|
-| EP001 | JWT real: login/register contra API Gateway, refresh token, recuperación de contraseña |
-| EP002 | Vista de integración Moodle (sincronización de cursos y actividades) |
-| EP003 | Endpoints reales: `/recommendations`, `/knowledge-state` (SAKT) |
-| EP004 | Endpoints XAI: `/xai/attention-heatmap`, `/xai/explanation` |
-| EP005 | Endpoints teacher: `/teacher/students`, `/teacher/alerts`, exportar PDF |
-| EP006 | Endpoints admin: `/admin/users`, `/admin/metrics` |
-| — | React Router v7 — el routing actual usa `useState` switch en App.tsx |
-| — | AuthContext + ProtectedRoute (RBAC por rol) |
-| — | React Query (`useQuery`, `useMutation`) reemplazando mock directo |
+- **React 19** + **TypeScript 5**
+- **Vite 6** como bundler y servidor de desarrollo
+- **Tailwind CSS 4** (vía `@tailwindcss/vite`) + componentes **shadcn/ui** (Radix UI)
+- **React Router 7** para el enrutado y la protección de rutas por rol
+- **TanStack React Query 5** para la gestión de datos del servidor (fetching, caché, revalidación)
+- **Axios** como cliente HTTP
+- **Recharts** para visualizaciones y **motion** para animaciones
 
 ---
 
-## Arquitectura objetivo (feature-based)
+## Estructura del proyecto
 
 ```
 src/
-├── core/
-│   ├── api/
-│   │   ├── client.ts           # axios instance con JWT interceptor
-│   │   └── endpoints.ts        # constantes de endpoints del PRD
-│   ├── auth/
-│   │   ├── AuthContext.tsx     # AuthContext + AuthProvider con JWT
-│   │   ├── useAuth.ts          # hook que consume AuthContext
-│   │   └── ProtectedRoute.tsx  # guard para rutas autenticadas (RBAC)
-│   └── types/
-│       ├── auth.types.ts       # User, LoginRequest, RegisterRequest, AuthResponse
-│       ├── student.types.ts    # KnowledgeState, Recommendation, Interaction
-│       ├── teacher.types.ts    # StudentProgress, Alert, Feedback
-│       └── index.ts            # re-exports
-├── features/
-│   ├── auth/                   # login, register, logout, refresh
-│   ├── student/                # recomendaciones, knowledge state, interacciones
-│   ├── xai/                    # attention heatmap, explicaciones
-│   ├── teacher/                # lista de estudiantes, alertas
-│   └── admin/                  # gestión de usuarios, métricas
-├── shared/
-│   ├── components/
-│   │   ├── layout/             # AppLayout (autenticado), AuthLayout (login/register)
-│   │   └── feedback/           # LoadingSpinner, ErrorBoundary, EmptyState
-│   └── hooks/                  # useDebounce, useMediaQuery
-├── mocks/
-│   └── data/                   # mock data extraída de pages (student, teacher, xai)
-├── routes/
-│   └── router.tsx              # createBrowserRouter + lazy loading
-└── app/                        # código legacy Figma (no borrar aún)
-    ├── pages/                  # StudentDashboard, TeacherDashboard, AdminDashboard
-    └── components/             # ui/, xai/, teacher/, resources/
+├── app/                  # Capa de presentación de la aplicación
+│   ├── pages/            # Páginas por rol: StudentDashboard, TeacherDashboard,
+│   │                     #   AdminDashboard, Login, Register
+│   ├── components/       # Componentes de UI (student, teacher, xai, resources,
+│   │                     #   notifications, ui/ shadcn)
+│   ├── context/          # ThemeContext
+│   └── lib/              # Utilidades de UI (utils.ts)
+│
+├── core/                 # Infraestructura transversal (no depende de features)
+│   ├── api/              # Cliente axios y definición de endpoints
+│   ├── auth/             # AuthContext, useAuth, ProtectedRoute (control por rol)
+│   ├── types/            # Tipos globales del dominio (auth, student, teacher, admin, xai)
+│   └── constants.ts      # Constantes del dominio (roles, tipos de recurso, umbrales)
+│
+├── features/             # Lógica de negocio por dominio (hooks + services)
+│   ├── auth/             # Autenticación y sesión
+│   ├── student/          # Recomendaciones SAKT, material generado, gamificación
+│   ├── teacher/          # Dashboard docente, feedback, alertas
+│   ├── admin/            # Administración
+│   ├── xai/              # Explicabilidad (mapas de atención, etc.)
+│   └── notifications/    # Notificaciones docente → estudiante
+│
+├── shared/               # Componentes y hooks reutilizables entre features
+├── routes/               # Definición del árbol de rutas y lazy loading
+├── styles/               # globals.css, tailwind.css, theme.css, fonts, view-transitions
+├── mocks/                # Datos mock para desarrollo sin backend
+└── main.tsx              # Punto de entrada
 ```
 
----
-
-## Configuración local
-
-### Requisitos
-
-- Node.js >= 20
-- pnpm >= 9
-
-### Instalación
-
-```bash
-pnpm install
-```
-
-### Variables de entorno
-
-```bash
-cp .env.example .env
-```
-
-`.env.example`:
-
-```env
-VITE_API_URL=http://localhost:8000
-VITE_APP_ENV=development
-```
-
-### Comandos
-
-```bash
-pnpm dev          # servidor de desarrollo en http://localhost:5173
-pnpm build        # build de producción
-pnpm preview      # preview del build
-pnpm lint         # ESLint sobre src/
-pnpm type-check   # tsc --noEmit
-```
+La aplicación sigue una separación en capas: `core/` (infraestructura), `features/` (negocio por
+dominio) y `app/` (presentación). Los alias de import (`@`, `@core`, `@features`, `@shared`,
+`@mocks`, `@routes`) están configurados en `vite.config.ts` y `tsconfig.json`.
 
 ---
 
 ## Roles de usuario
 
-| Rol | Ruta base | Vistas |
-|---|---|---|
-| `student` | `/student/*` | Inicio, Mi Aprendizaje (XAI), Mapa de Atención, Progreso, Recursos |
-| `teacher` | `/teacher/*` | Resumen de clase, Lista de estudiantes, Análisis, Reportes PDF |
-| `admin` | `/admin/*` | Usuarios, Cursos, Estado del sistema, Logs |
+La aplicación define tres roles, cada uno con su propio dashboard y rutas protegidas
+(`ProtectedRoute`). El rol del usuario proviene del backend (LMS / Moodle) tras el login.
 
-Las rutas protegidas usan `ProtectedRoute` con RBAC: si el token JWT no tiene el rol requerido, redirige a `/login`.
-
----
-
-## Convenciones de código
-
-- **TypeScript estricto**: `strict: true` en tsconfig, sin `any` explícito
-- **Path aliases**: `@core/*`, `@features/*`, `@shared/*`, `@mocks/*`, `@routes/*`
-- **Componentes**: PascalCase, un componente por archivo
-- **Hooks**: prefijo `use`, retornan objeto con propiedades nombradas (no array salvo casos simétricos tipo `useState`)
-- **Servicios**: funciones puras que reciben parámetros y retornan `Promise<T>`; no manejan estado de UI
-- **Commits**: Conventional Commits en español (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`)
-- **Naming de query keys**: semánticos por recurso y usuario — `['recommendations', userId]`, `['knowledge-state', userId]`
-
-### Estructura de un PR
-
-1. Rama desde `main`: `feat/<épica>-<descripción-corta>` o `fix/<descripción>`
-2. PR title sigue Conventional Commits
-3. Al menos un reviewer antes de mergear
-4. Tests de UI (vitest + testing-library) obligatorios para nuevos hooks y servicios
+| Rol            | Ruta base    | Descripción |
+|----------------|--------------|-------------|
+| **Estudiante** | `/student/*` | Recibe recomendaciones personalizadas (SAKT), visualiza su progreso, dominio por tema, gamificación y explicaciones XAI de las recomendaciones. |
+| **Docente**    | `/teacher/*` | Consulta el progreso de su clase, engagement, tendencias, alertas de riesgo y envía retroalimentación a los estudiantes. |
+| **Admin**      | `/admin/*`   | Administración general de la plataforma. |
 
 ---
 
-## Accesibilidad
+## Desarrollo local
 
-El proyecto apunta a cumplir **WCAG 2.1 nivel AA**. Ver `ACCESIBILIDAD.md` para el estado actual de cada vista.
+Requisitos: **Node 20+**. El proyecto usa **pnpm** (lockfile `pnpm-lock.yaml`); también funciona
+con npm.
+
+```bash
+# Instalar dependencias
+pnpm install        # o: npm install
+
+# Servidor de desarrollo (http://localhost:5173)
+pnpm dev            # o: npm run dev
+
+# Verificación de tipos
+pnpm type-check     # o: npm run type-check
+
+# Lint
+pnpm lint           # o: npm run lint
+```
+
+### Variables de entorno
+
+Copia `.env.example` a `.env` y ajusta los valores:
+
+```bash
+cp .env.example .env
+```
+
+| Variable        | Descripción                                              | Ejemplo |
+|-----------------|----------------------------------------------------------|---------|
+| `VITE_API_URL`  | URL base de la API de microservicios de SWARD            | `http://localhost:8000` (local) · `https://d11c2gdoarsvsa.cloudfront.net` (prod) |
+| `VITE_APP_ENV`  | Entorno de la aplicación                                 | `development` |
+| `VITE_BASE_URL` | Ruta base de servido (lo usa Vite). En GitHub Pages debe ser `/sward-frontend/` | `/` |
 
 ---
 
-## Documentación del proyecto
+## Build
 
-- PRD v1.0: `src/imports/PRD-SWARD-v1.0.md`
-- Funcionalidad XAI: `FUNCIONALIDAD-XAI.md`
-- Guia de estilos: `guidelines/Guidelines.md`
-- Progreso de implementacion: `docs/PROGRESS.md`
+```bash
+pnpm build          # o: npm run build
+```
+
+Genera la versión de producción en `dist/`. Para previsualizar localmente puedes servir esa carpeta
+con cualquier servidor estático.
 
 ---
 
-## Proyecto académico
+## Despliegue (GitHub Pages)
 
-**TP202610051** — Universidad Peruana de Ciencias Aplicadas (UPC), Lima, Perú.
-Repositorio GitHub: organización `TP202610051`.
+El despliegue es automático mediante GitHub Actions (`.github/workflows/deploy-pages.yml`): en cada
+**push a `main`** se construye la aplicación y se publica en GitHub Pages.
+
+Puntos clave del despliegue:
+
+- El sitio se sirve bajo la subruta **`/sward-frontend/`**, por lo que el workflow construye con
+  `VITE_BASE_URL=/sward-frontend/` y `VITE_API_URL` apuntando al backend de producción (CloudFront).
+- Al ser una SPA, el workflow copia `dist/index.html` a `dist/404.html` para que GitHub Pages
+  redirija correctamente las rutas del lado del cliente (deep links).
+- También puede lanzarse manualmente desde la pestaña *Actions* (`workflow_dispatch`).
+
+---
+
+## Documentación adicional
+
+- [`guidelines/Guidelines.md`](guidelines/Guidelines.md) — guía de implementación para el equipo.
+- [`ACCESIBILIDAD.md`](ACCESIBILIDAD.md) — cumplimiento WCAG 2.1 AA.
+- [`FUNCIONALIDAD-XAI.md`](FUNCIONALIDAD-XAI.md) — detalle de las funcionalidades de IA Explicable.
+- [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) — atribuciones de terceros (shadcn/ui, Unsplash).
