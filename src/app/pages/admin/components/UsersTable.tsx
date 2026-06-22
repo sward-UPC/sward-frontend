@@ -260,7 +260,47 @@ export function UsersTable({
                   )}
                 </div>
               ) : (
-                <div className="border rounded-[12px] overflow-x-auto">
+                <>
+                {/* MÓVIL: tarjetas apiladas (la tabla no cabe en pantallas chicas) */}
+                <div className="sm:hidden space-y-2">
+                  {paged.map((u) => (
+                    <div key={u.id} className="rounded-[12px] border p-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                          {u.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{u.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0"
+                          title={u.status === "active" ? "Desactivar usuario" : "Activar usuario"}
+                          aria-label={u.status === "active" ? `Desactivar a ${u.name}` : `Activar a ${u.name}`}
+                          onClick={() => onToggleStatus(u.id, u.status)}
+                        >
+                          {u.status === "active"
+                            ? <ToggleRight className="w-5 h-5 text-success" />
+                            : <ToggleLeft className="w-5 h-5 text-muted-foreground" />}
+                        </Button>
+                      </div>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {roleBadge(u.role)}
+                        {statusBadge(u.status)}
+                        {u.moodleUserId != null && (
+                          <span className="text-[11px] text-muted-foreground font-mono ml-auto">
+                            Moodle #{u.moodleUserId}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* DESKTOP/TABLET: tabla */}
+                <div className="hidden sm:block border rounded-[12px] overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -310,6 +350,7 @@ export function UsersTable({
                     </TableBody>
                   </Table>
                 </div>
+                </>
               )}
 
               {/* Pie: leyenda + paginación */}
