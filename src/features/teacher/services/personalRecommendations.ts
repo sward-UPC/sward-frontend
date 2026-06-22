@@ -25,6 +25,11 @@ export const TIPO_RECURSO_LABEL: Record<string, string> = {
   lesson: 'Lección',
   scorm: 'Lección',
   forum: 'Foro',
+  // Tipos del material generado por la IA ("Generado para ti").
+  practica_generada: 'Práctica generada',
+  quiz_generado: 'Quiz generado',
+  lectura_generada: 'Lectura generada',
+  video_generado: 'Video generado',
 };
 
 export function tipoLabel(tipo: string): string {
