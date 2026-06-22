@@ -5,6 +5,7 @@ import {
   ChevronRight, Moon, Sun, User, XCircle, ChevronLeft, Menu,
 } from "lucide-react";
 import type { AppNotification } from "@features/notifications/notifications.service";
+import { NotificationDetailDialog } from "../../../components/notifications/NotificationDetailDialog";
 
 interface AdminTopbarProps {
   notifs: AppNotification[];
@@ -44,7 +45,7 @@ export function AdminTopbar({
   onMarkAllRead, onMarkRead, onDismissNotif, onOpenProfile, onLogout,
 }: AdminTopbarProps) {
   const initials = adminName.charAt(0).toUpperCase();
-  const [expandedNotif, setExpandedNotif] = useState<string | null>(null);
+  const [selectedNotif, setSelectedNotif] = useState<AppNotification | null>(null);
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="flex h-14 items-center justify-between px-4 gap-3">
@@ -91,19 +92,17 @@ export function AdminTopbar({
                 <div className="max-h-64 overflow-y-auto">
                   {notifs.length === 0
                     ? <div className="py-8 text-center text-sm text-muted-foreground">Sin notificaciones</div>
-                    : notifs.map((n) => {
-                      const expanded = expandedNotif === n.id;
-                      return (
+                    : notifs.map((n) => (
                       <div key={n.id} className={`px-4 py-3 border-b last:border-b-0 ${!n.read ? "bg-primary/5" : ""}`}>
                         <div className="flex items-start gap-2">
                           {getNotifIcon(n.type)}
                           <button
                             type="button"
-                            onClick={() => { setExpandedNotif(expanded ? null : n.id); if (!n.read) onMarkRead(n.id); }}
+                            onClick={() => { setSelectedNotif(n); if (!n.read) onMarkRead(n.id); }}
                             className="flex-1 min-w-0 text-left"
                           >
                             <p className="text-sm font-medium">{n.title}</p>
-                            <p className={`text-xs text-muted-foreground mt-0.5 whitespace-pre-line ${expanded ? "" : "line-clamp-2"}`}>{n.message}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-line line-clamp-2">{n.message}</p>
                             <p className="text-xs text-muted-foreground mt-1">{n.time}</p>
                           </button>
                           <button onClick={() => onDismissNotif(n.id)} aria-label="Descartar" className="text-muted-foreground hover:text-foreground shrink-0">
@@ -111,8 +110,7 @@ export function AdminTopbar({
                           </button>
                         </div>
                       </div>
-                      );
-                    })}
+                    ))}
                 </div>
               </div>
             )}
@@ -160,6 +158,12 @@ export function AdminTopbar({
           </div>
         </div>
       </div>
+
+      <NotificationDetailDialog
+        notification={selectedNotif}
+        open={!!selectedNotif}
+        onClose={() => setSelectedNotif(null)}
+      />
     </header>
   );
 }
