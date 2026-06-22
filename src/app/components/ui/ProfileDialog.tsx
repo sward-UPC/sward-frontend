@@ -5,7 +5,8 @@ import { ProfileStats } from "./profile/ProfileStats";
 import { ProfileEditForm } from "./profile/ProfileEditForm";
 import { ProfileAchievements } from "./profile/ProfileAchievements";
 import { compressImageToDataUrl, dataUrlBytes, MAX_AVATAR_BYTES } from "./profile/avatarImage";
-import { changePassword, updateProfile } from "@features/auth/services/auth.service";
+import { changePassword, updateProfile, deleteAccount } from "@features/auth/services/auth.service";
+import { getNotifications } from "@features/notifications/notifications.service";
 import { useAuth } from "@core/auth/useAuth";
 
 interface UserProfile {
@@ -30,7 +31,7 @@ interface ProfileDialogProps {
 const DEFAULT_AVATAR_COLOR = "#4F46E5";
 
 export function ProfileDialog({ open, onClose, user, initialTab = "profile" }: ProfileDialogProps) {
-  const { updateUser } = useAuth();
+  const { updateUser, logout } = useAuth();
 
   // Estado editable del perfil (avatar). El resto es read-only (Moodle).
   const [avatarColor, setAvatarColor] = useState(user.avatarColor ?? DEFAULT_AVATAR_COLOR);
@@ -52,15 +53,12 @@ export function ProfileDialog({ open, onClose, user, initialTab = "profile" }: P
     }
   }, [open, user.avatarColor, user.avatarUrl]);
 
-  // Settings (tab "Configuración") — sin cambios funcionales por ahora.
+  // Settings (tab "Configuración") — preferencias de notificaciones.
   const [notifLearning, setNotifLearning] = useState(true);
   const [notifRecommend, setNotifRecommend] = useState(true);
   const [notifAchieve, setNotifAchieve] = useState(true);
-  const [notifEmail, setNotifEmail] = useState(false);
-  const [showProgress, setShowProgress] = useState(true);
-  const [shareData, setShareData] = useState(true);
-  const [twoFactor, setTwoFactor] = useState(false);
   const [savedSettings, setSavedSettings] = useState(false);
+  const [exportingData, setExportingData] = useState(false);
 
   const handleAvatarFileSelected = async (file: File) => {
     setAvatarError("");
@@ -101,6 +99,54 @@ export function ProfileDialog({ open, onClose, user, initialTab = "profile" }: P
   const handleSaveSettings = () => {
     setSavedSettings(true);
     setTimeout(() => setSavedSettings(false), 2500);
+  };
+
+  // Exporta los datos del usuario (perfil + notificaciones) como JSON descargable.
+  const handleExportData = async () => {
+    setExportingData(true);
+    try {
+      let notificaciones: unknown[] = [];
+      try {
+        notificaciones = (await getNotifications()).items;
+      } catch {
+        // Si falla la carga de notis, igual exportamos el perfil.
+      }
+      const data = {
+        exportado_en: new Date().toISOString(),
+        perfil: {
+          nombre: user.name,
+          email: user.email,
+          institucion: user.institution,
+          rol: user.role,
+          recursos_completados: user.recursosCompletados ?? null,
+        },
+        notificaciones,
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sward-mis-datos-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExportingData(false);
+    }
+  };
+
+  // Elimina (desactiva) la cuenta tras confirmación y cierra la sesión.
+  const handleDeleteAccount = async () => {
+    const ok = window.confirm(
+      "¿Seguro que quieres eliminar tu cuenta? Perderás el acceso y deberás " +
+        "registrarte de nuevo. Esta acción no se puede deshacer.",
+    );
+    if (!ok) return;
+    try {
+      await deleteAccount();
+      await logout();
+    } catch {
+      alert("No se pudo eliminar la cuenta. Inténtalo de nuevo más tarde.");
+    }
   };
 
   return (
@@ -159,17 +205,12 @@ export function ProfileDialog({ open, onClose, user, initialTab = "profile" }: P
               notifLearning={notifLearning}
               notifRecommend={notifRecommend}
               notifAchieve={notifAchieve}
-              notifEmail={notifEmail}
-              showProgress={showProgress}
-              shareData={shareData}
-              twoFactor={twoFactor}
               onToggleNotifLearning={() => setNotifLearning((v) => !v)}
               onToggleNotifRecommend={() => setNotifRecommend((v) => !v)}
               onToggleNotifAchieve={() => setNotifAchieve((v) => !v)}
-              onToggleNotifEmail={() => setNotifEmail((v) => !v)}
-              onToggleShowProgress={() => setShowProgress((v) => !v)}
-              onToggleShareData={() => setShareData((v) => !v)}
-              onToggleTwoFactor={() => setTwoFactor((v) => !v)}
+              onExportData={handleExportData}
+              onDeleteAccount={handleDeleteAccount}
+              exportingData={exportingData}
               onSave={handleSaveSettings}
               onCancel={onClose}
               savedSettings={savedSettings}

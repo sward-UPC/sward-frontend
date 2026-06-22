@@ -1,23 +1,18 @@
 import { Button } from "../button";
 import { Toggle } from "./Toggle";
-import { Check, Save, Bell, Monitor, Moon, Sun, Globe, Shield, Download, Smartphone, Trash2, ChevronRight } from "lucide-react";
+import { Check, Save, Bell, Monitor, Moon, Sun, Globe, Download, Smartphone, Trash2, ChevronRight } from "lucide-react";
 import { useTheme } from "../../../context/ThemeContext";
 
 interface ProfileAchievementsProps {
   notifLearning: boolean;
   notifRecommend: boolean;
   notifAchieve: boolean;
-  notifEmail: boolean;
-  showProgress: boolean;
-  shareData: boolean;
-  twoFactor: boolean;
   onToggleNotifLearning: () => void;
   onToggleNotifRecommend: () => void;
   onToggleNotifAchieve: () => void;
-  onToggleNotifEmail: () => void;
-  onToggleShowProgress: () => void;
-  onToggleShareData: () => void;
-  onToggleTwoFactor: () => void;
+  onExportData: () => void;
+  onDeleteAccount: () => void;
+  exportingData?: boolean;
   onSave: () => void;
   onCancel: () => void;
   savedSettings: boolean;
@@ -27,17 +22,12 @@ export function ProfileAchievements({
   notifLearning,
   notifRecommend,
   notifAchieve,
-  notifEmail,
-  showProgress,
-  shareData,
-  twoFactor,
   onToggleNotifLearning,
   onToggleNotifRecommend,
   onToggleNotifAchieve,
-  onToggleNotifEmail,
-  onToggleShowProgress,
-  onToggleShareData,
-  onToggleTwoFactor,
+  onExportData,
+  onDeleteAccount,
+  exportingData = false,
   onSave,
   onCancel,
   savedSettings,
@@ -48,13 +38,6 @@ export function ProfileAchievements({
     { label: "Alertas de aprendizaje", desc: "Bajo rendimiento o conceptos en riesgo", value: notifLearning, set: onToggleNotifLearning },
     { label: "Nuevas recomendaciones", desc: "Cuando SAKT genera recursos personalizados", value: notifRecommend, set: onToggleNotifRecommend },
     { label: "Logros y progreso", desc: "Hitos alcanzados y mejoras de dominio", value: notifAchieve, set: onToggleNotifAchieve },
-    { label: "Resumen por email", desc: "Recibir resumen semanal en tu correo", value: notifEmail, set: onToggleNotifEmail },
-  ];
-
-  const privacyItems = [
-    { label: "Mostrar progreso al docente", desc: "Tu profesor puede ver tu avance detallado", value: showProgress, set: onToggleShowProgress },
-    { label: "Compartir datos de aprendizaje", desc: "Mejora el modelo SAKT de forma anónima", value: shareData, set: onToggleShareData },
-    { label: "Autenticación de dos factores", desc: "Mayor seguridad para tu cuenta (SMS o app)", value: twoFactor, set: onToggleTwoFactor },
   ];
 
   return (
@@ -119,30 +102,6 @@ export function ProfileAchievements({
         </div>
       </section>
 
-      {/* Privacidad */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2 pb-1 border-b border-border">
-          <Shield className="w-4 h-4 text-primary" />
-          <h3 className="font-semibold text-sm">Privacidad y Seguridad</h3>
-        </div>
-        <div className="space-y-0 divide-y divide-border">
-          {privacyItems.map(({ label, desc, value, set }) => (
-            <div key={label} className="flex items-center justify-between py-3">
-              <div>
-                <p className="text-sm font-medium">{label}</p>
-                <p className="text-xs text-muted-foreground">{desc}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {label.includes("dos factores") && value && (
-                  <span className="text-xs text-success font-medium">Activo</span>
-                )}
-                <Toggle checked={value} onChange={set} label={label} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Datos */}
       <section className="space-y-3">
         <div className="flex items-center gap-2 pb-1 border-b border-border">
@@ -150,23 +109,31 @@ export function ProfileAchievements({
           <h3 className="font-semibold text-sm">Datos y cuenta</h3>
         </div>
         <div className="space-y-2">
-          <button className="w-full flex items-center justify-between p-3 border border-border rounded-[12px] hover:bg-muted/50 transition-colors text-sm">
+          <button
+            onClick={onExportData}
+            disabled={exportingData}
+            className="w-full flex items-center justify-between p-3 border border-border rounded-[12px] hover:bg-muted/50 transition-colors text-sm disabled:opacity-60"
+          >
             <span className="flex items-center gap-2">
               <Download className="w-4 h-4 text-muted-foreground" />
-              Exportar mis datos de aprendizaje
-            </span>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </button>
-          <button className="w-full flex items-center justify-between p-3 border border-border rounded-[12px] hover:bg-muted/50 transition-colors text-sm">
-            <span className="flex items-center gap-2">
-              <Smartphone className="w-4 h-4 text-muted-foreground" />
-              Sesiones activas
+              Exportar mis datos
             </span>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              1 dispositivo <ChevronRight className="w-4 h-4" />
+              {exportingData ? "Generando…" : "JSON"} <ChevronRight className="w-4 h-4" />
             </span>
           </button>
-          <button className="w-full flex items-center justify-between p-3 border border-destructive/20 rounded-[12px] hover:bg-destructive/5 transition-colors text-sm text-destructive">
+          {/* Sesión actual (informativo, sin tracking multi-dispositivo). */}
+          <div className="w-full flex items-center justify-between p-3 border border-border rounded-[12px] text-sm">
+            <span className="flex items-center gap-2">
+              <Smartphone className="w-4 h-4 text-muted-foreground" />
+              Sesión actual
+            </span>
+            <span className="text-xs text-muted-foreground">Este dispositivo</span>
+          </div>
+          <button
+            onClick={onDeleteAccount}
+            className="w-full flex items-center justify-between p-3 border border-destructive/20 rounded-[12px] hover:bg-destructive/5 transition-colors text-sm text-destructive"
+          >
             <span className="flex items-center gap-2">
               <Trash2 className="w-4 h-4" />
               Eliminar cuenta

@@ -109,3 +109,8 @@ export async function changePassword(payload: {
 }): Promise<void> {
   await apiClient.post(ENDPOINTS.auth.changePassword, payload);
 }
+
+/** Elimina (desactiva) la cuenta del usuario autenticado. */
+export async function deleteAccount(): Promise<void> {
+  await apiClient.delete(ENDPOINTS.users.deleteAccount);
+}

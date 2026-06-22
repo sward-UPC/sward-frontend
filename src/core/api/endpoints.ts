@@ -19,6 +19,7 @@ export const ENDPOINTS = {
   users: {
     profile: '/users/me',
     updateProfile: '/users/me',
+    deleteAccount: '/users/me',
     list: '/admin/users',
     byId: (id: string) => `/admin/users/${id}`,
     updateStatus: (id: string) => `/admin/users/${id}/status`,
