@@ -25,7 +25,7 @@ import { Badge } from '../../../components/ui/badge';
 import { RecommendedResources } from '../../../components/teacher/RecommendedResources';
 import { SaktRecommendations } from '../../../components/student/SaktRecommendations';
 import { RecommendationsSkeleton } from '../../../components/student/RecommendationsSkeleton';
-import { GeneratedMaterial } from '../../../components/student/GeneratedMaterial';
+import { GeneratedMaterial, limpiarTiposCompletados } from '../../../components/student/GeneratedMaterial';
 import { GeneratedMaterialSkeleton } from '../../../components/student/GeneratedMaterialSkeleton';
 
 /** Ícono según el tipo de módulo de Moodle (lecturas, quizzes, prácticas...). */
@@ -178,15 +178,29 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
     formatoPref,
   );
 
-  // "Generar más": regenera material fresco (salta cache) y reemplaza el mostrado.
+  // "Generar más": regenera material fresco (salta cache), ROTA al siguiente
+  // concepto débil (evita repetir el mostrado) y limpia los badges de completado
+  // (es contenido nuevo, no debe arrastrar lo "completado" anterior).
   const queryClient = useQueryClient();
   const [regenerando, setRegenerando] = useState(false);
+  const [regenSeq, setRegenSeq] = useState(0);
   async function regenerarMaterial() {
     if (!estudianteId || !courseId) return;
     setRegenerando(true);
+    const conceptoActual = material?.concepto ?? null;
     try {
-      const nuevo = await generarMaterial(estudianteId, courseId, true, formatoPref);
+      const nuevo = await generarMaterial(
+        estudianteId,
+        courseId,
+        true,
+        formatoPref,
+        conceptoActual, // evitarConcepto → rota al siguiente débil
+      );
+      // Contenido nuevo: borra los completados del concepto anterior y del nuevo.
+      limpiarTiposCompletados(courseId, conceptoActual);
+      limpiarTiposCompletados(courseId, nuevo.concepto ?? null);
       queryClient.setQueryData(['generated-material', estudianteId, courseId], nuevo);
+      setRegenSeq((s) => s + 1); // fuerza remonte → estado de completados limpio
     } catch {
       // best-effort
     } finally {
@@ -250,6 +264,7 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
             material &&
             courseId && (
               <GeneratedMaterial
+                key={`gen-${regenSeq}`}
                 material={material}
                 courseId={courseId}
                 onRegenerar={regenerarMaterial}
