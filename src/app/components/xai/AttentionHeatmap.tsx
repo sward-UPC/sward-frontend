@@ -1,14 +1,23 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { InteractionData } from "@core/types/xai.types";
+import type { ExplanationVerification as Verification, InteractionData } from "@core/types/xai.types";
 import { AttentionInfoModal } from "./AttentionInfoModal";
 import { AttentionHeatmapTable } from "./AttentionHeatmapTable";
+import { ExplanationVerification, type VerificationAudience } from "./ExplanationVerification";
 
 interface AttentionHeatmapProps {
   interactions: InteractionData[];
   currentPrediction: string;
+  /** Veredicto de fidelidad; sin él se muestra solo la atención, sin afirmar motivos. */
+  verification?: Verification | null;
+  audience?: VerificationAudience;
 }
 
-export function AttentionHeatmap({ interactions, currentPrediction }: AttentionHeatmapProps) {
+export function AttentionHeatmap({
+  interactions,
+  currentPrediction,
+  verification = null,
+  audience = "student",
+}: AttentionHeatmapProps) {
   return (
     <Card>
       <CardHeader>
@@ -19,7 +28,7 @@ export function AttentionHeatmap({ interactions, currentPrediction }: AttentionH
               <AttentionInfoModal />
             </CardTitle>
             <CardDescription>
-              Visualización de qué interacciones pasadas influyen en las recomendaciones actuales
+              A qué interacciones pasadas prestó más atención el modelo al estimar el siguiente paso
             </CardDescription>
           </div>
         </div>
@@ -30,6 +39,8 @@ export function AttentionHeatmap({ interactions, currentPrediction }: AttentionH
           <p className="text-sm font-medium text-primary mb-1">Predicción Actual</p>
           <p className="text-sm text-muted-foreground">{currentPrediction}</p>
         </div>
+
+        <ExplanationVerification verification={verification} audience={audience} />
 
         <AttentionHeatmapTable interactions={interactions} />
       </CardContent>

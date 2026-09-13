@@ -73,6 +73,7 @@ export function StudentAtencionTab({ estudianteId, courseId }: StudentTabProps) 
   const attData = enabled ? attention.data : null;
   const interactions = attData?.interactions ?? [];
   const prediction = attData?.prediction ?? '';
+  const verification = attData?.verification ?? null;
 
   // Esqueleto mientras no hay curso activo o la consulta sigue cargando.
   if (!courseId || (enabled && attention.isLoading)) {
@@ -102,7 +103,7 @@ export function StudentAtencionTab({ estudianteId, courseId }: StudentTabProps) 
       <div>
         <h2 className="text-xl font-semibold tracking-tight">Mapa de atención</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Una mirada explicable a cómo el modelo decide tu siguiente paso.
+          Dónde se fijó el modelo al estimar tu siguiente paso, y qué de eso pudimos comprobar.
         </p>
       </div>
 
@@ -122,6 +123,10 @@ export function StudentAtencionTab({ estudianteId, courseId }: StudentTabProps) 
               <strong className="text-foreground">Cómo leerlo:</strong> cada fila es una interacción
               pasada. Cuanto <strong>más larga y más cálida</strong> la barra, más atención le dio el
               modelo. El porcentaje a la derecha indica ese peso, y el ✓/✗ si la acertaste.
+            </p>
+            <p className="text-muted-foreground">
+              Que el modelo se fije en algo no significa que eso sea la causa. Por eso, cuando es
+              posible, <strong className="text-foreground">lo comprobamos</strong> y te lo indicamos.
             </p>
           </div>
         </div>
@@ -182,7 +187,12 @@ export function StudentAtencionTab({ estudianteId, courseId }: StudentTabProps) 
 
           {/* 4 · Heatmap real del SAKT (componente compartido, intacto) */}
           <Reveal delay={160}>
-            <AttentionHeatmap interactions={interactions} currentPrediction={prediction} />
+            <AttentionHeatmap
+              interactions={interactions}
+              currentPrediction={prediction}
+              verification={verification}
+              audience="student"
+            />
           </Reveal>
         </>
       )}
