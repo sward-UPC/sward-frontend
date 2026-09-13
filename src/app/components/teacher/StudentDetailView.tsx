@@ -176,6 +176,7 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
   const attRealData = enabled ? attention.data : null;
   const attentionInteractions = attRealData ? attRealData.interactions : [];
   const attentionPrediction = attRealData ? attRealData.prediction : '';
+  const attentionVerification = attRealData ? attRealData.verification : null;
 
   return (
     <Card className="border-primary">
@@ -299,6 +300,8 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
           <AttentionHeatmap
             interactions={attentionInteractions}
             currentPrediction={attentionPrediction}
+            verification={attentionVerification}
+            audience="teacher"
           />
         </div>
 
