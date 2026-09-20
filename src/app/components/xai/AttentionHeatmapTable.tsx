@@ -47,8 +47,9 @@ export function AttentionHeatmapTable({ interactions }: AttentionHeatmapTablePro
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Barra más larga y más cálida = más atención del SAKT. La predicción se apoya sobre todo en{" "}
-        <span className="font-medium text-foreground">{top.concept}</span>.
+        Barra más larga y más cálida = más atención del SAKT. El modelo prestó más atención a{" "}
+        <span className="font-medium text-foreground">{top.concept}</span>. Atención no es lo
+        mismo que causa.
       </p>
 
       <div className="space-y-2">
@@ -87,6 +88,16 @@ export function AttentionHeatmapTable({ interactions }: AttentionHeatmapTablePro
                   </span>
                 )}
               </div>
+
+              {/* Marca de suficiencia: solo si el backend la verificó */}
+              {it.sufficient ? (
+                <span
+                  className="shrink-0 rounded-full bg-success/15 text-success px-1.5 py-0.5 text-[10px] font-semibold"
+                  title="Verificado: esta interacción basta para llegar a la predicción"
+                >
+                  basta
+                </span>
+              ) : null}
 
               {/* Porcentaje real */}
               <span className="w-10 text-right text-xs font-semibold tabular-nums text-foreground">

@@ -19,7 +19,14 @@ import { tipoLabel } from '@features/teacher/services/personalRecommendations';
 import type { CourseResource } from '@features/teacher/services/teacher.service';
 import { useSaktRecommendations } from '@features/student/useSaktRecommendations';
 import { useGeneratedMaterial } from '@features/student/useGeneratedMaterial';
-import { generarMaterial } from '@features/student/material.service';
+import { generarMaterial, registrarMaterialCompletado } from '@features/student/material.service';
+import type { SaktRecItem } from '@features/student/sakt.service';
+import {
+  FORMATOS,
+  alimentaAlModelo,
+  formatoDe,
+  tipoParaRegistro,
+} from '@features/student/formato';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
 import { RecommendedResources } from '../../../components/teacher/RecommendedResources';
@@ -27,6 +34,28 @@ import { SaktRecommendations } from '../../../components/student/SaktRecommendat
 import { RecommendationsSkeleton } from '../../../components/student/RecommendationsSkeleton';
 import { GeneratedMaterial, limpiarTiposCompletados } from '../../../components/student/GeneratedMaterial';
 import { GeneratedMaterialSkeleton } from '../../../components/student/GeneratedMaterialSkeleton';
+import { FiltroFormato, type FiltroFormatoValor } from '../../../components/student/FiltroFormato';
+
+/** Qué pasó al marcar un recurso, para contárselo al alumno (HU-027). */
+interface AvisoCompletado {
+  concepto: string;
+  /** Prácticas y quizzes cambian el dominio estimado; las lecturas, no. */
+  alimenta: boolean;
+  /** Recursos que entraron a la lista después de marcarlo. */
+  nuevos: number;
+}
+
+/**
+ * Concepto (sección de Moodle) de un recurso recomendado. El item del SAKT no lo
+ * trae, así que se toma del catálogo por su URL; si no aparece, del motivo, que
+ * el motor redacta como «Refuerza <concepto> — …».
+ */
+function conceptoDe(item: SaktRecItem, seccionPorUrl: Map<string, string>): string | null {
+  const porUrl = seccionPorUrl.get(item.url);
+  if (porUrl) return porUrl;
+  const m = /^Refuerza (.+?) —/.exec(item.motivo ?? '');
+  return m ? m[1] : null;
+}
 
 /** Ícono según el tipo de módulo de Moodle (lecturas, quizzes, prácticas...). */
 function iconFor(tipo: string) {
@@ -184,6 +213,10 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
   const queryClient = useQueryClient();
   const [regenerando, setRegenerando] = useState(false);
   const [regenSeq, setRegenSeq] = useState(0);
+  // Filtro por formato (HU-026) y recursos marcados en esta visita (HU-027).
+  const [formato, setFormato] = useState<FiltroFormatoValor>('todos');
+  const [completados, setCompletados] = useState<Set<string>>(() => new Set());
+  const [aviso, setAviso] = useState<AvisoCompletado | null>(null);
   async function regenerarMaterial() {
     if (!estudianteId || !courseId) return;
     setRegenerando(true);
@@ -209,7 +242,54 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
   }
 
   const vistos = new Set(preferences?.recursos_vistos ?? []);
-  const grupos = agruparPorSeccion(courseResources ?? []);
+  const catalogo = courseResources ?? [];
+  const recomendados = saktItems ?? [];
+  const pasaFiltro = (tipo: string) => formato === 'todos' || formatoDe(tipo) === formato;
+  // Solo se ofrecen formatos que el curso realmente tiene.
+  const formatosDisponibles = FORMATOS.filter(
+    (f) =>
+      recomendados.some((i) => formatoDe(i.tipo) === f) ||
+      catalogo.some((r) => formatoDe(r.tipo) === f),
+  );
+  const recomendadosFiltrados = recomendados.filter((i) => pasaFiltro(i.tipo));
+  const grupos = agruparPorSeccion(catalogo.filter((r) => pasaFiltro(r.tipo)));
+  const seccionPorUrl = new Map(catalogo.map((r) => [r.url, r.seccion] as [string, string]));
+
+  /**
+   * Registra el recurso como completado y vuelve a pedir recomendaciones, para
+   * que el alumno vea si el sistema se adaptó. Si la lista no cambia, también se
+   * lo decimos: adaptarse sin comunicarlo es invisible para quien aprende.
+   */
+  async function completar(item: SaktRecItem, aprobado: boolean) {
+    if (!courseId) throw new Error('Sin curso seleccionado');
+    const concepto = conceptoDe(item, seccionPorUrl);
+    if (!concepto) throw new Error('No se pudo resolver el concepto del recurso');
+    const f = formatoDe(item.tipo) ?? 'lectura';
+    const alimenta = alimentaAlModelo(f);
+    await registrarMaterialCompletado({
+      cursoId: courseId,
+      concepto,
+      tipo: tipoParaRegistro(f),
+      aprobado: alimenta ? aprobado : true,
+    });
+    setCompletados((prev) => new Set(prev).add(item.recurso_id));
+
+    const antes = new Set(recomendados.map((i) => i.recurso_id));
+    const clave = ['sakt-recommendations', estudianteId, courseId];
+    await queryClient.invalidateQueries({ queryKey: clave });
+    void queryClient.invalidateQueries({
+      queryKey: ['teacher', 'student-detail', 'concept-mastery', estudianteId, courseId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ['teacher', 'student-preferences', estudianteId, courseId],
+    });
+    const despues = queryClient.getQueryData<SaktRecItem[]>(clave) ?? [];
+    setAviso({
+      concepto,
+      alimenta,
+      nuevos: despues.filter((i) => !antes.has(i.recurso_id)).length,
+    });
+  }
 
   // Skeleton mientras cargan los recursos o el dominio por concepto.
   const loading = resourcesLoading || conceptMastery.isLoading;
@@ -235,18 +315,53 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
         </p>
       </div>
 
+      <FiltroFormato disponibles={formatosDisponibles} valor={formato} onChange={setFormato} />
+
+      {aviso && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-start gap-3 p-3 rounded-[12px] border border-success/30 bg-success/5 text-sm"
+        >
+          <Check className="w-5 h-5 text-success shrink-0 mt-0.5" aria-hidden="true" />
+          <p>
+            {aviso.alimenta ? (
+              <>
+                Registramos tu avance en <strong>{aviso.concepto}</strong>.{' '}
+                {aviso.nuevos > 0
+                  ? `Tus recomendaciones se actualizaron: ${aviso.nuevos} recurso${
+                      aviso.nuevos === 1 ? ' nuevo' : 's nuevos'
+                    }.`
+                  : 'Tus recomendaciones siguen igual: con tu historial actual, el modelo todavía ve estos temas como los que más conviene reforzar.'}
+              </>
+            ) : (
+              <>
+                Anotamos que revisaste material de <strong>{aviso.concepto}</strong>. Las lecturas
+                no cambian tu dominio estimado; las prácticas y los quizzes, sí.
+              </>
+            )}
+          </p>
+        </div>
+      )}
+
       {/* 1 · Recomendado para ti — motor SAKT real. Mientras el SAKT carga mostramos un
           skeleton con el header real + mensaje (NO el heurístico) para no enseñar dos
           versiones; solo si el SAKT ya respondió y vino vacío caemos al heurístico. */}
       <Reveal>
         {saktLoading ? (
           <RecommendationsSkeleton />
-        ) : saktItems && saktItems.length > 0 ? (
-          <SaktRecommendations items={saktItems} prefs={preferences} />
+        ) : recomendados.length > 0 ? (
+          <SaktRecommendations
+            items={recomendadosFiltrados}
+            prefs={preferences}
+            filtradoVacio={recomendadosFiltrados.length === 0}
+            completados={completados}
+            onCompletar={completar}
+          />
         ) : (
           <RecommendedResources
             weak={conceptMastery.data ?? []}
-            recursos={courseResources ?? []}
+            recursos={catalogo.filter((r) => pasaFiltro(r.tipo))}
             prefs={preferences}
             title="Recomendado para ti"
             description="Material elegido según tus secciones flojas y el formato en el que mejor aprendes."
@@ -304,7 +419,9 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
                   <Library className="w-5 h-5" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Aún no hay recursos disponibles en este curso.
+                  {formato === 'todos'
+                    ? 'Aún no hay recursos disponibles en este curso.'
+                    : 'No hay recursos de este formato en el curso.'}
                 </p>
               </div>
             ) : (

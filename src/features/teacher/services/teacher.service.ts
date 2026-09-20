@@ -8,6 +8,8 @@ import type {
   RiskLevel,
   StudentInteractionRecord,
   AttentionInteractionRecord,
+  ExplanationVerification,
+  VerificationReason,
 } from '@core/types';
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -469,17 +471,62 @@ interface ApiPuntoAtencion {
   concepto: string;
   acierto: boolean;
   peso: number; // [0, 1]
+  suficiente?: boolean;
+}
+
+interface ApiContrafactual {
+  concepto: string;
+  acierto_original: boolean;
+  probabilidad_original: number; // [0, 1]
+  probabilidad_contrafactual: number; // [0, 1]
+}
+
+/** Veredicto de la verificación de fidelidad (opcional: backends previos no lo envían). */
+interface ApiFidelidad {
+  criterio: 'suficiencia' | 'exhaustividad';
+  verificada: boolean;
+  motivo: VerificationReason;
+  confianza: number; // [0, 1]
+  umbral: number;
+  n_comparaciones: number;
+  conceptos_suficientes: string[];
+  es_necesaria: boolean;
+  contrafactual: ApiContrafactual | null;
 }
 
 interface ApiAtencion {
   probabilidad_dominio: number; // [0, 1]
   puntos: ApiPuntoAtencion[];
+  fidelidad?: ApiFidelidad | null;
 }
 
 /** Heatmap de atención del estudiante listo para `AttentionHeatmap`. */
 export interface StudentAttention {
   interactions: AttentionInteractionRecord[];
   prediction: string;
+  /** null si el backend no verificó (o es anterior a la verificación). */
+  verification: ExplanationVerification | null;
+}
+
+function mapVerification(f: ApiFidelidad | null | undefined): ExplanationVerification | null {
+  if (!f) return null;
+  return {
+    criterion: f.criterio,
+    verified: f.verificada,
+    reason: f.motivo,
+    confidence: f.confianza,
+    comparisons: f.n_comparaciones,
+    sufficientConcepts: f.conceptos_suficientes ?? [],
+    isNecessary: f.es_necesaria,
+    counterfactual: f.contrafactual
+      ? {
+          concept: f.contrafactual.concepto,
+          originallyCorrect: f.contrafactual.acierto_original,
+          probabilityBefore: f.contrafactual.probabilidad_original,
+          probabilityAfter: f.contrafactual.probabilidad_contrafactual,
+        }
+      : null,
+  };
 }
 
 /** Construye el texto de "Predicción Actual" a partir del dominio estimado. */
@@ -514,7 +561,12 @@ export async function getStudentAttention(
       timestamp: '',
       isCorrect: p.acierto,
       attention: Math.round(p.peso * 100),
+      sufficient: p.suficiente ?? false,
     }))
     .sort((a, b) => b.attention - a.attention);
-  return { interactions, prediction: buildPrediction(data.probabilidad_dominio) };
+  return {
+    interactions,
+    prediction: buildPrediction(data.probabilidad_dominio),
+    verification: mapVerification(data.fidelidad),
+  };
 }

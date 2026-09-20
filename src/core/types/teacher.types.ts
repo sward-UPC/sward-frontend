@@ -87,6 +87,8 @@ export interface AttentionInteractionRecord {
   timestamp: string;
   isCorrect: boolean;
   attention: number;
+  /** Interacción que la verificación comprobó que basta para la predicción. */
+  sufficient?: boolean;
 }
 
 /** Dato para el radar de dominio del estudiante (EP005). */
