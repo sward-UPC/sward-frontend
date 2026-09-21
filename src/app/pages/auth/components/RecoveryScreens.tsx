@@ -108,11 +108,11 @@ interface ForgotCodeProps {
   resendTimer: number;
   onOtp: (v: string[]) => void;
   onVerifyCode: () => void;
-  onResendTimer: (v: number | ((p: number) => number)) => void;
+  onResendCode: () => void;
   onLoginScreen: (v: LoginScreen) => void;
 }
 
-export function ForgotCodeScreen({ recEmail, otp, otpErr, recLoading, resendTimer, onOtp, onVerifyCode, onResendTimer, onLoginScreen }: ForgotCodeProps) {
+export function ForgotCodeScreen({ recEmail, otp, otpErr, recLoading, resendTimer, onOtp, onVerifyCode, onResendCode, onLoginScreen }: ForgotCodeProps) {
   return (
     <div className="flex-1 flex flex-col gap-6">
       <button onClick={() => onLoginScreen("forgot-email")} className={backBtnClass}>
@@ -131,9 +131,9 @@ export function ForgotCodeScreen({ recEmail, otp, otpErr, recLoading, resendTime
       <div className="text-center">
         {resendTimer > 0
           ? <p className="text-xs text-muted-foreground">Reenviar en <strong>{resendTimer}s</strong></p>
-          : <button onClick={() => { onResendTimer(60); onOtp(["", "", "", "", "", ""]); }} className="text-xs font-medium text-primary hover:text-primary/70 transition-colors flex items-center gap-1 mx-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"><RotateCcw className="w-3 h-3" />Reenviar código</button>}
+          : <button onClick={onResendCode} className="text-xs font-medium text-primary hover:text-primary/70 transition-colors flex items-center gap-1 mx-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded"><RotateCcw className="w-3 h-3" />Reenviar código</button>}
       </div>
-      <p className="text-xs text-center text-muted-foreground">Código de prueba: <span className="font-mono font-bold text-foreground">123456</span></p>
+      <p className="text-xs text-center text-muted-foreground">¿No te llegó? Revisa la carpeta de spam. El código vence en 15 minutos.</p>
     </div>
   );
 }
@@ -158,7 +158,7 @@ export function ForgotNewPassScreen({ newPw, confirmPw, showNewPw, newPwErr, rec
       <div>
         <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><Lock className="w-5 h-5 text-primary" /></div>
         <h2 className="font-bold text-lg">Nueva contraseña</h2>
-        <p className="text-sm text-muted-foreground mt-1">Mínimo 8 caracteres.</p>
+        <p className="text-sm text-muted-foreground mt-1">Mínimo 8 caracteres, con al menos una mayúscula y un número.</p>
       </div>
       <div className="space-y-3">
         <div className="space-y-1.5">

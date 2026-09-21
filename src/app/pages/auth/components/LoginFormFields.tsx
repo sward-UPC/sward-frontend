@@ -42,7 +42,7 @@ interface LoginFormFieldsProps {
   onConfirmPw: (v: string) => void;
   onShowNewPw: (v: boolean | ((p: boolean) => boolean)) => void;
   onNewPwErr: (v: string) => void;
-  onResendTimer: (v: number | ((p: number) => number)) => void;
+  onResendCode: () => void;
   onSubmitLogin: (e: React.FormEvent) => void;
   onSendCode: () => void;
   onVerifyCode: () => void;
@@ -55,14 +55,14 @@ export function LoginFormFields({
   loginScreen, loginEmail, loginPassword, showLoginPw, loginError, loginLoading,
   recEmail, recEmailErr, otp, otpErr, newPw, confirmPw, showNewPw, newPwErr, recLoading, resendTimer,
   onLoginEmail, onLoginPassword, onShowLoginPw, onLoginError, onLoginScreen,
-  onRecEmail, onRecEmailErr, onOtp, onNewPw, onConfirmPw, onShowNewPw, onNewPwErr, onResendTimer,
+  onRecEmail, onRecEmailErr, onOtp, onNewPw, onConfirmPw, onShowNewPw, onNewPwErr, onResendCode,
   onSubmitLogin, onSendCode, onVerifyCode, onSetNewPw, onResetRecovery, onFlip,
 }: LoginFormFieldsProps) {
   if (loginScreen === "forgot-email") {
     return <ForgotEmailScreen recEmail={recEmail} recEmailErr={recEmailErr} recLoading={recLoading} onRecEmail={onRecEmail} onRecEmailErr={onRecEmailErr} onSendCode={onSendCode} onResetRecovery={onResetRecovery} />;
   }
   if (loginScreen === "forgot-code") {
-    return <ForgotCodeScreen recEmail={recEmail} otp={otp} otpErr={otpErr} recLoading={recLoading} resendTimer={resendTimer} onOtp={onOtp} onVerifyCode={onVerifyCode} onResendTimer={onResendTimer} onLoginScreen={onLoginScreen} />;
+    return <ForgotCodeScreen recEmail={recEmail} otp={otp} otpErr={otpErr} recLoading={recLoading} resendTimer={resendTimer} onOtp={onOtp} onVerifyCode={onVerifyCode} onResendCode={onResendCode} onLoginScreen={onLoginScreen} />;
   }
   if (loginScreen === "forgot-newpass") {
     return <ForgotNewPassScreen newPw={newPw} confirmPw={confirmPw} showNewPw={showNewPw} newPwErr={newPwErr} recLoading={recLoading} onNewPw={onNewPw} onConfirmPw={onConfirmPw} onShowNewPw={onShowNewPw} onNewPwErr={onNewPwErr} onSetNewPw={onSetNewPw} />;
