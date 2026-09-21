@@ -59,6 +59,24 @@ export async function register(payload: RegisterRequest): Promise<RegisterRespon
 }
 
 /**
+ * Recuperación de contraseña, paso 1: pide que se envíe un código al correo.
+ * El backend responde lo mismo exista o no la cuenta.
+ */
+export async function requestPasswordRecovery(correo: string): Promise<void> {
+  await apiClient.post(ENDPOINTS.auth.passwordRecovery, { correo });
+}
+
+/** Paso 2: comprueba el código sin consumirlo. Falla si es incorrecto o venció. */
+export async function verifyRecoveryCode(correo: string, codigo: string): Promise<void> {
+  await apiClient.post(ENDPOINTS.auth.passwordRecoveryVerify, { correo, codigo });
+}
+
+/** Paso 3: fija la contraseña nueva. El backend cierra todas las sesiones abiertas. */
+export async function resetPassword(correo: string, codigo: string, passwordNueva: string): Promise<void> {
+  await apiClient.post(ENDPOINTS.auth.passwordReset, { correo, codigo, password_nueva: passwordNueva });
+}
+
+/**
  * Renueva el access token usando el refresh token guardado.
  * El backend devuelve solo un nuevo access_token (el refresh no rota).
  */

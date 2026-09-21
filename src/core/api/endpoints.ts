@@ -12,6 +12,7 @@ export const ENDPOINTS = {
     me: '/auth/me',
     changePassword: '/auth/change-password',
     passwordRecovery: '/auth/password-recovery',
+    passwordRecoveryVerify: '/auth/password-recovery/verify',
     passwordReset: '/auth/password-reset',
   },
 
