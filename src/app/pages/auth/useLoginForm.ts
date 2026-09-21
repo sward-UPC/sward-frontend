@@ -1,4 +1,9 @@
 import { useState, useEffect } from "react";
+import {
+  requestPasswordRecovery,
+  resetPassword,
+  verifyRecoveryCode,
+} from "@features/auth/services/auth.service";
 
 export type LoginScreen = "login" | "forgot-email" | "forgot-code" | "forgot-newpass" | "forgot-success";
 
@@ -41,6 +46,7 @@ export interface UseLoginFormReturn {
   // Handlers
   handleLogin: (e: React.FormEvent, onLogin: (correo: string, password: string) => Promise<void>) => void;
   handleSendCode: () => void;
+  handleResendCode: () => void;
   handleVerifyCode: () => void;
   handleSetNewPw: () => void;
   resetRecovery: () => void;
@@ -87,38 +93,73 @@ export function useLoginForm(): UseLoginFormReturn {
       .finally(() => setLoginLoading(false));
   };
 
-  const handleSendCode = () => {
+  const mensaje = (err: unknown, porDefecto: string) =>
+    err instanceof Error && err.message ? err.message : porDefecto;
+
+  const enviarCodigo = async () => {
+    await requestPasswordRecovery(recEmail);
+    setOtp(["", "", "", "", "", ""]);
+    setResendTimer(60);
+  };
+
+  const handleSendCode = async () => {
     if (!recEmail) { setRecEmailErr("Ingresa tu correo."); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recEmail)) { setRecEmailErr("Correo inválido."); return; }
     setRecEmailErr("");
     setRecLoading(true);
-    setTimeout(() => {
-      setRecLoading(false);
-      setOtp(["", "", "", "", "", ""]);
-      setResendTimer(60);
+    try {
+      await enviarCodigo();
       setLoginScreen("forgot-code");
-    }, 1200);
+    } catch (err: unknown) {
+      setRecEmailErr(mensaje(err, "No pudimos enviar el código. Intenta de nuevo en unos minutos."));
+    } finally {
+      setRecLoading(false);
+    }
   };
 
-  const handleVerifyCode = () => {
-    if (otp.join("").length < 6) { setOtpErr("Ingresa los 6 dígitos."); return; }
+  const handleResendCode = async () => {
+    setOtpErr("");
+    try {
+      await enviarCodigo();
+    } catch (err: unknown) {
+      setOtpErr(mensaje(err, "No pudimos reenviar el código. Intenta de nuevo en unos minutos."));
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    const codigo = otp.join("");
+    if (codigo.length < 6) { setOtpErr("Ingresa los 6 dígitos."); return; }
     setOtpErr("");
     setRecLoading(true);
-    setTimeout(() => {
-      setRecLoading(false);
+    try {
+      await verifyRecoveryCode(recEmail, codigo);
       setNewPw("");
       setConfirmPw("");
       setLoginScreen("forgot-newpass");
-    }, 900);
+    } catch (err: unknown) {
+      setOtpErr(mensaje(err, "El código es incorrecto o venció."));
+    } finally {
+      setRecLoading(false);
+    }
   };
 
-  const handleSetNewPw = () => {
+  const handleSetNewPw = async () => {
+    // Las mismas reglas que aplica el servidor, para avisar antes de enviar.
     if (!newPw) { setNewPwErr("Ingresa una contraseña."); return; }
     if (newPw.length < 8) { setNewPwErr("Mínimo 8 caracteres."); return; }
+    if (!/\p{Lu}/u.test(newPw)) { setNewPwErr("Incluye al menos una mayúscula."); return; }
+    if (!/\d/.test(newPw)) { setNewPwErr("Incluye al menos un número."); return; }
     if (newPw !== confirmPw) { setNewPwErr("Las contraseñas no coinciden."); return; }
     setNewPwErr("");
     setRecLoading(true);
-    setTimeout(() => { setRecLoading(false); setLoginScreen("forgot-success"); }, 1000);
+    try {
+      await resetPassword(recEmail, otp.join(""), newPw);
+      setLoginScreen("forgot-success");
+    } catch (err: unknown) {
+      setNewPwErr(mensaje(err, "No pudimos cambiar la contraseña. Intenta de nuevo."));
+    } finally {
+      setRecLoading(false);
+    }
   };
 
   const resetRecovery = () => {
@@ -137,6 +178,6 @@ export function useLoginForm(): UseLoginFormReturn {
     recEmail, recEmailErr, otp, otpErr, newPw, confirmPw, showNewPw, newPwErr, recLoading, resendTimer,
     setLoginEmail, setLoginPassword, setShowLoginPw, setLoginRole, setLoginError, setLoginScreen,
     setRecEmail, setRecEmailErr, setOtp, setOtpErr, setNewPw, setConfirmPw, setShowNewPw, setNewPwErr, setResendTimer,
-    handleLogin, handleSendCode, handleVerifyCode, handleSetNewPw, resetRecovery,
+    handleLogin, handleSendCode, handleResendCode, handleVerifyCode, handleSetNewPw, resetRecovery,
   };
 }
