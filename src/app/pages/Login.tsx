@@ -121,7 +121,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 onLoginRole={form.setLoginRole} onLoginError={form.setLoginError} onLoginScreen={form.setLoginScreen}
                 onRecEmail={form.setRecEmail} onRecEmailErr={form.setRecEmailErr} onOtp={form.setOtp}
                 onNewPw={form.setNewPw} onConfirmPw={form.setConfirmPw} onShowNewPw={form.setShowNewPw}
-                onNewPwErr={form.setNewPwErr} onResendTimer={form.setResendTimer}
+                onNewPwErr={form.setNewPwErr} onResendCode={form.handleResendCode}
                 onSubmitLogin={(e) => form.handleLogin(e, handleLoginSuccess)}
                 onSendCode={form.handleSendCode} onVerifyCode={form.handleVerifyCode}
                 onSetNewPw={form.handleSetNewPw} onResetRecovery={form.resetRecovery} onFlip={flip}
