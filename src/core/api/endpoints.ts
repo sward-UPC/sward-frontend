@@ -93,6 +93,10 @@ export const ENDPOINTS = {
       `/students/${studentId}/progress?courseId=${courseId}`,
     studentInteractions: (studentId: string, courseId: string) =>
       `/students/${studentId}/interactions?courseId=${courseId}`,
+    // Sin curso: todas las interacciones del estudiante, para saber en qué
+    // cursos tiene historial.
+    studentAllInteractions: (studentId: string, limit = 200) =>
+      `/students/${studentId}/interactions?limit=${limit}`,
     studentIndicators: (studentId: string, courseId: string) =>
       `/students/${studentId}/indicators?courseId=${courseId}`,
     // Dominio por concepto/sección y evolución del estudiante (ms-trazabilidad).

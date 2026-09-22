@@ -122,6 +122,23 @@ export async function getTeacherCourses(): Promise<TeacherCourse[]> {
     }));
 }
 
+/**
+ * Cursos en los que el estudiante tiene historial. `/courses` devuelve todos los
+ * de la plataforma, así que sin esto el participante ve también los que no
+ * lleva, vacíos.
+ */
+export async function getStudentCourseIds(studentId: string): Promise<string[]> {
+  // El endpoint devuelve 50 por defecto y admite 200 como maximo: con menos, un
+  // curso entero podia quedarse fuera de la lista. Si llegan justo 200, la
+  // respuesta puede venir cortada y no se filtra nada.
+  const tope = 200;
+  const { data } = await apiClient.get<{ curso_id?: string }[]>(
+    ENDPOINTS.teacher.studentAllInteractions(studentId, tope),
+  );
+  if (data.length >= tope) return [];
+  return [...new Set(data.map((it) => it.curso_id).filter((id): id is string => !!id))];
+}
+
 /** Retorna la lista de estudiantes del docente con su estado de riesgo. */
 export async function getStudentList(): Promise<StudentProgress[]> {
   const { data } = await apiClient.get<StudentProgress[]>(ENDPOINTS.teacher.students);
