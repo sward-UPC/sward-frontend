@@ -31,7 +31,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     onLogin?.(role);
   };
 
-  const [isFlipped, setIsFlipped] = useState(false);
+  // /register redirige aquí con ?registro=1: había dos pantallas de registro
+  // distintas y quedó esta, la del mismo diseño que el ingreso.
+  const [isFlipped, setIsFlipped] = useState(
+    () => new URLSearchParams(window.location.search).get("registro") === "1"
+  );
   const [isAnimating, setIsAnimating] = useState(false);
   const [regStep, setRegStep] = useState(1);
   const [regEmail, setRegEmail] = useState("");
@@ -159,6 +163,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                           describedBy={regErrors.email ? "r-email-err" : undefined}
                           onChange={(v: string) => { setRegEmail(v); setRegErrors((e) => ({ ...e, email: "" })); }} placeholder="tu@universidad.edu.pe" icon={Mail} />
                         {regErrors.email && <p id="r-email-err" role="alert" className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.email}</p>}
+                        <p className="text-xs text-muted-foreground">Usa el mismo correo con el que entras a tus cursos: tu rol se asigna solo.</p>
                       </div>
                       <button type="button" onClick={handleRegStep1} className="w-full h-12 rounded-xl text-base font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card mt-auto" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
                         Siguiente <ChevronRight className="w-4 h-4" />

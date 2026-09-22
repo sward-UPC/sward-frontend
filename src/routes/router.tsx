@@ -1,7 +1,6 @@
 import { lazy, Suspense, Component } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
-import { AuthLayout } from '@shared/components/layout/AuthLayout';
 import { ProtectedRoute } from '@core/auth/ProtectedRoute';
 import { LoadingSpinner } from '@shared/components/feedback/LoadingSpinner';
 import { UserRole } from '@core/types';
@@ -9,9 +8,6 @@ import { UserRole } from '@core/types';
 // Lazy loading con retry automático ante chunks obsoletos (GitHub Pages cache)
 const LoginPage = lazyWithRetry(() =>
   import('../app/pages/Login').then((m) => ({ default: m.LoginPage }))
-);
-const RegisterPage = lazyWithRetry(() =>
-  import('../app/pages/Register').then((m) => ({ default: m.RegisterPage }))
 );
 const StudentDashboard = lazyWithRetry(() =>
   import('../app/pages/StudentDashboard').then((m) => ({ default: m.StudentDashboard }))
@@ -90,20 +86,10 @@ export const router = createBrowserRouter(
       ),
     },
 
-    // Registro usa AuthLayout centrado
-    {
-      element: <AuthLayout />,
-      children: [
-        {
-          path: '/register',
-          element: (
-            <SuspenseWrapper>
-              <RegisterPage />
-            </SuspenseWrapper>
-          ),
-        },
-      ],
-    },
+    // Habia dos pantallas de registro distintas: esta (AuthLayout centrado) y la
+    // del propio ingreso. Queda la del ingreso, que comparte diseno con el, y
+    // /register lleva alli con el panel de registro abierto.
+    { path: '/register', element: <Navigate to="/login?registro=1" replace /> },
 
     // Dashboards: cada uno tiene su propio layout (topbar + sidebar)
     // AppLayout no se usa porque causaría doble sidebar/topbar
