@@ -503,7 +503,9 @@ interface ApiAtencion {
 /** Heatmap de atención del estudiante listo para `AttentionHeatmap`. */
 export interface StudentAttention {
   interactions: AttentionInteractionRecord[];
-  prediction: string;
+  /** Dominio estimado por el SAKT (0-1). El texto lo arma cada pantalla:
+   *  el estudiante y el profesor no leen lo mismo. */
+  probability: number;
   /** null si el backend no verificó (o es anterior a la verificación). */
   verification: ExplanationVerification | null;
 }
@@ -527,16 +529,6 @@ function mapVerification(f: ApiFidelidad | null | undefined): ExplanationVerific
         }
       : null,
   };
-}
-
-/** Construye el texto de "Predicción Actual" a partir del dominio estimado. */
-function buildPrediction(probabilidad: number): string {
-  const pct = Math.round(probabilidad * 100);
-  const cierre =
-    pct < 50
-      ? ' Se recomienda intervención docente.'
-      : ' El estudiante muestra un dominio adecuado.';
-  return `Probabilidad de éxito en el próximo ejercicio estimada por SAKT: ${pct}%.${cierre}`;
 }
 
 /**
@@ -566,7 +558,7 @@ export async function getStudentAttention(
     .sort((a, b) => b.attention - a.attention);
   return {
     interactions,
-    prediction: buildPrediction(data.probabilidad_dominio),
+    probability: data.probabilidad_dominio,
     verification: mapVerification(data.fidelidad),
   };
 }

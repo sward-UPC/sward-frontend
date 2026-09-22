@@ -175,7 +175,7 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
   // Heatmap de atención SAKT: pesos reales (vacío mientras carga).
   const attRealData = enabled ? attention.data : null;
   const attentionInteractions = attRealData ? attRealData.interactions : [];
-  const attentionPrediction = attRealData ? attRealData.prediction : '';
+  const attentionProbability = attRealData ? attRealData.probability : 0;
   const attentionVerification = attRealData ? attRealData.verification : null;
 
   return (
@@ -299,7 +299,7 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
           />
           <AttentionHeatmap
             interactions={attentionInteractions}
-            currentPrediction={attentionPrediction}
+            probability={attentionProbability}
             verification={attentionVerification}
             audience="teacher"
           />

@@ -230,7 +230,9 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
                   <LineChartIcon className="w-4 h-4 text-primary" aria-hidden="true" />
                   Evolución de tu dominio
                 </CardTitle>
-                <CardDescription>Tu dominio acumulado a lo largo de las actividades</CardDescription>
+                <CardDescription>
+                  Tu dominio acumulado por tramos de actividad, del más antiguo al más reciente
+                </CardDescription>
               </div>
               {tieneCurva && (
                 <span
@@ -262,7 +264,16 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={evolution} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
-                    <XAxis dataKey="week" stroke={AXIS} tickLine={false} axisLine={false} style={{ fontSize: '12px' }} />
+                    {/* El servicio numera los tramos como «E1»…«E6»; en pantalla
+                        basta el número, que la descripción ya explica. */}
+                    <XAxis
+                      dataKey="week"
+                      stroke={AXIS}
+                      tickLine={false}
+                      axisLine={false}
+                      style={{ fontSize: '12px' }}
+                      tickFormatter={(v: string) => String(v).replace(/^E/, '')}
+                    />
                     <YAxis stroke={AXIS} tickLine={false} axisLine={false} style={{ fontSize: '12px' }} domain={[0, 100]} width={40} />
                     <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ stroke: GRID }} formatter={(v: number) => [`${v}%`, 'Dominio']} />
                     <Line

@@ -116,7 +116,7 @@ function ResumenAprendizaje({
                   {reforzar}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {reforzar === 1 ? 'a reforzar' : 'a reforzar'}
+                  {reforzar === 1 ? 'concepto a reforzar' : 'conceptos a reforzar'}
                 </p>
               </div>
             </div>
@@ -124,8 +124,8 @@ function ResumenAprendizaje({
         </div>
 
         <p className="sr-only">
-          Tienes {totalConceptos} conceptos en seguimiento: {fuertes} fuertes y {reforzar} a
-          reforzar.
+          Tienes {totalConceptos} {totalConceptos === 1 ? 'concepto' : 'conceptos'} en seguimiento:{' '}
+          {fuertes} {fuertes === 1 ? 'fuerte' : 'fuertes'} y {reforzar} a reforzar.
         </p>
       </CardContent>
     </Card>
