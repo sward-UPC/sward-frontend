@@ -6,15 +6,39 @@ import { ExplanationVerification, type VerificationAudience } from "./Explanatio
 
 interface AttentionHeatmapProps {
   interactions: InteractionData[];
-  currentPrediction: string;
+  /** Dominio estimado por el SAKT (0-1). */
+  probability: number;
   /** Veredicto de fidelidad; sin él se muestra solo la atención, sin afirmar motivos. */
   verification?: Verification | null;
   audience?: VerificationAudience;
 }
 
+/**
+ * El mismo número se cuenta distinto según quién lo lee: al estudiante se le
+ * habla de él y de lo que viene; al profesor, de su alumno y de si conviene
+ * intervenir. Antes ambos veían el texto del profesor, y el estudiante leía
+ * «El estudiante muestra un dominio adecuado» o «Se recomienda intervención
+ * docente» sobre sí mismo.
+ */
+function textoPrediccion(probabilidad: number, audiencia: VerificationAudience): string {
+  const pct = Math.round(probabilidad * 100);
+  if (audiencia === "teacher") {
+    const cierre =
+      pct < 50
+        ? " Se recomienda intervención docente."
+        : " El estudiante muestra un dominio adecuado.";
+    return `Probabilidad de éxito en el próximo ejercicio estimada por SAKT: ${pct}%.${cierre}`;
+  }
+  const cierre =
+    pct < 50
+      ? " Conviene repasar antes de seguir."
+      : " Vas bien para lo que sigue.";
+  return `El modelo estima en ${pct}% la probabilidad de que resuelvas bien el próximo ejercicio.${cierre}`;
+}
+
 export function AttentionHeatmap({
   interactions,
-  currentPrediction,
+  probability,
   verification = null,
   audience = "student",
 }: AttentionHeatmapProps) {
@@ -37,7 +61,7 @@ export function AttentionHeatmap({
         {/* Predicción actual */}
         <div className="p-4 bg-primary/5 border border-primary/20 rounded-[12px]">
           <p className="text-sm font-medium text-primary mb-1">Predicción Actual</p>
-          <p className="text-sm text-muted-foreground">{currentPrediction}</p>
+          <p className="text-sm text-muted-foreground">{textoPrediccion(probability, audience)}</p>
         </div>
 
         <ExplanationVerification verification={verification} audience={audience} />

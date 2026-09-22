@@ -72,7 +72,7 @@ export function StudentAtencionTab({ estudianteId, courseId }: StudentTabProps) 
   // Pesos de atención reales del SAKT (vacío mientras carga o sin curso).
   const attData = enabled ? attention.data : null;
   const interactions = attData?.interactions ?? [];
-  const prediction = attData?.prediction ?? '';
+  const probability = attData?.probability ?? 0;
   const verification = attData?.verification ?? null;
 
   // Esqueleto mientras no hay curso activo o la consulta sigue cargando.
@@ -189,7 +189,7 @@ export function StudentAtencionTab({ estudianteId, courseId }: StudentTabProps) 
           <Reveal delay={160}>
             <AttentionHeatmap
               interactions={interactions}
-              currentPrediction={prediction}
+              probability={probability}
               verification={verification}
               audience="student"
             />
