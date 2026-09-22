@@ -43,6 +43,18 @@ export function formatoDe(tipo: string | undefined | null): Formato | null {
 }
 
 /**
+ * ¿El recurso entra en el filtro elegido? «Práctica» abarca ejercicios y
+ * quizzes, como en el motor de recomendación: quien prefiere practicar a leer
+ * espera ver ambos. «Quiz» deja solo los quizzes. Antes «Práctica» excluía los
+ * quizzes, y con una lista hecha de quizzes y lecturas el filtro la dejaba vacía.
+ */
+export function pasaFormato(tipo: string | undefined | null, filtro: Formato | 'todos'): boolean {
+  if (filtro === 'todos') return true;
+  const f = formatoDe(tipo);
+  return filtro === 'practica' ? f === 'practica' || f === 'quiz' : f === filtro;
+}
+
+/**
  * Tipo que espera `/interactions/material-completed`. El quiz cuenta como
  * práctica: es una actividad calificada y, como tal, alimenta al SAKT.
  */

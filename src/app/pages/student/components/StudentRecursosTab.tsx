@@ -25,6 +25,7 @@ import {
   FORMATOS,
   alimentaAlModelo,
   formatoDe,
+  pasaFormato,
   tipoParaRegistro,
 } from '@features/student/formato';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
@@ -244,12 +245,12 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
   const vistos = new Set(preferences?.recursos_vistos ?? []);
   const catalogo = courseResources ?? [];
   const recomendados = saktItems ?? [];
-  const pasaFiltro = (tipo: string) => formato === 'todos' || formatoDe(tipo) === formato;
+  const pasaFiltro = (tipo: string) => pasaFormato(tipo, formato);
   // Solo se ofrecen formatos que el curso realmente tiene.
   const formatosDisponibles = FORMATOS.filter(
     (f) =>
-      recomendados.some((i) => formatoDe(i.tipo) === f) ||
-      catalogo.some((r) => formatoDe(r.tipo) === f),
+      recomendados.some((i) => pasaFormato(i.tipo, f)) ||
+      catalogo.some((r) => pasaFormato(r.tipo, f)),
   );
   const recomendadosFiltrados = recomendados.filter((i) => pasaFiltro(i.tipo));
   const grupos = agruparPorSeccion(catalogo.filter((r) => pasaFiltro(r.tipo)));
