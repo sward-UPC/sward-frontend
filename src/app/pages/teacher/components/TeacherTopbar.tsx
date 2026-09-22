@@ -16,13 +16,13 @@ interface TeacherTopbarProps {
   setDarkMode: (v: boolean) => void;
   showNotifPopup: boolean;
   setShowNotifPopup: (v: boolean) => void;
-  notifRef: React.RefObject<HTMLDivElement>;
+  notifRef: React.RefObject<HTMLDivElement | null>;
   markAllRead: () => void;
   markRead: (id: string) => void;
   dismissNotification: (id: string) => void;
   showProfilePopup: boolean;
   setShowProfilePopup: (v: boolean) => void;
-  profileRef: React.RefObject<HTMLDivElement>;
+  profileRef: React.RefObject<HTMLDivElement | null>;
   openProfile: (tab: 'profile' | 'settings') => void;
   onLogout: () => void;
   clearNotifications: () => void;

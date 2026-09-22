@@ -19,8 +19,8 @@ interface StudentTopbarProps {
   unreadCount: number;
   showNotifPopup: boolean;
   showProfilePopup: boolean;
-  notifRef: React.RefObject<HTMLDivElement>;
-  profileRef: React.RefObject<HTMLDivElement>;
+  notifRef: React.RefObject<HTMLDivElement | null>;
+  profileRef: React.RefObject<HTMLDivElement | null>;
   onToggleSidebar: () => void;
   onToggleDarkMode: () => void;
   onToggleNotif: () => void;
