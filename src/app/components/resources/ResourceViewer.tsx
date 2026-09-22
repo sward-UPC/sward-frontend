@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Progress } from "../ui/progress";
 import {
@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { CheckCircle2, Play, BookOpen, Video, FileText, Clock, X } from "lucide-react";
+import { CheckCircle2, Play, BookOpen, Video, FileText, X } from "lucide-react";
 
 interface Resource {
   id: number;

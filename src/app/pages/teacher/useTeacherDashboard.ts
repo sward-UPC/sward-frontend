@@ -67,7 +67,7 @@ export interface UseTeacherDashboardReturn {
   /* notification popup */
   showNotifPopup: boolean;
   setShowNotifPopup: (v: boolean) => void;
-  notifRef: React.RefObject<HTMLDivElement>;
+  notifRef: React.RefObject<HTMLDivElement | null>;
   markAllRead: () => void;
   markRead: (id: string) => void;
   dismissNotification: (id: string) => void;
@@ -76,7 +76,7 @@ export interface UseTeacherDashboardReturn {
   /* profile popup */
   showProfilePopup: boolean;
   setShowProfilePopup: (v: boolean) => void;
-  profileRef: React.RefObject<HTMLDivElement>;
+  profileRef: React.RefObject<HTMLDivElement | null>;
 
   /* profile dialog */
   showProfileDialog: boolean;

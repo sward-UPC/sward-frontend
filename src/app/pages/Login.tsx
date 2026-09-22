@@ -11,6 +11,17 @@ interface LoginPageProps {
   onNavigateToRegister?: () => void;
 }
 
+/**
+ * Apaga una cara de la tarjeta para el teclado y el lector de pantalla. El
+ * proyecto corre React 18, que no conoce «inert» como booleano (React 19 sí),
+ * así que se manda como atributo de texto; el cast es para eso.
+ */
+function inerte(apagada: boolean): React.HTMLAttributes<HTMLDivElement> {
+  return (apagada
+    ? { inert: '', 'aria-hidden': true }
+    : {}) as React.HTMLAttributes<HTMLDivElement>;
+}
+
 /* Register form is part of the flip card — kept inline to share flip/animation state */
 function Spinner() {
   return <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />;
@@ -111,8 +122,11 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         <div className="w-full" style={{ maxWidth: 420, height: "min(640px, calc(100dvh - 64px))", perspective: "1200px", position: "relative", zIndex: 1 }}>
           <div style={{ width: "100%", height: "100%", position: "relative", transformStyle: "preserve-3d", transition: "transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)", transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)" }}>
 
-            {/* FRONT — LOGIN */}
-            <div className={faceBase} style={faceStyle}>
+            {/* FRONT — LOGIN. La cara que no se ve queda inerte: sin eso, el
+                tabulador y el lector de pantalla entran en el formulario de
+                atrás, que está en el DOM pero volteado. React 18 no conoce
+                «inert», así que se pasa como cadena vacía (o se omite). */}
+            <div className={faceBase} style={faceStyle} {...inerte(isFlipped)}>
               <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
               {mobileLogo}
               <LoginFormFields
@@ -134,7 +148,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </div>
 
             {/* BACK — REGISTER */}
-            <div className={faceBase} style={{ ...faceStyle, transform: "rotateY(180deg)" }}>
+            <div className={faceBase} style={{ ...faceStyle, transform: "rotateY(180deg)" }} {...inerte(!isFlipped)}>
               <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
               {mobileLogo}
               {!regSuccess ? (

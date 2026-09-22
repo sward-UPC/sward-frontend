@@ -3,7 +3,9 @@
 export type AdminTab = "resumen" | "usuarios" | "cursos" | "sistema" | "logs";
 export type UserStatus = "active" | "inactive" | "suspended";
 export type UserRole2 = "student" | "teacher" | "admin";
-export type NotificationType = "info" | "warning" | "error";
+/** Avisos del panel de administracion. El del estudiante es otro tipo
+ * (student.types.ts) y con otros valores: se distinguen por el nombre. */
+export type AdminNotificationType = "info" | "warning" | "error";
 export type LogLevel = "info" | "warning" | "error";
 
 // ---------------------------------------------------------------------------
@@ -93,7 +95,7 @@ export interface SystemLog {
 
 export interface AdminNotification {
   id: number;
-  type: NotificationType;
+  type: AdminNotificationType;
   title: string;
   message: string;
   time: string;

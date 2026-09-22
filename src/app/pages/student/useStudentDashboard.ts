@@ -21,7 +21,7 @@ export interface UseStudentDashboardReturn {
   markRead: (id: string) => void;
   dismissNotification: (id: string) => void;
   clearNotifications: () => void;
-  notifRef: React.RefObject<HTMLDivElement>;
+  notifRef: React.RefObject<HTMLDivElement | null>;
 
   /* profile popup */
   showProfilePopup: boolean;
@@ -30,7 +30,7 @@ export interface UseStudentDashboardReturn {
   setShowProfileDialog: React.Dispatch<React.SetStateAction<boolean>>;
   profileDialogTab: 'profile' | 'settings';
   openProfile: (tab: 'profile' | 'settings') => void;
-  profileRef: React.RefObject<HTMLDivElement>;
+  profileRef: React.RefObject<HTMLDivElement | null>;
 
   /* theme */
   darkMode: boolean;

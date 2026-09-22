@@ -19,8 +19,13 @@ const AdminDashboard = lazyWithRetry(() =>
   import('../app/pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
 );
 
-// Retry lazy import once on chunk load failure (stale deploy cache on GitHub Pages)
-function lazyWithRetry<T extends React.ComponentType<unknown>>(
+// Retry lazy import once on chunk load failure (stale deploy cache on GitHub Pages).
+// El componente puede declarar sus propias props (Login recibe onLogin): lazy()
+// conserva su tipo, así que el JSX se sigue comprobando en cada uso.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- es la misma
+// restricción que usa React.lazy; con ComponentType<unknown> no entran las
+// páginas que declaran props, como Login (onLogin).
+function lazyWithRetry<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
 ) {
   return lazy(() =>
