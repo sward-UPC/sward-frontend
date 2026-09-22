@@ -45,6 +45,45 @@ async function refreshAccessToken(): Promise<string> {
   return data.access_token;
 }
 
+/** Un error de validación de FastAPI (los 422 traen una lista de estos). */
+type ErrorDeValidacion = { type?: string; msg?: string; loc?: (string | number)[] };
+
+const ETIQUETAS: Record<string, string> = {
+  correo: 'el correo',
+  correo_institucional: 'el correo',
+  password: 'la contraseña',
+  new_password: 'la contraseña nueva',
+  codigo: 'el código',
+  nombre: 'el nombre',
+  apellido: 'el apellido',
+};
+
+/**
+ * Los 422 llegan con los mensajes de pydantic, en inglés y con jerga («String
+ * should have at least 8 characters»). El participante ve la aplicación en
+ * español, así que se traduce lo que puede llegarle a la pantalla; para el
+ * resto, un aviso claro en vez del texto del servidor.
+ */
+function mensajeDeValidacion(detalle: ErrorDeValidacion[]): string {
+  const primero = detalle[0];
+  if (!primero) return 'Revisa los datos e inténtalo de nuevo.';
+  const campo = String(primero.loc?.[primero.loc.length - 1] ?? '');
+  const etiqueta = ETIQUETAS[campo] ?? 'los datos';
+  const tipo = primero.type ?? '';
+
+  if (tipo === 'missing') return `Falta ${etiqueta}.`;
+  if (campo === 'correo' || campo === 'correo_institucional') {
+    return 'Escribe un correo válido, como nombre@universidad.edu.pe.';
+  }
+  if (tipo === 'string_too_short') return `${capitalizar(etiqueta)} es demasiado corta.`;
+  if (tipo === 'string_too_long') return `${capitalizar(etiqueta)} es demasiado larga.`;
+  return 'Revisa los datos e inténtalo de nuevo.';
+}
+
+function capitalizar(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
 // Normaliza errores y, ante un 401, intenta refrescar el access token y
 // reintentar la request original una vez antes de cerrar sesión.
 apiClient.interceptors.response.use(
@@ -78,7 +117,7 @@ apiClient.interceptors.response.use(
       typeof detail === 'string'
         ? detail
         : Array.isArray(detail)
-          ? detail.map((d: { msg?: string }) => d.msg ?? d).join(', ')
+          ? mensajeDeValidacion(detail as ErrorDeValidacion[])
           : error.message;
 
     return Promise.reject(new Error(message));
