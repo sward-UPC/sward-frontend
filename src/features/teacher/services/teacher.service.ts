@@ -366,10 +366,21 @@ interface ApiTendencia {
   riesgoAlto: number;
 }
 
-/** Tendencia semanal histórica de la clase (ms-trazabilidad). */
+/**
+ * Tendencia histórica de la clase (ms-trazabilidad).
+ *
+ * El servicio agrupa por tramos de la secuencia de actividades, no por semanas
+ * del calendario —las notas de Moodle no traen una fecha fiable—, aunque
+ * etiquete cada punto como «Sem N». Aquí se deja solo el número: el panel
+ * explica debajo qué son.
+ */
 export async function getClassTrendReal(courseId: string): Promise<ClassTrendDataPoint[]> {
   const { data } = await apiClient.get<ApiTendencia[]>(ENDPOINTS.teacher.trend(courseId));
-  return data.map((p) => ({ week: p.week, promedio: p.promedio, riesgoAlto: p.riesgoAlto }));
+  return data.map((p, i) => ({
+    week: String(p.week ?? '').replace(/^Sem\s*/i, '') || String(i + 1),
+    promedio: p.promedio,
+    riesgoAlto: p.riesgoAlto,
+  }));
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -474,7 +485,10 @@ export async function getWeeklyProgress(
   const { data } = await apiClient.get<ApiWeeklyProgress[]>(
     ENDPOINTS.teacher.studentWeeklyProgress(studentId, courseId),
   );
-  return data.map((p) => ({ week: p.etapa, mastery: Math.round(p.dominio) }));
+  return data.map((p, i) => ({
+    week: String(p.etapa ?? '').replace(/^E/, '') || String(i + 1),
+    mastery: Math.round(p.dominio),
+  }));
 }
 
 // ───────────────────────────────────────────────────────────────────────────
