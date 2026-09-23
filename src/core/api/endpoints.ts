@@ -149,6 +149,7 @@ export const ENDPOINTS = {
     systemStatus: '/admin/system/status',
     systemMetrics: '/admin/system/metrics',
     systemDatabases: '/admin/system/databases',
+    systemSecurity: '/admin/system/security',
     modelConfig: '/admin/model/config',
     modelRetrain: '/admin/model/retrain',
   },
