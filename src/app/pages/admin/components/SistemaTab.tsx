@@ -6,7 +6,7 @@ import {
   CheckCircle2, RefreshCw, Download, AlertTriangle,
 } from "lucide-react";
 import { useSystemMetrics } from "../../../../features/admin/hooks/useSystemMetrics";
-import { useModelConfig, useTriggerRetrain } from "../../../../features/admin/hooks/useModelConfig";
+import { useModelConfig, useSecurityPolicy, useTriggerRetrain } from "../../../../features/admin/hooks/useModelConfig";
 import { useDatabasesStatus } from "../../../../features/admin/hooks/useDatabasesStatus";
 
 interface SistemaTabProps {
@@ -14,13 +14,6 @@ interface SistemaTabProps {
   retrainDone: boolean;
   onRetrain: () => void;
 }
-
-const SECURITY_SETTINGS = [
-  { label: "Autenticación de dos factores (2FA)", desc: "Requerido para todos los administradores", enabled: true },
-  { label: "Sesión con expiración automática", desc: "Cierre de sesión tras 30 min de inactividad", enabled: true },
-  { label: "Registro de auditoría", desc: "Todas las acciones quedan registradas en logs", enabled: true },
-  { label: "Acceso API externo", desc: "Permite integración con sistemas institucionales", enabled: false },
-];
 
 function formatUptime(segundos: number): string {
   if (segundos < 60) return `${Math.round(segundos)}s`;
@@ -88,6 +81,7 @@ function MetricCard({
 export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabProps) {
   const { data: metrics, isLoading: metricsLoading } = useSystemMetrics();
   const { data: modelConfig, isLoading: configLoading } = useModelConfig();
+  const { data: policy } = useSecurityPolicy();
   const { data: databases, isLoading: dbLoading } = useDatabasesStatus();
   const retrain = useTriggerRetrain();
 
@@ -127,6 +121,33 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
 
   const numOr = (v: number | null | undefined, suf = "") =>
     v === null || v === undefined ? "—" : `${v}${suf}`;
+
+  // Lo que el sistema aplica de verdad. Antes esta lista estaba escrita a mano
+  // y anunciaba doble factor y un cierre por inactividad que no existen.
+  const seguridad = policy
+    ? [
+        {
+          label: "Sesión con caducidad",
+          desc: `El acceso caduca a los ${policy.sesion_minutos} min y se renueva en silencio hasta ${policy.refresco_dias} días`,
+          enabled: true,
+        },
+        {
+          label: "Bloqueo por intentos fallidos",
+          desc: "La cuenta se bloquea temporalmente tras varios intentos de acceso",
+          enabled: policy.bloqueo_por_intentos,
+        },
+        {
+          label: "Registro de auditoría",
+          desc: "Las acciones administrativas quedan registradas con fecha y autor",
+          enabled: policy.auditoria,
+        },
+        {
+          label: "Autenticación de dos factores (2FA)",
+          desc: "No implementada: el acceso es con correo y contraseña",
+          enabled: policy.doble_factor,
+        },
+      ]
+    : [];
 
   const modelParams = modelConfig
     ? [
@@ -331,7 +352,7 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {SECURITY_SETTINGS.map((s) => (
+          {seguridad.map((s) => (
             <div key={s.label} className="flex items-center justify-between p-3 rounded-[10px] border border-border">
               <div>
                 <p className="text-sm font-medium">{s.label}</p>

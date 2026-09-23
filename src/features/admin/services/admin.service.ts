@@ -11,6 +11,7 @@ import type {
   ApiSystemMetrics,
   ApiModelConfig,
   ApiDatabaseHealth,
+  ApiSecurityPolicy,
 } from '@core/types/admin.types';
 
 // ---------------------------------------------------------------------------
@@ -176,6 +177,12 @@ export async function getSystemMetrics(): Promise<ApiSystemMetrics> {
 /** Estado de las bases de datos de todos los microservicios (panel admin). */
 export async function getDatabasesStatus(): Promise<ApiDatabaseHealth[]> {
   const { data } = await apiClient.get<ApiDatabaseHealth[]>(ENDPOINTS.admin.systemDatabases);
+  return data;
+}
+
+/** Política de acceso vigente; el panel la muestra tal cual, sin adornos. */
+export async function getSecurityPolicy(): Promise<ApiSecurityPolicy> {
+  const { data } = await apiClient.get<ApiSecurityPolicy>(ENDPOINTS.admin.systemSecurity);
   return data;
 }
 

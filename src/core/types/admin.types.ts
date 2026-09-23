@@ -151,6 +151,15 @@ export interface ApiSystemMetrics {
   uptime_segundos: number;
 }
 
+/** Política de acceso realmente vigente (ms-usuarios la lee de su configuración). */
+export interface ApiSecurityPolicy {
+  sesion_minutos: number;
+  refresco_dias: number;
+  auditoria: boolean;
+  bloqueo_por_intentos: boolean;
+  doble_factor: boolean;
+}
+
 export interface ApiModelConfig {
   // Ambos pueden faltar: sin metadata del artefacto, el panel no inventa nada.
   version: string | null;
