@@ -152,9 +152,10 @@ export interface ApiSystemMetrics {
 }
 
 export interface ApiModelConfig {
-  version: string;
+  // Ambos pueden faltar: sin metadata del artefacto, el panel no inventa nada.
+  version: string | null;
   tasa_aprendizaje: number | null;
-  umbral_confianza_xai: number;
+  umbral_confianza_xai: number | null;
   ventana_contexto: number | null;
   dimension_embedding: number | null;
   ultimo_reentrenamiento: string | null;
