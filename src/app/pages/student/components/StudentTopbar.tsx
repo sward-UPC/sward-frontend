@@ -33,6 +33,12 @@ interface StudentTopbarProps {
   onLogout: () => void;
 }
 
+/** Porcentaje de la ruta de aprendizaje que el estudiante ya completo. */
+function avanceDeLaRuta(pasos: LearningPathStep[]): number {
+  if (!pasos.length) return 0;
+  return Math.round((pasos.filter((p) => p.done).length / pasos.length) * 100);
+}
+
 function getNotifIcon(type: string) {
   switch (type) {
     case 'warning': return <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />;
@@ -66,6 +72,7 @@ export function StudentTopbar({
 }: StudentTopbarProps) {
   // Notificación abierta en el modal de lectura completa.
   const [selectedNotif, setSelectedNotif] = useState<AppNotification | null>(null);
+  const avanceRuta = avanceDeLaRuta(learningPath);
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
       <div className="flex h-14 items-center justify-between px-4 gap-3">
@@ -218,11 +225,14 @@ export function StudentTopbar({
                     </div>
                   </div>
                   <div className="mt-2">
+                    {/* Iba fijo en 68 %: todos los estudiantes veian lo mismo.
+                        Sale de su ruta de aprendizaje, que es la que ya pinta
+                        esta misma barra arriba. */}
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-muted-foreground">Progreso general</span>
-                      <span className="font-medium">68%</span>
+                      <span className="text-muted-foreground">Progreso del curso</span>
+                      <span className="font-medium tabular-nums">{avanceRuta}%</span>
                     </div>
-                    <Progress value={68} className="h-1.5" />
+                    <Progress value={avanceRuta} className="h-1.5" />
                   </div>
                 </div>
                 <div className="py-1">
