@@ -10,6 +10,7 @@ import type {
 import { useAuth } from '@core/auth/useAuth';
 import { useTeacherCourses } from '@features/teacher/hooks/useTeacherCourses';
 import { cursosDelDocente } from '@features/teacher/services/teacher.service';
+import { aVigesimal } from '@core/nota';
 import type { TeacherCourse } from '@features/teacher/services/teacher.service';
 import { useTeacherStudents } from '@features/teacher/hooks/useTeacherStudents';
 import { useClassTrend } from '@features/teacher/hooks/useClassTrend';
@@ -182,11 +183,16 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
   // Tendencia (ms-trazabilidad) real, sin fallback.
   const { data: realTrend } = useClassTrend(effectiveCourseId);
 
-  const trendData: ClassTrendDataPoint[] = realTrend ?? [];
+  // La tendencia llega como porcentaje del máximo; en pantalla va en la escala
+  // del aula, 0 a 20, igual que el resto de las notas.
+  const trendData: ClassTrendDataPoint[] = useMemo(
+    () => (realTrend ?? []).map((p) => ({ ...p, promedio: aVigesimal(p.promedio) })),
+    [realTrend],
+  );
   const engagementData: EngagementDataPoint[] = students.map((s) => ({
     name: s.name.split(' ')[0] || s.name,
     engagement: s.engagement,
-    dominio: s.avgMastery,
+    nota: aVigesimal(s.avgMastery),
   }));
 
   // Perfil del docente desde la sesión real (no mock).

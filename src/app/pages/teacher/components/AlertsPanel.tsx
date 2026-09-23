@@ -3,6 +3,7 @@ import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { AlertTriangle, Eye, MessageSquare, ArrowRight } from 'lucide-react';
 import type { StudentProgress } from '@core/types';
+import { nota } from '@core/nota';
 
 interface AlertsPanelProps {
   highRiskStudents: StudentProgress[];
@@ -49,7 +50,7 @@ export function AlertsPanel({ highRiskStudents, onViewStudent, onFeedback, onVie
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{s.name}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  Promedio: {s.avgMastery}% · Última actividad: {s.lastActivity}
+                  Promedio: {nota(s.avgMastery)} / 20 · Última actividad: {s.lastActivity}
                 </p>
               </div>
             </div>

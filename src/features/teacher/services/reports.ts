@@ -1,4 +1,5 @@
 import type { StudentProgress } from '@core/types';
+import { nota } from '@core/nota';
 
 /**
  * Generación de reportes reales del docente en formato CSV (compatible con
@@ -61,13 +62,13 @@ export function downloadRiskAnalysisCsv(students: StudentProgress[], cursoNombre
     s.name,
     s.email,
     RISK_LABEL[s.riskLevel] ?? s.riskLevel,
-    s.avgMastery,
+    nota(s.avgMastery),
     s.conceptsAtRisk,
     s.engagement,
     s.lastActivity,
   ]);
   const csv = buildCsv(
-    ['Estudiante', 'Correo', 'Nivel de Riesgo', 'Dominio (%)', 'Conceptos en Riesgo', 'Engagement (%)', 'Última Actividad'],
+    ['Estudiante', 'Correo', 'Nivel de Riesgo', 'Promedio (0-20)', 'Conceptos en Riesgo', 'Engagement (%)', 'Última Actividad'],
     rows,
   );
   downloadFile(`analisis-riesgo_${slug(cursoNombre)}_${fileStamp()}.csv`, csv);
@@ -77,9 +78,9 @@ export function downloadRiskAnalysisCsv(students: StudentProgress[], cursoNombre
 export function downloadEngagementCsv(students: StudentProgress[], cursoNombre?: string): void {
   const rows = [...students]
     .sort((a, b) => b.engagement - a.engagement)
-    .map((s) => [s.name, s.email, s.engagement, s.avgMastery, RISK_LABEL[s.riskLevel] ?? s.riskLevel, s.lastActivity]);
+    .map((s) => [s.name, s.email, s.engagement, nota(s.avgMastery), RISK_LABEL[s.riskLevel] ?? s.riskLevel, s.lastActivity]);
   const csv = buildCsv(
-    ['Estudiante', 'Correo', 'Engagement (%)', 'Dominio (%)', 'Nivel de Riesgo', 'Última Actividad'],
+    ['Estudiante', 'Correo', 'Engagement (%)', 'Promedio (0-20)', 'Nivel de Riesgo', 'Última Actividad'],
     rows,
   );
   downloadFile(`registro-engagement_${slug(cursoNombre)}_${fileStamp()}.csv`, csv);
@@ -90,7 +91,7 @@ export function downloadKnowledgeMapCsv(students: StudentProgress[], cursoNombre
   const ordenados = [...students].sort((a, b) => b.avgMastery - a.avgMastery);
   const rows = ordenados.map((s) => [
     s.name,
-    s.avgMastery,
+    nota(s.avgMastery),
     s.avgMastery >= 75 ? 'Dominado' : s.avgMastery >= 55 ? 'En proceso' : 'Inicial',
     s.conceptsAtRisk,
     RISK_LABEL[s.riskLevel] ?? s.riskLevel,
@@ -98,10 +99,10 @@ export function downloadKnowledgeMapCsv(students: StudentProgress[], cursoNombre
   // Fila de promedio grupal al final.
   if (ordenados.length) {
     const prom = Math.round(ordenados.reduce((a, s) => a + s.avgMastery, 0) / ordenados.length);
-    rows.push(['Promedio del grupo', prom, '', '', '']);
+    rows.push(['Promedio del grupo', nota(prom), '', '', '']);
   }
   const csv = buildCsv(
-    ['Estudiante', 'Dominio (%)', 'Estado', 'Conceptos en Riesgo', 'Nivel de Riesgo'],
+    ['Estudiante', 'Promedio (0-20)', 'Estado', 'Conceptos en Riesgo', 'Nivel de Riesgo'],
     rows,
   );
   downloadFile(`mapa-conocimiento_${slug(cursoNombre)}_${fileStamp()}.csv`, csv);

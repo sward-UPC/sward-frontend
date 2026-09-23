@@ -275,9 +275,9 @@ export function TeacherDashboard() {
                               </defs>
                               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                               <XAxis dataKey="week" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                              <YAxis domain={[55, 75]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                              <YAxis domain={[0, 20]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                               <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                              <Area type="monotone" dataKey="promedio" stroke="#6366f1" fill="url(#gProm)" strokeWidth={2} name="Promedio %" />
+                              <Area type="monotone" dataKey="promedio" stroke="#6366f1" fill="url(#gProm)" strokeWidth={2} name="Promedio (0-20)" />
                             </AreaChart>
                           </ResponsiveContainer>
                         </CardContent>
@@ -293,11 +293,12 @@ export function TeacherDashboard() {
                             <BarChart data={dash.engagementData} barSize={14}>
                               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                               <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                              <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                              <YAxis yAxisId="pct" domain={[0, 100]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                              <YAxis yAxisId="nota" orientation="right" domain={[0, 20]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                               <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
                               <Legend wrapperStyle={{ fontSize: 11 }} />
-                              <Bar dataKey="engagement" fill="#6366f1" name="Engagement" radius={[4, 4, 0, 0]} />
-                              <Bar dataKey="dominio" fill="#10b981" name="Promedio" radius={[4, 4, 0, 0]} />
+                              <Bar yAxisId="pct" dataKey="engagement" fill="#6366f1" name="Engagement (%)" radius={[4, 4, 0, 0]} />
+                              <Bar yAxisId="nota" dataKey="nota" fill="#10b981" name="Promedio (0-20)" radius={[4, 4, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
                         </CardContent>
@@ -390,9 +391,9 @@ export function TeacherDashboard() {
                               </defs>
                               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                               <XAxis dataKey="week" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                              <YAxis domain={[55, 75]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                              <YAxis domain={[0, 20]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                               <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                              <Area type="monotone" dataKey="promedio" stroke="#6366f1" fill="url(#gProm2)" strokeWidth={2} name="Promedio %" />
+                              <Area type="monotone" dataKey="promedio" stroke="#6366f1" fill="url(#gProm2)" strokeWidth={2} name="Promedio (0-20)" />
                             </AreaChart>
                           </ResponsiveContainer>
                         </CardContent>
@@ -429,11 +430,12 @@ export function TeacherDashboard() {
                           <BarChart data={dash.engagementData} barSize={20}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                             <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                            <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                            <YAxis yAxisId="pct" domain={[0, 100]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                            <YAxis yAxisId="nota" orientation="right" domain={[0, 20]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                             <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
                             <Legend wrapperStyle={{ fontSize: 11 }} />
-                            <Bar dataKey="engagement" fill="#6366f1" name="Engagement %" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="dominio" fill="#10b981" name="Promedio %" radius={[4, 4, 0, 0]} />
+                            <Bar yAxisId="pct" dataKey="engagement" fill="#6366f1" name="Engagement (%)" radius={[4, 4, 0, 0]} />
+                            <Bar yAxisId="nota" dataKey="nota" fill="#10b981" name="Promedio (0-20)" radius={[4, 4, 0, 0]} />
                           </BarChart>
                         </ResponsiveContainer>
                       </CardContent>
@@ -453,9 +455,9 @@ export function TeacherDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {([
                         { key: 'completo', icon: <FileText className="w-6 h-6 text-primary" />, title: 'Reporte de Clase (PDF)', desc: 'Documento con resumen por nivel de riesgo y detalle por estudiante.', badge: 'PDF', badgeColor: 'bg-red-500' },
-                        { key: 'riesgo', icon: <BarChart2 className="w-6 h-6 text-success" />, title: 'Análisis de Riesgo', desc: 'Estudiantes en riesgo alto/medio con dominio, conceptos en riesgo y engagement.', badge: 'CSV', badgeColor: 'bg-green-600' },
-                        { key: 'engagement', icon: <Users className="w-6 h-6 text-warning" />, title: 'Registro de Engagement', desc: 'Engagement y dominio por estudiante, ordenado por participación.', badge: 'CSV', badgeColor: 'bg-blue-500' },
-                        { key: 'conocimiento', icon: <BookOpen className="w-6 h-6 text-purple-500" />, title: 'Mapa de Conocimiento', desc: 'Estado de dominio del grupo por estudiante, con promedio grupal.', badge: 'CSV', badgeColor: 'bg-purple-500' },
+                        { key: 'riesgo', icon: <BarChart2 className="w-6 h-6 text-success" />, title: 'Análisis de Riesgo', desc: 'Estudiantes en riesgo alto/medio con su promedio, conceptos en riesgo y engagement.', badge: 'CSV', badgeColor: 'bg-green-600' },
+                        { key: 'engagement', icon: <Users className="w-6 h-6 text-warning" />, title: 'Registro de Engagement', desc: 'Engagement y promedio por estudiante, ordenado por participación.', badge: 'CSV', badgeColor: 'bg-blue-500' },
+                        { key: 'conocimiento', icon: <BookOpen className="w-6 h-6 text-purple-500" />, title: 'Mapa de Conocimiento', desc: 'Estado del grupo por estudiante, con el promedio grupal.', badge: 'CSV', badgeColor: 'bg-purple-500' },
                       ] as const).map((r) => (
                         <Card
                           key={r.key}

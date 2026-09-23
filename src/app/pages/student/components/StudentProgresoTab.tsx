@@ -21,6 +21,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
+import { notaConEscala } from '@core/nota';
 import type { StudentTabProps } from '@features/student/useStudentContext';
 import { useStudentDetail } from '@features/teacher/hooks/useStudentDetail';
 
@@ -174,7 +175,10 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
     conceptos.length > 0
       ? Math.round(conceptos.reduce((acc, c) => acc + c.dominio, 0) / conceptos.length)
       : 0;
-  const dominioPromedio = progress.data?.puntajePromedio ?? promedioConceptos;
+  // La nota real del estudiante (porcentaje del máximo) o, si todavía no tiene
+  // ninguna, el promedio de aciertos por tema, que no es una nota.
+  const notaReal = progress.data?.puntajePromedio;
+  const dominioPromedio = notaReal ?? promedioConceptos;
   const conceptosDominados = conceptos.filter((c) => c.dominio >= 75).length;
   const conceptosEnRiesgo = conceptos.filter((c) => c.dominio < 55).length;
 
@@ -193,8 +197,8 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <KpiCard
             icon={<TrendingUp className="w-5 h-5" />}
-            label="Nota promedio"
-            value={`${dominioPromedio}%`}
+            label={notaReal != null ? 'Nota promedio' : 'Aciertos por tema'}
+            value={notaReal != null ? notaConEscala(notaReal) : `${dominioPromedio}%`}
           />
           <KpiCard
             icon={<Activity className="w-5 h-5" />}

@@ -11,6 +11,7 @@ import {
   ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, Users,
 } from 'lucide-react';
 import type { StudentProgress } from '@core/types';
+import { nota } from '@core/nota';
 
 interface StudentRiskTableProps {
   /** Lista COMPLETA de estudiantes del curso (sin filtrar). */
@@ -245,8 +246,8 @@ export function StudentRiskTable({
                   {/* Métricas */}
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Promedio</p>
-                      <p className={`text-sm font-semibold ${getMasteryColor(student.avgMastery)}`}>{student.avgMastery}%</p>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Promedio /20</p>
+                      <p className={`text-sm font-semibold tabular-nums ${getMasteryColor(student.avgMastery)}`}>{nota(student.avgMastery)}</p>
                       <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden mt-1">
                         <div
                           className={`h-full rounded-full ${getMasteryBar(student.avgMastery)}`}
@@ -291,7 +292,7 @@ export function StudentRiskTable({
                     <TableHead className="w-6"></TableHead>
                     <SortHeader label="Estudiante" col="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                     <TableHead className="hidden sm:table-cell">Semáforo</TableHead>
-                    <SortHeader label="Promedio" col="avgMastery" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="center" />
+                    <SortHeader label="Promedio /20" col="avgMastery" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="center" />
                     <SortHeader label="En Riesgo" col="conceptsAtRisk" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="center" className="hidden lg:table-cell" />
                     <SortHeader label="Engagement" col="engagement" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="center" className="hidden md:table-cell" />
                     <TableHead className="hidden lg:table-cell">Última Actividad</TableHead>
@@ -331,8 +332,8 @@ export function StudentRiskTable({
                       <TableCell className="hidden sm:table-cell">{getRiskBadge(student.riskLevel)}</TableCell>
                       <TableCell className="text-center">
                         <div className="inline-flex flex-col items-center gap-1 min-w-[3rem]">
-                          <span className={`font-semibold text-sm ${getMasteryColor(student.avgMastery)}`}>
-                            {student.avgMastery}%
+                          <span className={`font-semibold text-sm tabular-nums ${getMasteryColor(student.avgMastery)}`}>
+                            {nota(student.avgMastery)}
                           </span>
                           <div className="h-1.5 w-12 rounded-full bg-muted overflow-hidden">
                             <div
