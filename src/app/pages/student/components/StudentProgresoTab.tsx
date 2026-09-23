@@ -193,7 +193,7 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <KpiCard
             icon={<TrendingUp className="w-5 h-5" />}
-            label="Dominio promedio"
+            label="Nota promedio"
             value={`${dominioPromedio}%`}
           />
           <KpiCard
@@ -228,7 +228,7 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
               <div className="min-w-0">
                 <CardTitle className="text-base flex items-center gap-2">
                   <LineChartIcon className="w-4 h-4 text-primary" aria-hidden="true" />
-                  Evolución de tu dominio
+                  Evolución de tus aciertos
                 </CardTitle>
                 <CardDescription>
                   Tu dominio acumulado por tramos de actividad, del más antiguo al más reciente
@@ -275,13 +275,13 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
                       tickFormatter={(v: string) => String(v).replace(/^E/, '')}
                     />
                     <YAxis stroke={AXIS} tickLine={false} axisLine={false} style={{ fontSize: '12px' }} domain={[0, 100]} width={40} />
-                    <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ stroke: GRID }} formatter={(v: number) => [`${v}%`, 'Dominio']} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ stroke: GRID }} formatter={(v: number) => [`${v}%`, 'Aciertos']} />
                     <Line
                       type="monotone"
                       dataKey="mastery"
                       stroke={PRIMARY}
                       strokeWidth={2.5}
-                      name="Dominio %"
+                      name="Aciertos %"
                       dot={{ r: 3, fill: PRIMARY }}
                       activeDot={{ r: 5 }}
                       isAnimationActive={animar}
@@ -294,7 +294,7 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
             ) : (
               <ChartEmpty
                 icon={<LineChartIcon className="w-5 h-5" />}
-                text="Aún no hay suficientes etapas para dibujar tu curva. Sigue resolviendo actividades y pronto verás cómo avanza tu dominio."
+                text="Aún no hay suficientes tramos para dibujar tu curva. Sigue resolviendo actividades y pronto verás cómo avanzas."
               />
             )}
           </CardContent>
@@ -307,7 +307,7 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-primary" aria-hidden="true" />
-              Dominio por concepto
+              Aciertos por tema
             </CardTitle>
             <CardDescription>
               Tu tasa de acierto por sección. Pasa el cursor (o toca) una barra para ver el nombre completo y el %.
@@ -347,11 +347,11 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
                     <Tooltip
                       contentStyle={TOOLTIP_STYLE}
                       cursor={{ fill: 'rgba(79, 70, 229, 0.06)' }}
-                      formatter={(v: number) => [`${v}%`, 'Dominio']}
+                      formatter={(v: number) => [`${v}%`, 'Aciertos']}
                     />
                     <Bar
                       dataKey="mastery"
-                      name="Dominio %"
+                      name="Aciertos %"
                       radius={[0, 6, 6, 0]}
                       isAnimationActive={animar}
                       animationDuration={800}
@@ -368,7 +368,7 @@ export function StudentProgresoTab({ estudianteId, courseId }: StudentTabProps) 
             ) : (
               <ChartEmpty
                 icon={<BarChart3 className="w-5 h-5" />}
-                text="Todavía no tienes dominio registrado por concepto en este curso."
+                text="Todavía no tienes aciertos registrados por tema en este curso."
               />
             )}
           </CardContent>

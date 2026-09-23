@@ -222,7 +222,7 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
           <Card>
             <CardContent className="pt-4 sm:pt-6">
               <div className="text-center">
-                <p className="text-xs sm:text-sm text-muted-foreground mb-1">Dominio Promedio</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-1">Nota promedio</p>
                 <p className="text-xl sm:text-2xl font-bold text-destructive">{avgMastery}%</p>
               </div>
             </CardContent>
@@ -256,8 +256,8 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
         {/* Evolución del Dominio (real: dominio acumulado por etapa) */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Evolución del Dominio</CardTitle>
-            <CardDescription>Dominio acumulado por tramos de actividad, del más antiguo al más reciente</CardDescription>
+            <CardTitle className="text-base">Evolución de sus aciertos</CardTitle>
+            <CardDescription>Porcentaje de aciertos acumulado por tramos de actividad, del más antiguo al más reciente</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[200px]">
@@ -267,7 +267,7 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
                   <XAxis dataKey="week" stroke={CHART_AXIS} style={{ fontSize: "11px" }} />
                   <YAxis stroke={CHART_AXIS} style={{ fontSize: "11px" }} domain={[0, 100]} width={32} />
                   <Tooltip contentStyle={CHART_TOOLTIP} labelStyle={{ color: "var(--color-foreground)" }} />
-                  <Line type="monotone" dataKey="mastery" stroke={CHART_PRIMARY} strokeWidth={2} name="Dominio %" />
+                  <Line type="monotone" dataKey="mastery" stroke={CHART_PRIMARY} strokeWidth={2} name="Aciertos %" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -296,7 +296,7 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
           <DomainRadar
             key={`radar-${student.id}-${radarData.length}`}
             data={radarData}
-            title="Vista Rápida de Dominio"
+            title="Aciertos por tema"
           />
           <AttentionHeatmap
             interactions={attentionInteractions}
@@ -310,7 +310,7 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
         {/* Dominio por Concepto (real: % de acierto por sección del curso) */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Dominio por Concepto</CardTitle>
+            <CardTitle className="text-base">Aciertos por tema</CardTitle>
             <CardDescription>Tasa de acierto por sección del curso</CardDescription>
           </CardHeader>
           <CardContent>
@@ -327,7 +327,7 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
                   />
                   <YAxis stroke={CHART_AXIS} style={{ fontSize: "11px" }} domain={[0, 100]} width={32} />
                   <Tooltip contentStyle={CHART_TOOLTIP} labelStyle={{ color: "var(--color-foreground)" }} cursor={{ fill: "var(--color-muted)" }} />
-                  <Bar dataKey="mastery" fill={CHART_PRIMARY} name="Dominio %" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="mastery" fill={CHART_PRIMARY} name="Aciertos %" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
