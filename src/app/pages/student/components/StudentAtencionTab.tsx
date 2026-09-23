@@ -73,6 +73,7 @@ export function StudentAtencionTab({ estudianteId, courseId }: StudentTabProps) 
   const attData = enabled ? attention.data : null;
   const interactions = attData?.interactions ?? [];
   const probability = attData?.probability ?? 0;
+  const fuente = attData?.fuente ?? 'modelo';
   const verification = attData?.verification ?? null;
 
   // Esqueleto mientras no hay curso activo o la consulta sigue cargando.
@@ -190,6 +191,7 @@ export function StudentAtencionTab({ estudianteId, courseId }: StudentTabProps) 
             <AttentionHeatmap
               interactions={interactions}
               probability={probability}
+              fuente={fuente}
               verification={verification}
               audience="student"
             />

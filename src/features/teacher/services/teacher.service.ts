@@ -529,14 +529,19 @@ interface ApiAtencion {
   probabilidad_dominio: number; // [0, 1]
   puntos: ApiPuntoAtencion[];
   fidelidad?: ApiFidelidad | null;
+  fuente?: 'modelo' | 'promedio';
 }
 
 /** Heatmap de atención del estudiante listo para `AttentionHeatmap`. */
 export interface StudentAttention {
   interactions: AttentionInteractionRecord[];
-  /** Dominio estimado por el SAKT (0-1). El texto lo arma cada pantalla:
-   *  el estudiante y el profesor no leen lo mismo. */
+  /** Dominio estimado (0-1). El texto lo arma cada pantalla: el estudiante y
+   *  el profesor no leen lo mismo. */
   probability: number;
+  /** De dónde sale la cifra: «modelo» si la produjo el SAKT entrenado;
+   *  «promedio» si el modelo no pudo (no conoce los temas del curso, historia
+   *  muy corta) y es el promedio de aciertos con atención uniforme. */
+  fuente: 'modelo' | 'promedio';
   /** null si el backend no verificó (o es anterior a la verificación). */
   verification: ExplanationVerification | null;
 }
@@ -590,6 +595,7 @@ export async function getStudentAttention(
   return {
     interactions,
     probability: data.probabilidad_dominio,
+    fuente: data.fuente === 'promedio' ? 'promedio' : 'modelo',
     verification: mapVerification(data.fidelidad),
   };
 }
