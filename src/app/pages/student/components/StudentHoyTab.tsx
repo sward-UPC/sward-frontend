@@ -440,7 +440,8 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
             hint={
               porReforzar === 0
                 ? 'Nada pendiente, ¡genial!'
-                : `Sección${porReforzar === 1 ? '' : 'es'} para repasar`
+                : // «Sección» pierde la tilde en plural: Secciones, no Secciónes.
+                  `${porReforzar === 1 ? 'Sección' : 'Secciones'} para repasar`
             }
             accent={porReforzar === 0 ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}
           />
