@@ -100,6 +100,8 @@ export interface TeacherCourse {
   id: string;
   nombre: string;
   moodleCourseId: string;
+  /** Docente a cargo, o null si nadie lo tiene asignado. */
+  docenteId: string | null;
 }
 
 interface ApiCurso {
@@ -109,7 +111,7 @@ interface ApiCurso {
   docente_id: string | null;
 }
 
-/** Cursos disponibles para el docente (ms-cursos-recursos). */
+/** Catálogo de cursos de la plataforma (ms-cursos-recursos). */
 export async function getTeacherCourses(): Promise<TeacherCourse[]> {
   const { data } = await apiClient.get<ApiCurso[]>(ENDPOINTS.admin.courses);
   return data
@@ -119,7 +121,25 @@ export async function getTeacherCourses(): Promise<TeacherCourse[]> {
       id: c.id,
       nombre: c.nombre,
       moodleCourseId: c.moodle_course_id,
+      docenteId: c.docente_id,
     }));
+}
+
+/**
+ * Los cursos que dicta un docente.
+ *
+ * El catálogo trae todos los de la plataforma, así que sin este filtro el panel
+ * abría en el primero de la lista —aunque el docente no lo dicte— y le mostraba
+ * estudiantes que no son suyos. Si no tiene ninguno asignado devuelve una lista
+ * vacía a propósito: el panel dice que no hay cursos asignados, que es cierto,
+ * en vez de enseñar los de otro.
+ */
+export function cursosDelDocente(
+  cursos: TeacherCourse[] | undefined,
+  docenteId: string | undefined,
+): TeacherCourse[] {
+  if (!cursos || !docenteId) return [];
+  return cursos.filter((c) => c.docenteId === docenteId);
 }
 
 /**

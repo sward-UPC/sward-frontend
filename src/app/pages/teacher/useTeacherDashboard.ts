@@ -9,6 +9,8 @@ import type {
 } from '@core/types';
 import { useAuth } from '@core/auth/useAuth';
 import { useTeacherCourses } from '@features/teacher/hooks/useTeacherCourses';
+import { cursosDelDocente } from '@features/teacher/services/teacher.service';
+import type { TeacherCourse } from '@features/teacher/services/teacher.service';
 import { useTeacherStudents } from '@features/teacher/hooks/useTeacherStudents';
 import { useClassTrend } from '@features/teacher/hooks/useClassTrend';
 import { useNotifications } from '@features/notifications/useNotifications';
@@ -24,7 +26,7 @@ export interface UseTeacherDashboardReturn {
   engagementData: EngagementDataPoint[];
 
   /* datos reales / curso activo */
-  courses: { id: string; nombre: string; moodleCourseId: string }[];
+  courses: TeacherCourse[];
   activeCourseId: string | undefined;
   setActiveCourseId: (id: string | undefined) => void;
   isLoadingStudents: boolean;
@@ -154,13 +156,20 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
   // ── Datos reales (SIN fallback a mock): cargando → skeleton, error → estado
   // de error, vacío → estado vacío. Nunca se muestra data ficticia. ───────────
   const {
-    data: courses,
+    data: catalogo,
     isLoading: isLoadingCourses,
     isError: isErrorCourses,
   } = useTeacherCourses();
+  // El catálogo trae los cursos de toda la plataforma; al docente le tocan los
+  // suyos. Sin esto el panel abría en el primero de la lista, con estudiantes
+  // que no son de él.
+  const courses = useMemo(
+    () => cursosDelDocente(catalogo, user?.id),
+    [catalogo, user?.id],
+  );
   const [activeCourseId, setActiveCourseId] = useState<string | undefined>(undefined);
   // Selecciona el primer curso disponible mientras no haya selección explícita.
-  const effectiveCourseId = activeCourseId ?? courses?.[0]?.id;
+  const effectiveCourseId = activeCourseId ?? courses[0]?.id;
   const {
     data: realStudents,
     isLoading: isLoadingStudents,
@@ -187,11 +196,11 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
     role: 'Docente',
     department: user?.institution ?? '',
     avatar: user?.avatarUrl ?? '',
-    courses: courses?.map((c) => c.nombre).join(', ') ?? '',
+    courses: courses.map((c) => c.nombre).join(', '),
   };
 
   // Estados globales para que la vista muestre skeleton / error / vacío.
-  const hasCourses = (courses?.length ?? 0) > 0;
+  const hasCourses = courses.length > 0;
   const isLoading = isLoadingCourses || (!!effectiveCourseId && isLoadingStudents);
   const isError = isErrorCourses || isErrorStudents;
 
@@ -244,7 +253,7 @@ export function useTeacherDashboard(): UseTeacherDashboardReturn {
     engagementData,
 
     /* datos reales / curso activo */
-    courses: courses ?? [],
+    courses,
     activeCourseId: effectiveCourseId,
     setActiveCourseId,
     isLoadingStudents,
