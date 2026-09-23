@@ -1,5 +1,6 @@
 import { Card, CardContent } from '../../../components/ui/card';
 import { TrendingDown, Minus, TrendingUp, Activity } from 'lucide-react';
+import { notaConEscala } from '@core/nota';
 
 interface TeacherMetricsCardsProps {
   highRiskCount: number;
@@ -62,8 +63,8 @@ export function TeacherMetricsCards({
               <Activity className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Promedio General</p>
-              <p className="text-2xl font-bold">{avgMastery}%</p>
+              <p className="text-xs text-muted-foreground">Promedio del grupo</p>
+              <p className="text-2xl font-bold tabular-nums">{notaConEscala(avgMastery)}</p>
             </div>
           </div>
         </CardContent>

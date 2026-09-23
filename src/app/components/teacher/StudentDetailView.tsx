@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
+import { notaConEscala } from "@core/nota";
 import {
   LineChart,
   Line,
@@ -223,7 +224,7 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
             <CardContent className="pt-4 sm:pt-6">
               <div className="text-center">
                 <p className="text-xs sm:text-sm text-muted-foreground mb-1">Nota promedio</p>
-                <p className="text-xl sm:text-2xl font-bold text-destructive">{avgMastery}%</p>
+                <p className="text-xl sm:text-2xl font-bold text-destructive tabular-nums">{notaConEscala(avgMastery)}</p>
               </div>
             </CardContent>
           </Card>

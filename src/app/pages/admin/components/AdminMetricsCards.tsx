@@ -1,4 +1,5 @@
 import { Card, CardContent } from "../../../components/ui/card";
+import { notaConEscala } from "@core/nota";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { Users, BookOpen, Activity, TrendingUp, AlertCircle } from "lucide-react";
 import { useAdminMetrics } from "../../../../features/admin/hooks/useAdminMetrics";
@@ -68,7 +69,7 @@ export function AdminMetricsCards() {
       // El numero es avg(puntaje_promedio) de trazabilidad: la nota media de los
       // estudiantes, no una salida del SAKT. Decia «promedio SAKT».
       label: "Promedio de la plataforma",
-      value: metrics.dominio_plataforma != null ? `${metrics.dominio_plataforma}%` : "—",
+      value: metrics.dominio_plataforma != null ? notaConEscala(metrics.dominio_plataforma) : "—",
       icon: <TrendingUp className="w-5 h-5 text-info" />,
       color: "bg-info/10",
       sub:

@@ -52,8 +52,10 @@ export interface ClassTrendDataPoint {
 /** Dato de engagement por estudiante para gráficas (EP005). */
 export interface EngagementDataPoint {
   name: string;
+  /** Porcentaje de actividad del estudiante. */
   engagement: number;
-  dominio: number;
+  /** Nota promedio, en la escala 0-20. */
+  nota: number;
 }
 
 /** Punto de progreso semanal de un estudiante individual (EP005). */

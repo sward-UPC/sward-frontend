@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { nota } from '@core/nota';
 import { useSearchParams } from 'react-router';
 import type { StudentTabProps } from '@features/student/useStudentContext';
 import { useStudentDetail } from '@features/teacher/hooks/useStudentDetail';
@@ -47,7 +48,13 @@ function Reveal({
 }
 
 /** Anillo de progreso (SVG) que se LLENA mientras el número cuenta hacia arriba. */
-function ProgressRing({ value, size = 104, stroke = 9 }: { value: number; size?: number; stroke?: number }) {
+/**
+ * El aro del progreso. `value` llega siempre como porcentaje del máximo, que es
+ * como lo manejan los servicios; `esNota` decide qué se lee en el centro: la
+ * nota en la escala del aula (0 a 20) o, mientras no haya ninguna nota, el
+ * porcentaje de aciertos, que no es lo mismo y no se puede llamar promedio.
+ */
+function ProgressRing({ value, esNota, size = 104, stroke = 9 }: { value: number; esNota: boolean; size?: number; stroke?: number }) {
   const objetivo = Math.min(100, Math.max(0, value));
   const v = useCountUp(objetivo); // cuenta 0 → objetivo (el aro sigue al número)
   const r = (size - stroke) / 2;
@@ -58,7 +65,7 @@ function ProgressRing({ value, size = 104, stroke = 9 }: { value: number; size?:
       className="relative shrink-0"
       style={{ width: size, height: size }}
       role="img"
-      aria-label={`Nota promedio ${objetivo} por ciento`}
+      aria-label={esNota ? `Nota promedio ${nota(objetivo)} de 20` : `${objetivo} por ciento de aciertos`}
     >
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} className="fill-none stroke-muted" />
@@ -73,8 +80,8 @@ function ProgressRing({ value, size = 104, stroke = 9 }: { value: number; size?:
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold leading-none tabular-nums">{v}%</span>
-        <span className="text-[10px] text-muted-foreground mt-0.5">promedio</span>
+        <span className="text-2xl font-bold leading-none tabular-nums">{esNota ? nota(v) : `${v}%`}</span>
+        <span className="text-[10px] text-muted-foreground mt-0.5">{esNota ? 'promedio /20' : 'aciertos'}</span>
       </div>
     </div>
   );
@@ -323,7 +330,8 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
 
   // Dominio promedio: puntaje real si existe, si no promedio del radar.
   const avgFromConcepts = Math.round(cm.reduce((acc, c) => acc + c.dominio, 0) / cm.length);
-  const avgMastery = progress.data?.puntajePromedio ?? avgFromConcepts;
+  const notaReal = progress.data?.puntajePromedio;
+  const avgMastery = notaReal ?? avgFromConcepts;
 
   const weak = cm.filter((c) => c.dominio < 60).sort((a, b) => a.dominio - b.dominio);
   const porReforzar = weak.length;
@@ -362,7 +370,7 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-5">
-                <ProgressRing value={avgMastery} />
+                <ProgressRing value={avgMastery} esNota={notaReal != null} />
                 <BarraRuta completados={ruta.completados} total={ruta.total} />
               </div>
             </CardContent>
