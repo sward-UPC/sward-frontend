@@ -132,7 +132,7 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
     ? [
         {
           label: "Versión del modelo",
-          value: modelConfig.version,
+          value: modelConfig.version ?? "—",
           tag: modelConfig.modelo_real ? "Real" : "Simulado",
         },
         {
@@ -165,7 +165,11 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
         },
         {
           label: "Umbral de confianza XAI",
-          value: `${Math.round(modelConfig.umbral_confianza_xai * 100)}%`,
+          value:
+            modelConfig.umbral_confianza_xai === null ||
+            modelConfig.umbral_confianza_xai === undefined
+              ? "—"
+              : `${Math.round(modelConfig.umbral_confianza_xai * 100)}%`,
           tag: "Configurable",
         },
       ]
@@ -301,7 +305,7 @@ export function SistemaTab({ modelRetrain, retrainDone, onRetrain }: SistemaTabP
                   modelConfig ? `seq_len,${modelConfig.ventana_contexto ?? ""}` : "",
                   modelConfig ? `dimension_embedding,${modelConfig.dimension_embedding ?? ""}` : "",
                   modelConfig ? `tasa_aprendizaje,${modelConfig.tasa_aprendizaje ?? ""}` : "",
-                  modelConfig ? `umbral_xai,${modelConfig.umbral_confianza_xai}` : "",
+                  modelConfig ? `umbral_xai,${modelConfig.umbral_confianza_xai ?? ""}` : "",
                 ]
                   .filter(Boolean)
                   .join("\n");
