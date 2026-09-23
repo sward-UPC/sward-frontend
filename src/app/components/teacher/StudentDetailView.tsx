@@ -176,6 +176,7 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
   const attRealData = enabled ? attention.data : null;
   const attentionInteractions = attRealData ? attRealData.interactions : [];
   const attentionProbability = attRealData ? attRealData.probability : 0;
+  const attentionFuente = attRealData ? attRealData.fuente : 'modelo';
   const attentionVerification = attRealData ? attRealData.verification : null;
 
   return (
@@ -300,6 +301,7 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
           <AttentionHeatmap
             interactions={attentionInteractions}
             probability={attentionProbability}
+            fuente={attentionFuente}
             verification={attentionVerification}
             audience="teacher"
           />

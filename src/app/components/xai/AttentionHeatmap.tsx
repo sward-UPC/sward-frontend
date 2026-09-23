@@ -6,8 +6,10 @@ import { ExplanationVerification, type VerificationAudience } from "./Explanatio
 
 interface AttentionHeatmapProps {
   interactions: InteractionData[];
-  /** Dominio estimado por el SAKT (0-1). */
+  /** Dominio estimado (0-1). */
   probability: number;
+  /** «promedio» cuando la cifra no salió del modelo; ver StudentAttention. */
+  fuente?: 'modelo' | 'promedio';
   /** Veredicto de fidelidad; sin él se muestra solo la atención, sin afirmar motivos. */
   verification?: Verification | null;
   audience?: VerificationAudience;
@@ -36,12 +38,49 @@ function textoPrediccion(probabilidad: number, audiencia: VerificationAudience):
   return `El modelo estima en ${pct}% la probabilidad de que resuelvas bien el próximo ejercicio.${cierre}`;
 }
 
+/**
+ * Qué se lee cuando la cifra no es del modelo. El SAKT solo conoce los temas con
+ * los que se entrenó: en un curso nuevo, el servicio devuelve el promedio de
+ * aciertos y reparte la atención por igual. Presentar eso como «estimado por
+ * SAKT», con su mapa de calor, sería inventar una explicación — justo lo que
+ * este trabajo trata de evitar.
+ */
+function SinModelo({ probabilidad, audiencia }: { probabilidad: number; audiencia: VerificationAudience }) {
+  const pct = Math.round(probabilidad * 100);
+  return (
+    <div className="p-4 rounded-[12px] border border-warning/30 bg-warning/5 space-y-1.5">
+      <p className="text-sm font-medium">Todavía sin estimación del modelo</p>
+      <p className="text-sm text-muted-foreground">
+        {audiencia === "teacher"
+          ? `El modelo aún no conoce los temas de este curso, así que no hay predicción suya ni mapa de atención. El ${pct} % es el porcentaje de aciertos del estudiante hasta ahora.`
+          : `El modelo aún no conoce los temas de este curso, así que todavía no puede anticipar tu siguiente paso. El ${pct} % es tu porcentaje de aciertos hasta ahora, no una predicción.`}
+      </p>
+    </div>
+  );
+}
+
 export function AttentionHeatmap({
   interactions,
   probability,
+  fuente = "modelo",
   verification = null,
   audience = "student",
 }: AttentionHeatmapProps) {
+  if (fuente !== "modelo") {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Explicabilidad: Mapa de Atención SAKT</CardTitle>
+          <CardDescription>
+            A qué interacciones pasadas prestó más atención el modelo al estimar el siguiente paso
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SinModelo probabilidad={probability} audiencia={audience} />
+        </CardContent>
+      </Card>
+    );
+  }
   return (
     <Card>
       <CardHeader>
