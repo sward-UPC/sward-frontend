@@ -406,11 +406,14 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
+                    {/* Antes prometia el resultado («un repaso te dara un gran
+                        salto», «con un repaso mas lo dominas»). Ahora describe
+                        donde esta, que es lo unico que el sistema sabe. */}
                     {c.dominio < 40
-                      ? 'Conviene empezar por aquí: un repaso te dará un gran salto.'
+                      ? 'Es donde menos aciertos llevas: conviene empezar por aquí.'
                       : c.dominio < 60
-                        ? 'Estás cerca: con un repaso más lo dominas.'
-                        : '¡Buen nivel! Refuérzalo para que quede sólido.'}
+                        ? 'Vas a medio camino en este tema.'
+                        : 'Buen nivel; un repaso lo deja más sólido.'}
                   </p>
                 </button>
               ))}
