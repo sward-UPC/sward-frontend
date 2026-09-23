@@ -65,11 +65,16 @@ export function AdminMetricsCards() {
       sub: "sesiones con token vigente",
     },
     {
-      label: "Dominio Plataforma",
+      // El numero es avg(puntaje_promedio) de trazabilidad: la nota media de los
+      // estudiantes, no una salida del SAKT. Decia «promedio SAKT».
+      label: "Promedio de la plataforma",
       value: metrics.dominio_plataforma != null ? `${metrics.dominio_plataforma}%` : "—",
       icon: <TrendingUp className="w-5 h-5 text-info" />,
       color: "bg-info/10",
-      sub: metrics.dominio_plataforma != null ? "promedio SAKT de la plataforma" : "sin datos aún",
+      sub:
+        metrics.dominio_plataforma != null
+          ? "nota media de los estudiantes"
+          : "sin datos aún",
     },
   ];
 
