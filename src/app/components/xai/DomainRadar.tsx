@@ -38,7 +38,7 @@ const CustomTooltip = ({ active, payload }: TooltipProps<ValueType, NameType>) =
   return null;
 };
 
-export function DomainRadar({ data = defaultData, title = "Vista Rápida de Dominio" }: DomainRadarProps) {
+export function DomainRadar({ data = defaultData, title = "Aciertos por tema" }: DomainRadarProps) {
   const hasData = data.length > 0;
 
   // Para que los PUNTOS del radar "se expandan desde el centro": arrancamos el
@@ -93,7 +93,7 @@ export function DomainRadar({ data = defaultData, title = "Vista Rápida de Domi
                   tickCount={5}
                 />
                 <Radar
-                  name="Dominio"
+                  name="Aciertos %"
                   dataKey="value"
                   stroke="#4f46e5"
                   fill="#6366f1"

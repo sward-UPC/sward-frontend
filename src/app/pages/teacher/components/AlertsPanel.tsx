@@ -49,7 +49,7 @@ export function AlertsPanel({ highRiskStudents, onViewStudent, onFeedback, onVie
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{s.name}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  Dominio: {s.avgMastery}% · Última actividad: {s.lastActivity}
+                  Promedio: {s.avgMastery}% · Última actividad: {s.lastActivity}
                 </p>
               </div>
             </div>

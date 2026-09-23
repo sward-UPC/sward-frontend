@@ -58,7 +58,7 @@ function ProgressRing({ value, size = 104, stroke = 9 }: { value: number; size?:
       className="relative shrink-0"
       style={{ width: size, height: size }}
       role="img"
-      aria-label={`Dominio promedio ${objetivo} por ciento`}
+      aria-label={`Nota promedio ${objetivo} por ciento`}
     >
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} className="fill-none stroke-muted" />
@@ -74,7 +74,7 @@ function ProgressRing({ value, size = 104, stroke = 9 }: { value: number; size?:
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-2xl font-bold leading-none tabular-nums">{v}%</span>
-        <span className="text-[10px] text-muted-foreground mt-0.5">dominio</span>
+        <span className="text-[10px] text-muted-foreground mt-0.5">promedio</span>
       </div>
     </div>
   );
@@ -460,7 +460,7 @@ export function StudentHoyTab({ estudianteId, courseId, courseName }: StudentTab
         <DomainRadar
           key={`radar-hoy-${radarData.length}`}
           data={radarData}
-          title="Tu dominio por sección"
+          title="Tus aciertos por tema"
         />
       </Reveal>
     </div>

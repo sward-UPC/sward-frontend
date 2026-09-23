@@ -259,7 +259,7 @@ export function TeacherDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Card>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">Tendencia de Dominio Grupal</CardTitle>
+                          <CardTitle className="text-sm">Tendencia del promedio del grupo</CardTitle>
                           <CardDescription className="text-xs">
                             Promedio del grupo por tramos de actividad
                           </CardDescription>
@@ -277,7 +277,7 @@ export function TeacherDashboard() {
                               <XAxis dataKey="week" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                               <YAxis domain={[55, 75]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                               <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                              <Area type="monotone" dataKey="promedio" stroke="#6366f1" fill="url(#gProm)" strokeWidth={2} name="Dominio %" />
+                              <Area type="monotone" dataKey="promedio" stroke="#6366f1" fill="url(#gProm)" strokeWidth={2} name="Promedio %" />
                             </AreaChart>
                           </ResponsiveContainer>
                         </CardContent>
@@ -285,7 +285,7 @@ export function TeacherDashboard() {
 
                       <Card>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">Engagement vs Dominio</CardTitle>
+                          <CardTitle className="text-sm">Engagement vs promedio</CardTitle>
                           <CardDescription className="text-xs">Por estudiante</CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -297,7 +297,7 @@ export function TeacherDashboard() {
                               <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
                               <Legend wrapperStyle={{ fontSize: 11 }} />
                               <Bar dataKey="engagement" fill="#6366f1" name="Engagement" radius={[4, 4, 0, 0]} />
-                              <Bar dataKey="dominio" fill="#10b981" name="Dominio" radius={[4, 4, 0, 0]} />
+                              <Bar dataKey="dominio" fill="#10b981" name="Promedio" radius={[4, 4, 0, 0]} />
                             </BarChart>
                           </ResponsiveContainer>
                         </CardContent>
@@ -374,7 +374,7 @@ export function TeacherDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Card>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">Evolución del Dominio Grupal</CardTitle>
+                          <CardTitle className="text-sm">Evolución del promedio del grupo</CardTitle>
                           <CardDescription className="text-xs">
                             Por tramos de la secuencia de actividades, del más antiguo al más reciente
                           </CardDescription>
@@ -392,7 +392,7 @@ export function TeacherDashboard() {
                               <XAxis dataKey="week" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                               <YAxis domain={[55, 75]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
                               <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                              <Area type="monotone" dataKey="promedio" stroke="#6366f1" fill="url(#gProm2)" strokeWidth={2} name="Dominio %" />
+                              <Area type="monotone" dataKey="promedio" stroke="#6366f1" fill="url(#gProm2)" strokeWidth={2} name="Promedio %" />
                             </AreaChart>
                           </ResponsiveContainer>
                         </CardContent>
@@ -421,7 +421,7 @@ export function TeacherDashboard() {
 
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm">Engagement vs Dominio — Vista Comparativa</CardTitle>
+                        <CardTitle className="text-sm">Engagement vs promedio — Vista Comparativa</CardTitle>
                         <CardDescription className="text-xs">Todos los estudiantes</CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -433,7 +433,7 @@ export function TeacherDashboard() {
                             <Tooltip contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
                             <Legend wrapperStyle={{ fontSize: 11 }} />
                             <Bar dataKey="engagement" fill="#6366f1" name="Engagement %" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="dominio" fill="#10b981" name="Dominio %" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="dominio" fill="#10b981" name="Promedio %" radius={[4, 4, 0, 0]} />
                           </BarChart>
                         </ResponsiveContainer>
                       </CardContent>

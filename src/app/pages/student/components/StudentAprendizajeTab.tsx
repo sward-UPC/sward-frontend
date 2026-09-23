@@ -74,7 +74,7 @@ function ResumenAprendizaje({
               <Target className="w-6 h-6" aria-hidden="true" />
             </IconChip>
             <div>
-              <p className="text-sm text-muted-foreground">Tu dominio promedio</p>
+              <p className="text-sm text-muted-foreground">Tu promedio de aciertos</p>
               <p className="text-4xl font-bold leading-tight tracking-tight">{promedio}%</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {promedio >= 70
@@ -145,7 +145,7 @@ function DominioPorConcepto({ conceptos }: { conceptos: ConceptMasteryItem[] }) 
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <ListChecks className="w-5 h-5 text-primary" aria-hidden="true" />
-          Dominio por concepto
+          Aciertos por tema
         </CardTitle>
         <CardDescription>Ordenado del que más conviene repasar al más sólido</CardDescription>
       </CardHeader>
@@ -165,7 +165,7 @@ function DominioPorConcepto({ conceptos }: { conceptos: ConceptMasteryItem[] }) 
               </div>
               <Progress
                 value={c.dominio}
-                aria-label={`Dominio de ${c.concepto}: ${c.dominio} por ciento`}
+                aria-label={`Aciertos en ${c.concepto}: ${c.dominio} por ciento`}
               />
             </div>
           );
@@ -262,7 +262,7 @@ export function StudentAprendizajeTab({ estudianteId, courseId }: StudentTabProp
             <IconChip accent="bg-primary/10 text-primary">
               <Sparkles className="w-6 h-6" aria-hidden="true" />
             </IconChip>
-            <p className="text-base font-medium">Todavía no tenemos datos de tu dominio</p>
+            <p className="text-base font-medium">Todavía no tenemos datos de tus aciertos</p>
             <p className="text-sm text-muted-foreground max-w-md">
               A medida que vayas resolviendo actividades del curso, aquí verás cómo evoluciona tu
               aprendizaje por concepto. ¡Anímate a comenzar!
@@ -302,7 +302,7 @@ export function StudentAprendizajeTab({ estudianteId, courseId }: StudentTabProp
         <DomainRadar
           key={`radar-${radarData.length}`}
           data={radarData}
-          title="Vista de tu dominio"
+          title="Vista de tus aciertos"
         />
         <DominioPorConcepto conceptos={conceptos} />
       </div>

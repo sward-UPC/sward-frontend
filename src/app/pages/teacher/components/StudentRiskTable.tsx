@@ -245,7 +245,7 @@ export function StudentRiskTable({
                   {/* Métricas */}
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Dominio</p>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Promedio</p>
                       <p className={`text-sm font-semibold ${getMasteryColor(student.avgMastery)}`}>{student.avgMastery}%</p>
                       <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden mt-1">
                         <div
@@ -291,7 +291,7 @@ export function StudentRiskTable({
                     <TableHead className="w-6"></TableHead>
                     <SortHeader label="Estudiante" col="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
                     <TableHead className="hidden sm:table-cell">Semáforo</TableHead>
-                    <SortHeader label="Dominio" col="avgMastery" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="center" />
+                    <SortHeader label="Promedio" col="avgMastery" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="center" />
                     <SortHeader label="En Riesgo" col="conceptsAtRisk" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="center" className="hidden lg:table-cell" />
                     <SortHeader label="Engagement" col="engagement" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="center" className="hidden md:table-cell" />
                     <TableHead className="hidden lg:table-cell">Última Actividad</TableHead>
