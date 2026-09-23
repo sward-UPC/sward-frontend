@@ -19,7 +19,8 @@ export function RecommendationsSkeleton() {
           </Badge>
         </CardTitle>
         <CardDescription>
-          Material elegido por el modelo de aprendizaje según tu estado de conocimiento.
+          Material elegido según los temas donde vas más flojo y el formato en el que rindes
+          mejor. Cada tarjeta explica por qué.
         </CardDescription>
       </CardHeader>
       <CardContent>

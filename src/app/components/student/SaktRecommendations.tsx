@@ -161,10 +161,10 @@ export function SaktRecommendations({
         <CardTitle className="text-base flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
           Recomendado para ti
-          <Badge variant="outline" className="text-[10px] ml-1">modelo SAKT</Badge>
         </CardTitle>
         <CardDescription>
-          Material elegido por el modelo de aprendizaje según tu estado de conocimiento.
+          Material elegido según los temas donde vas más flojo y el formato en el que rindes
+          mejor. Cada tarjeta explica por qué.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">

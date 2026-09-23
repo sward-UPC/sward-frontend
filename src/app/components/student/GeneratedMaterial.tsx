@@ -501,7 +501,9 @@ function QuizBody({
           {registrando
             ? 'Registrando tu avance…'
             : registrado
-              ? '✓ Tu resultado alimenta tu modelo de aprendizaje (SAKT)'
+              // El SAKT es un solo modelo, no uno por estudiante: lo que
+              // cambia es la secuencia con la que estima el siguiente paso.
+              ? '✓ Guardado: entra en la secuencia con la que el modelo estima tu avance'
               : pct >= 60
                 ? '¡Bien! Sigue reforzando.'
                 : 'Repasa la lectura y vuelve a intentarlo.'}
