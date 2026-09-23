@@ -256,7 +256,7 @@ export function StudentDetailView({ student, courseId, moodleCourseId, onClose, 
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Evolución del Dominio</CardTitle>
-            <CardDescription>Dominio acumulado a lo largo de las actividades</CardDescription>
+            <CardDescription>Dominio acumulado por tramos de actividad, del más antiguo al más reciente</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[200px]">

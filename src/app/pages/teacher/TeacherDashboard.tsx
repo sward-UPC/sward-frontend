@@ -260,7 +260,9 @@ export function TeacherDashboard() {
                       <Card>
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm">Tendencia de Dominio Grupal</CardTitle>
-                          <CardDescription className="text-xs">Promedio semanal del grupo</CardDescription>
+                          <CardDescription className="text-xs">
+                            Promedio del grupo por tramos de actividad
+                          </CardDescription>
                         </CardHeader>
                         <CardContent>
                           <ResponsiveContainer width="100%" height={180}>
@@ -373,7 +375,9 @@ export function TeacherDashboard() {
                       <Card>
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm">Evolución del Dominio Grupal</CardTitle>
-                          <CardDescription className="text-xs">Semanas 1–4</CardDescription>
+                          <CardDescription className="text-xs">
+                            Por tramos de la secuencia de actividades, del más antiguo al más reciente
+                          </CardDescription>
                         </CardHeader>
                         <CardContent>
                           <ResponsiveContainer width="100%" height={220}>
@@ -396,8 +400,10 @@ export function TeacherDashboard() {
 
                       <Card>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">Estudiantes en Riesgo Alto por Semana</CardTitle>
-                          <CardDescription className="text-xs">Evolución semanal</CardDescription>
+                          <CardTitle className="text-sm">Estudiantes en riesgo alto por tramo</CardTitle>
+                          <CardDescription className="text-xs">
+                            A lo largo de la secuencia de actividades
+                          </CardDescription>
                         </CardHeader>
                         <CardContent>
                           <ResponsiveContainer width="100%" height={220}>
