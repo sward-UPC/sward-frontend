@@ -155,12 +155,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   {regStep === 1 && (
                     <div className="flex flex-col gap-5 flex-1">
                       <div className="space-y-1.5">
-                        <label className="text-sm font-medium" htmlFor="r-email">Correo institucional</label>
+                        <label className="text-sm font-medium" htmlFor="r-email">Correo</label>
                         <Field id="r-email" type="email" value={regEmail} autoComplete="email" invalid={!!regErrors.email}
                           describedBy={regErrors.email ? "r-email-err" : undefined}
-                          onChange={(v: string) => { setRegEmail(v); setRegErrors((e) => ({ ...e, email: "" })); }} placeholder="tu@universidad.edu.pe" icon={Mail} />
+                          onChange={(v: string) => { setRegEmail(v); setRegErrors((e) => ({ ...e, email: "" })); }} placeholder="tucorreo@mail.com" icon={Mail} />
                         {regErrors.email && <p id="r-email-err" role="alert" className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.email}</p>}
-                        <p className="text-xs text-muted-foreground">Usa el mismo correo con el que entras a tus cursos: tu rol se asigna solo.</p>
+                        <p className="text-xs text-muted-foreground">Usa un correo que revises: por ahí llega tu acceso al aula virtual.</p>
                       </div>
                       <button type="button" onClick={handleRegStep1} className="w-full h-12 rounded-xl text-base font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card mt-auto" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
                         Siguiente <ChevronRight className="w-4 h-4" />

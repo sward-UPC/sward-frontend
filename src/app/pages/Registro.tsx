@@ -149,7 +149,7 @@ export function Registro() {
             value={correo}
             onChange={setCorreo}
             icon={Mail}
-            placeholder="tucorreo@upc.edu.pe"
+            placeholder="tucorreo@mail.com"
             autoComplete="email"
           />
           <p className="text-xs text-muted-foreground">
