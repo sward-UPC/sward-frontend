@@ -9,6 +9,9 @@ import { UserRole } from '@core/types';
 const LoginPage = lazyWithRetry(() =>
   import('../app/pages/Login').then((m) => ({ default: m.LoginPage }))
 );
+const RegistroPage = lazyWithRetry(() =>
+  import('../app/pages/Registro').then((m) => ({ default: m.Registro }))
+);
 const StudentDashboard = lazyWithRetry(() =>
   import('../app/pages/StudentDashboard').then((m) => ({ default: m.StudentDashboard }))
 );
@@ -91,10 +94,19 @@ export const router = createBrowserRouter(
       ),
     },
 
-    // Habia dos pantallas de registro distintas: esta (AuthLayout centrado) y la
-    // del propio ingreso. Queda la del ingreso, que comparte diseno con el, y
-    // /register lleva alli con el panel de registro abierto.
-    { path: '/register', element: <Navigate to="/login?registro=1" replace /> },
+    // Inscripción al estudio. Hasta el 24-sep-2026 no había pantalla de registro:
+    // el alta se hacía con un formulario de Google y un script que creaba las
+    // cuentas de Moodle a mano, y /register sólo redirigía al ingreso.
+    {
+      path: '/registro',
+      element: (
+        <SuspenseWrapper>
+          <RegistroPage />
+        </SuspenseWrapper>
+      ),
+    },
+    // El enlace en inglés se conserva porque quedó repartido en mensajes ya enviados.
+    { path: '/register', element: <Navigate to="/registro" replace /> },
 
     // Dashboards: cada uno tiene su propio layout (topbar + sidebar)
     // AppLayout no se usa porque causaría doble sidebar/topbar

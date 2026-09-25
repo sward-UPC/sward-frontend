@@ -38,7 +38,21 @@ export interface LoginResponse {
 export interface RegisterRequest {
   correo: string;
   password: string;
+  /** Obligatorios si el correo todavía no existe en la plataforma educativa:
+   *  el registro da de alta la cuenta y Moodle los exige. */
+  nombres: string;
+  apellidos: string;
+  /** Sólo describe la muestra del estudio; no cambia permisos. */
+  carrera: string;
+  /** Versión del consentimiento informado que se mostró y se aceptó. */
+  consentimiento_version: string;
 }
+
+/** Versión vigente del consentimiento. Debe coincidir con la del backend
+ *  (`CONSENTIMIENTO_VERSION_VIGENTE` en ms-usuarios): si no coincide, el
+ *  registro se rechaza, que es justo lo que se quiere cuando el texto cambia
+ *  y el frontend se quedó atrás. */
+export const CONSENTIMIENTO_VERSION = '2026-09-24';
 
 /** Respuesta del endpoint /auth/register (contrato real del backend). */
 export interface RegisterResponse {
