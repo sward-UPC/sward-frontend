@@ -167,10 +167,15 @@ export function Registro() {
             icon={Lock}
             autoComplete="new-password"
             right={
+              // `FormField` pinta este nodo como un hijo más del contenedor
+              // relativo: posicionarlo es tarea de quien lo pasa. Sin esto, el
+              // ojo cae debajo del campo en vez de dentro.
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => setVerPassword((v) => !v)}
                 aria-label={verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 {verPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -184,7 +189,10 @@ export function Registro() {
 
         <section className="rounded-md border p-3 space-y-2">
           <h2 className="text-sm font-medium">Consentimiento informado</h2>
-          <div className="max-h-44 overflow-y-auto pr-1 text-xs text-muted-foreground space-y-2">
+          {/* Se desplaza, pero con un degradado abajo: cortado a media frase y a
+              filo parecía un texto incompleto, sobre todo en una captura. */}
+          <div className="relative">
+            <div className="max-h-56 overflow-y-auto pr-1 text-xs text-muted-foreground space-y-2 [scrollbar-width:thin]">
             <p>
               Participas en la validación de <strong>SWARD</strong>, un sistema que recomienda
               material de estudio y explica por qué lo recomienda. Es parte de un proyecto de
@@ -215,6 +223,11 @@ export function Registro() {
               tus datos, rectificarlos y pedir que se eliminen. Los datos personales se eliminan
               al terminar el proyecto, en diciembre de 2026.
             </p>
+            </div>
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-card to-transparent"
+            />
           </div>
           <label className="flex items-start gap-2 text-sm">
             <input
