@@ -4,7 +4,7 @@ import { ArrowLeft, CheckCircle2, ChevronRight, AlertCircle, Mail, Lock, Eye, Ey
 import { LoginBranding, LoginFormFields, useLoginForm } from "./auth";
 import { FormField as Field } from "./auth/components/FormField";
 import { useAuth } from "@core/auth/useAuth";
-import { login as loginService, register as registerService } from "@features/auth/services/auth.service";
+import { login as loginService } from "@features/auth/services/auth.service";
 
 interface LoginPageProps {
   onLogin?: (role: "student" | "teacher" | "admin") => void;
@@ -20,11 +20,6 @@ function inerte(apagada: boolean): React.HTMLAttributes<HTMLDivElement> {
   return (apagada
     ? { inert: '', 'aria-hidden': true }
     : {}) as React.HTMLAttributes<HTMLDivElement>;
-}
-
-/* Register form is part of the flip card — kept inline to share flip/animation state */
-function Spinner() {
-  return <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />;
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
@@ -54,8 +49,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [regConfirmPw, setRegConfirmPw] = useState("");
   const [showRegPw, setShowRegPw] = useState(false);
   const [regErrors, setRegErrors] = useState<Record<string, string>>({});
-  const [regLoading, setRegLoading] = useState(false);
-  const [regSuccess, setRegSuccess] = useState(false);
   const [regApiError, setRegApiError] = useState("");
 
   const form = useLoginForm();
@@ -75,24 +68,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setRegErrors({}); setRegStep(2);
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  // Este panel pedía sólo correo y contraseña, porque la cuenta ya tenía que
+  // existir en la plataforma educativa: la creaba un script externo a partir de
+  // un formulario. Desde el 24-sep-2026 el registro da de alta al participante y
+  // recoge su consentimiento informado, que necesita su propia pantalla. Aquí se
+  // conserva el paso 1 para no romper el recorrido de quien ya lo conocía, y se
+  // continúa en /registro con el correo ya escrito.
+  const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    const errs: Record<string, string> = {};
-    if (!regPw) errs.pw = "Contraseña requerida.";
-    else if (regPw.length < 8) errs.pw = "Mínimo 8 caracteres.";
-    if (regPw !== regConfirmPw) errs.confirmPw = "Las contraseñas no coinciden.";
-    if (Object.keys(errs).length) { setRegErrors(errs); return; }
-    setRegErrors({}); setRegApiError(""); setRegLoading(true);
-    try {
-      await registerService({ correo: regEmail, password: regPw });
-      setRegLoading(false);
-      setRegSuccess(true);
-      setTimeout(() => { setRegSuccess(false); setRegStep(1); setRegEmail(""); setRegPw(""); setRegConfirmPw(""); flip(); }, 2000);
-    } catch (err: unknown) {
-      setRegLoading(false);
-      const message = err instanceof Error ? err.message : "Error al crear la cuenta. Intenta nuevamente.";
-      setRegApiError(message);
-    }
+    navigate(`/registro?correo=${encodeURIComponent(regEmail)}`);
   };
 
   // Sin overflow en la cara 3D: un elemento con backface-visibility:hidden y
@@ -151,8 +135,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             <div className={faceBase} style={{ ...faceStyle, transform: "rotateY(180deg)" }} {...inerte(!isFlipped)}>
               <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
               {mobileLogo}
-              {!regSuccess ? (
-                <div className="flex-1 flex flex-col gap-8">
+              <div className="flex-1 flex flex-col gap-8">
                   <div className="space-y-2">
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Crea tu cuenta</h1>
                     <p className="text-sm text-muted-foreground">Únete a la plataforma de aprendizaje adaptativo.</p>
@@ -217,25 +200,13 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                         <button type="button" onClick={() => { setRegStep(1); setRegErrors({}); setRegApiError(""); }} className="h-12 px-4 rounded-xl text-sm font-medium border border-border text-foreground hover:bg-muted/50 transition-all flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
                           <ArrowLeft className="w-4 h-4" /> Atrás
                         </button>
-                        <button type="submit" disabled={regLoading} className="flex-1 h-12 rounded-xl text-base font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
-                          {regLoading ? <><Spinner /> Creando cuenta...</> : "Crear cuenta"}
+                        <button type="submit" className="flex-1 h-12 rounded-xl text-base font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
+                          "Continuar"
                         </button>
                       </div>
                     </form>
                   )}
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center gap-5 text-center">
-                  <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center">
-                    <CheckCircle2 className="w-8 h-8 text-success" />
-                  </div>
-                  <div>
-                    <h2 className="font-bold text-xl">¡Registro exitoso!</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Tu cuenta fue creada correctamente.<br />Redirigiendo al inicio de sesión...</p>
-                  </div>
-                  <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                </div>
-              )}
+              </div>
               </div>
             </div>
 
