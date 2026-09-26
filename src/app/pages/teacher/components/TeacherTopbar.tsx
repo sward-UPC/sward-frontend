@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Button } from '../../../components/ui/button';
 import {
   Bell, X, AlertTriangle, CheckCircle, Info,
-  User, Settings, ChevronRight, Moon, Sun, LogOut, ChevronLeft, Menu,
+  User, Settings, ChevronRight, Moon, Sun, LogOut, ChevronLeft, Menu, GraduationCap,
 } from 'lucide-react';
+import { AULA_VIRTUAL_URL } from '@core/types';
 import type { TeacherProfile } from '@core/types';
 import type { AppNotification } from '@features/notifications/notifications.service';
 import { NotificationDetailDialog } from '../../../components/notifications/NotificationDetailDialog';
@@ -81,8 +82,24 @@ export function TeacherTopbar({
           </div>
         </div>
 
-        {/* Right: dark mode + notifications + profile */}
+        {/* Right: aula virtual + dark mode + notifications + profile */}
         <div className="flex items-center gap-1">
+          {/* El docente va y viene entre los dos sitios: aquí ve el riesgo y la
+              trazabilidad, y allá califica y responde el foro. Estaba solo en el
+              panel del estudiante. */}
+          {AULA_VIRTUAL_URL && (
+            <a
+              href={AULA_VIRTUAL_URL}
+              target="_blank"
+              rel="noreferrer"
+              title="Ir al aula virtual"
+              className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium hover:bg-muted/60 transition-colors"
+            >
+              <GraduationCap className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="hidden md:inline">Aula virtual</span>
+            </a>
+          )}
+
           <Button variant="ghost" size="icon" onClick={() => setDarkMode(!darkMode)}>
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
