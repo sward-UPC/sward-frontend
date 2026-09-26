@@ -2,9 +2,10 @@ import { Button } from '../../../components/ui/button';
 import { Progress } from '../../../components/ui/progress';
 import {
   Bell, X, CheckCircle, AlertTriangle, Info, Settings,
-  ChevronRight, Moon, Sun, Flame, User, LogOut, ChevronLeft, Menu,
+  ChevronRight, Moon, Sun, Flame, User, LogOut, ChevronLeft, Menu, GraduationCap,
 } from 'lucide-react';
 import { useState } from 'react';
+import { AULA_VIRTUAL_URL } from '@core/types';
 import type { StudentUser, LearningPathStep } from '@core/types';
 import type { AppNotification } from '@features/notifications/notifications.service';
 import { NotificationDetailDialog } from '../../../components/notifications/NotificationDetailDialog';
@@ -114,6 +115,23 @@ export function StudentTopbar({
 
         {/* Right: actions */}
         <div className="flex items-center gap-1">
+          {/* El aula virtual. Estuvo al pie de la barra lateral y ahi no se veia:
+              en la fase 1 es el sitio al que el estudiante tiene que ir, asi que
+              va arriba, junto a las demas acciones, y con texto en pantallas
+              anchas para que se entienda sin adivinar el icono. */}
+          {AULA_VIRTUAL_URL && (
+            <a
+              href={AULA_VIRTUAL_URL}
+              target="_blank"
+              rel="noreferrer"
+              title="Ir al aula virtual"
+              className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium hover:bg-muted/60 transition-colors"
+            >
+              <GraduationCap className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="hidden md:inline">Aula virtual</span>
+            </a>
+          )}
+
           {/* Streak */}
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-warning/10 text-warning">
             <Flame className="w-3.5 h-3.5" />
