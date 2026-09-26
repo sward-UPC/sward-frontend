@@ -38,6 +38,8 @@ jobs:
       - name: Build
         env:
           VITE_API_URL: https://dt2mpuhca1dmv.cloudfront.net
+          # El aula virtual, para el enlace que ve quien termina de inscribirse.
+          VITE_MOODLE_URL: https://ds035jxie8q8l.cloudfront.net
           VITE_BASE_URL: /sward-frontend/
         run: pnpm build && cp dist/index.html dist/404.html
 

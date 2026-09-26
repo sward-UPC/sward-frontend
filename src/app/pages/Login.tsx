@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, CheckCircle2, ChevronRight, AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { ChevronRight, AlertCircle, Mail } from "lucide-react";
 import { LoginBranding, LoginFormFields, useLoginForm } from "./auth";
 import { FormField as Field } from "./auth/components/FormField";
 import { useAuth } from "@core/auth/useAuth";
@@ -43,13 +43,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     () => new URLSearchParams(window.location.search).get("registro") === "1"
   );
   const [isAnimating, setIsAnimating] = useState(false);
-  const [regStep, setRegStep] = useState(1);
   const [regEmail, setRegEmail] = useState("");
-  const [regPw, setRegPw] = useState("");
-  const [regConfirmPw, setRegConfirmPw] = useState("");
-  const [showRegPw, setShowRegPw] = useState(false);
   const [regErrors, setRegErrors] = useState<Record<string, string>>({});
-  const [regApiError, setRegApiError] = useState("");
 
   const form = useLoginForm();
 
@@ -60,22 +55,23 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setTimeout(() => setIsAnimating(false), 700);
   };
 
+  // Este panel pedía sólo correo y contraseña, porque la cuenta ya tenía que
+  // existir en la plataforma educativa: la creaba un script externo a partir de
+  // un formulario. Desde el 24-sep-2026 el registro da de alta al participante y
+  // recoge su consentimiento informado, que necesita su propia pantalla.
+  //
+  // Hasta el 26-sep-2026 esto tenía dos pasos —correo, y luego contraseña con su
+  // confirmación— y al final **descartaba la contraseña** y continuaba en
+  // /registro, que volvía a pedir correo y contraseña desde cero. El participante
+  // escribía las dos cosas dos veces, en dos diseños distintos. Ahora este panel
+  // sólo toma el correo y lleva a la inscripción con él ya escrito: una sola vez
+  // cada dato, y el consentimiento en la misma pantalla que los recoge.
   const handleRegStep1 = () => {
     const errs: Record<string, string> = {};
     if (!regEmail) errs.email = "Correo requerido.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail)) errs.email = "Correo inválido.";
     if (Object.keys(errs).length) { setRegErrors(errs); return; }
-    setRegErrors({}); setRegStep(2);
-  };
-
-  // Este panel pedía sólo correo y contraseña, porque la cuenta ya tenía que
-  // existir en la plataforma educativa: la creaba un script externo a partir de
-  // un formulario. Desde el 24-sep-2026 el registro da de alta al participante y
-  // recoge su consentimiento informado, que necesita su propia pantalla. Aquí se
-  // conserva el paso 1 para no romper el recorrido de quien ya lo conocía, y se
-  // continúa en /registro con el correo ya escrito.
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
+    setRegErrors({});
     navigate(`/registro?correo=${encodeURIComponent(regEmail)}`);
   };
 
@@ -140,19 +136,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Crea tu cuenta</h1>
                     <p className="text-sm text-muted-foreground">Únete a la plataforma de aprendizaje adaptativo.</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {[1, 2].map((s) => (
-                      <div key={s} className="flex items-center gap-2 flex-1">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0 transition-all duration-300 ${regStep >= s ? "text-white shadow-sm" : "bg-muted text-muted-foreground"}`}
-                          style={regStep >= s ? { background: "linear-gradient(135deg, #4f46e5, #7c3aed)", fontWeight: 600 } : {}}>
-                          {regStep > s ? <CheckCircle2 className="w-4 h-4" /> : s}
-                        </div>
-                        <span className={`text-xs transition-colors ${regStep === s ? "text-foreground font-medium" : "text-muted-foreground"}`}>{s === 1 ? "Información" : "Acceso"}</span>
-                        {s < 2 && <div className={`flex-1 h-px mx-1 rounded-full transition-colors duration-300 ${regStep > 1 ? "bg-primary" : "bg-border"}`} />}
-                      </div>
-                    ))}
-                  </div>
-                  {regStep === 1 && (
                     <div className="flex flex-col gap-5 flex-1">
                       <div className="space-y-1.5">
                         <label className="text-sm font-medium" htmlFor="r-email">Correo</label>
@@ -170,42 +153,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                         <button onClick={flip} className="text-primary font-semibold hover:text-primary/70 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 rounded">Inicia sesión</button>
                       </div>
                     </div>
-                  )}
-                  {regStep === 2 && (
-                    <form onSubmit={handleRegister} className="flex flex-col gap-5 flex-1" noValidate>
-                      <div className="space-y-5">
-                        <div className="space-y-1.5">
-                          <label className="text-sm font-medium" htmlFor="r-pw">Contraseña</label>
-                          <Field id="r-pw" type={showRegPw ? "text" : "password"} value={regPw} autoComplete="new-password" invalid={!!regErrors.pw}
-                            describedBy={regErrors.pw ? "r-pw-err" : undefined}
-                            onChange={(v: string) => { setRegPw(v); setRegErrors((e) => ({ ...e, pw: "" })); }} placeholder="Mínimo 8 caracteres" icon={Lock}
-                            right={<button type="button" tabIndex={-1} onClick={() => setShowRegPw((p) => !p)} aria-label={showRegPw ? "Ocultar contraseña" : "Mostrar contraseña"} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer">{showRegPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}</button>} />
-                          {regErrors.pw && <p id="r-pw-err" role="alert" className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.pw}</p>}
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-sm font-medium" htmlFor="r-confirm">Confirmar contraseña</label>
-                          <Field id="r-confirm" type={showRegPw ? "text" : "password"} value={regConfirmPw} autoComplete="new-password" invalid={!!regErrors.confirmPw}
-                            describedBy={regErrors.confirmPw ? "r-confirm-err" : undefined}
-                            onChange={(v: string) => { setRegConfirmPw(v); setRegErrors((e) => ({ ...e, confirmPw: "" })); }} placeholder="Repite tu contraseña" icon={Lock} />
-                          {regErrors.confirmPw && <p id="r-confirm-err" role="alert" className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.confirmPw}</p>}
-                        </div>
-                        {regApiError && (
-                          <div role="alert" className="flex items-center gap-2 p-3 rounded-xl bg-destructive/8 border border-destructive/20">
-                            <AlertCircle className="w-4 h-4 text-destructive shrink-0" />
-                            <p className="text-xs text-destructive">{regApiError}</p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2.5 mt-auto">
-                        <button type="button" onClick={() => { setRegStep(1); setRegErrors({}); setRegApiError(""); }} className="h-12 px-4 rounded-xl text-sm font-medium border border-border text-foreground hover:bg-muted/50 transition-all flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30">
-                          <ArrowLeft className="w-4 h-4" /> Atrás
-                        </button>
-                        <button type="submit" className="flex-1 h-12 rounded-xl text-base font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
-                          "Continuar"
-                        </button>
-                      </div>
-                    </form>
-                  )}
               </div>
               </div>
             </div>

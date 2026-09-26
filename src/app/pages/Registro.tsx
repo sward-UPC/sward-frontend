@@ -10,6 +10,11 @@ import { FormField as Field } from './auth/components/FormField';
  *  obligar a nadie a declarar algo que no es: si aparece, se revisa. */
 const CARRERAS = ['Ingeniería Industrial', 'Ingeniería Empresarial', 'Otra carrera'];
 
+/** El aula virtual cambia de dirección con cada despliegue, así que viene del
+ *  entorno. Si falta, la pantalla final no ofrece el enlace en vez de mandar a
+ *  nadie a una dirección inventada. */
+const AULA_VIRTUAL = import.meta.env.VITE_MOODLE_URL ?? '';
+
 function Spinner() {
   return (
     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
@@ -35,7 +40,11 @@ export function Registro() {
   const [nombres, setNombres] = useState('');
   const [apellidos, setApellidos] = useState('');
   const [carrera, setCarrera] = useState('');
-  const [correo, setCorreo] = useState('');
+  // La pantalla de ingreso llega aquí con ?correo=... Hasta el 26-sep-2026 este
+  // campo arrancaba vacío y la persona escribía su correo dos veces.
+  const [correo, setCorreo] = useState(
+    () => new URLSearchParams(window.location.search).get('correo') ?? '',
+  );
   const [password, setPassword] = useState('');
   const [verPassword, setVerPassword] = useState(false);
   const [acepta, setAcepta] = useState(false);
@@ -89,16 +98,26 @@ export function Registro() {
           <h1 className="text-2xl font-semibold">Tu cuenta está lista</h1>
           <p className="text-muted-foreground">
             Te matriculamos en los cursos del estudio. En unos minutos recibirás un correo
-            del aula virtual con tu usuario y una contraseña que deberás cambiar al entrar.
+            del aula virtual con una contraseña que deberás cambiar al entrar. Entras con{' '}
+            <strong>este mismo correo</strong>: el usuario que aparezca en ese mensaje no
+            hace falta.
           </p>
           <p className="text-muted-foreground">
             Empieza por los cuestionarios del aula virtual. Te avisaremos cuándo usar SWARD.
           </p>
+          {AULA_VIRTUAL && (
+            <a
+              href={AULA_VIRTUAL}
+              className="mt-2 block w-full rounded-md bg-primary px-4 py-2 text-primary-foreground"
+            >
+              Ir al aula virtual
+            </a>
+          )}
           <button
             onClick={() => navigate('/login')}
-            className="mt-2 w-full rounded-md bg-primary px-4 py-2 text-primary-foreground"
+            className="w-full rounded-md border px-4 py-2"
           >
-            Ir a iniciar sesión
+            Iniciar sesión en SWARD
           </button>
         </div>
       </main>
@@ -189,10 +208,14 @@ export function Registro() {
 
         <section className="rounded-md border p-3 space-y-2">
           <h2 className="text-sm font-medium">Consentimiento informado</h2>
-          {/* Se desplaza, pero con un degradado abajo: cortado a media frase y a
-              filo parecía un texto incompleto, sobre todo en una captura. */}
+          {/* El texto se desplaza. Tuvo un degradado abajo para insinuar que
+              seguía, pero atenuaba la última línea visible y en un consentimiento
+              informado no puede haber una palabra que no se lea. Se quitó el 26 de
+              septiembre de 2026; ahora el aviso de que hay más es la barra de
+              desplazamiento, y el relleno inferior evita que el texto llegue al
+              filo y parezca cortado. */}
           <div className="relative">
-            <div className="max-h-56 overflow-y-auto pr-1 text-xs text-muted-foreground space-y-2 [scrollbar-width:thin]">
+            <div className="max-h-56 overflow-y-auto pr-1 pb-2 text-xs text-muted-foreground space-y-2 [scrollbar-width:thin]">
             <p>
               Participas en la validación de <strong>SWARD</strong>, un sistema que recomienda
               material de estudio y explica por qué lo recomienda. Es parte de un proyecto de
@@ -224,10 +247,6 @@ export function Registro() {
               al terminar el proyecto, en diciembre de 2026.
             </p>
             </div>
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-card to-transparent"
-            />
           </div>
           <label className="flex items-start gap-2 text-sm">
             <input
