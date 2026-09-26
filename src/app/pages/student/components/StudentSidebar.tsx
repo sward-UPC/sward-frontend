@@ -1,5 +1,6 @@
-import { Flame, LayoutDashboard, Brain, BarChart2, Library, Sparkles } from 'lucide-react';
+import { Flame, LayoutDashboard, Brain, BarChart2, Library, Sparkles, GraduationCap } from 'lucide-react';
 import { Sidebar } from '@shared/components/layout/Sidebar';
+import { AULA_VIRTUAL_URL } from '@core/types';
 import type { NavItem } from '@core/types';
 
 const NAV = [
@@ -23,6 +24,20 @@ export function StudentSidebar({ activeNav, sidebarOpen, streak, ruta, onNavChan
   const rutaPct = ruta.total > 0 ? Math.round((ruta.completados / ruta.total) * 100) : 0;
   const footer = (
     <div className="p-3 space-y-2.5">
+      {/* El aula virtual, siempre a la vista. Durante la fase 1 el estudiante
+          resuelve los quizzes allá y en SWARD todavía no hay nada que mirar: sin
+          este enlace, quien entra primero aquí se queda sin saber adónde ir. */}
+      {AULA_VIRTUAL_URL && (
+        <a
+          href={AULA_VIRTUAL_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-2 rounded-md border border-border px-2.5 py-2 text-xs font-medium hover:bg-muted/60 transition-colors"
+        >
+          <GraduationCap className="w-3.5 h-3.5 shrink-0 text-primary" />
+          <span>Ir al aula virtual</span>
+        </a>
+      )}
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Flame className="w-3.5 h-3.5 text-warning shrink-0" />
         <span>
@@ -44,9 +59,17 @@ export function StudentSidebar({ activeNav, sidebarOpen, streak, ruta, onNavChan
   );
 
   const footerCollapsed = (
-    <div className="flex flex-col items-center gap-0.5 py-3">
-      <Flame className="w-4 h-4 text-warning" />
-      <span className="text-[11px] font-bold text-warning leading-none">{streak}</span>
+    <div className="flex flex-col items-center gap-2 py-3">
+      {AULA_VIRTUAL_URL && (
+        <a href={AULA_VIRTUAL_URL} target="_blank" rel="noreferrer" title="Ir al aula virtual"
+           aria-label="Ir al aula virtual" className="text-primary hover:opacity-80">
+          <GraduationCap className="w-4 h-4" />
+        </a>
+      )}
+      <div className="flex flex-col items-center gap-0.5">
+        <Flame className="w-4 h-4 text-warning" />
+        <span className="text-[11px] font-bold text-warning leading-none">{streak}</span>
+      </div>
     </div>
   );
 

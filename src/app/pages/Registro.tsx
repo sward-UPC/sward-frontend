@@ -3,17 +3,14 @@ import { useNavigate, Link } from 'react-router';
 import { AlertCircle, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 
 import { useRegister } from '@features/auth/hooks/useRegister';
-import { CONSENTIMIENTO_VERSION } from '@core/types';
+import { AULA_VIRTUAL_URL, CONSENTIMIENTO_VERSION } from '@core/types';
 import { FormField as Field } from './auth/components/FormField';
 
 /** Carreras de los participantes del estudio. «Otra carrera» existe para no
  *  obligar a nadie a declarar algo que no es: si aparece, se revisa. */
 const CARRERAS = ['Ingeniería Industrial', 'Ingeniería Empresarial', 'Otra carrera'];
 
-/** El aula virtual cambia de dirección con cada despliegue, así que viene del
- *  entorno. Si falta, la pantalla final no ofrece el enlace en vez de mandar a
- *  nadie a una dirección inventada. */
-const AULA_VIRTUAL = import.meta.env.VITE_MOODLE_URL ?? '';
+const AULA_VIRTUAL = AULA_VIRTUAL_URL;
 
 function Spinner() {
   return (

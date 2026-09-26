@@ -54,6 +54,12 @@ export interface RegisterRequest {
  *  y el frontend se quedó atrás. */
 export const CONSENTIMIENTO_VERSION = '2026-09-24';
 
+/** El aula virtual. Viene del entorno porque su dirección cambia con cada
+ *  despliegue, y vacía cuando no hay ninguna configurada: en ese caso no se
+ *  ofrece el enlace, que es mejor que mandar a alguien a una página que no
+ *  existe. La usan la inscripción y el panel del estudiante. */
+export const AULA_VIRTUAL_URL: string = import.meta.env.VITE_MOODLE_URL ?? '';
+
 /** Respuesta del endpoint /auth/register (contrato real del backend). */
 export interface RegisterResponse {
   id: string;
