@@ -143,7 +143,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                           describedBy={regErrors.email ? "r-email-err" : undefined}
                           onChange={(v: string) => { setRegEmail(v); setRegErrors((e) => ({ ...e, email: "" })); }} placeholder="tucorreo@mail.com" icon={Mail} />
                         {regErrors.email && <p id="r-email-err" role="alert" className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="w-3 h-3" />{regErrors.email}</p>}
-                        <p className="text-xs text-muted-foreground">Usa un correo que revises: por ahí llega tu acceso al aula virtual.</p>
+                        <p className="text-xs text-muted-foreground">Es el que usarás para entrar al aula virtual.</p>
                       </div>
                       <button type="button" onClick={handleRegStep1} className="w-full h-12 rounded-xl text-base font-semibold text-white flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[.99] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-card mt-auto" style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
                         Siguiente <ChevronRight className="w-4 h-4" />

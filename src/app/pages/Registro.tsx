@@ -94,10 +94,9 @@ export function Registro() {
         <div className="w-full max-w-md text-center space-y-4">
           <h1 className="text-2xl font-semibold">Tu cuenta está lista</h1>
           <p className="text-muted-foreground">
-            Te matriculamos en los cursos del estudio. En unos minutos recibirás un correo
-            del aula virtual con una contraseña que deberás cambiar al entrar. Entras con{' '}
-            <strong>este mismo correo</strong>: el usuario que aparezca en ese mensaje no
-            hace falta.
+            Te matriculamos en los cursos del estudio. Entra al aula virtual con{' '}
+            <strong>este mismo correo y la misma contraseña</strong> que acabas de elegir.
+            No tienes que esperar ningún correo ni cambiar nada.
           </p>
           <p className="text-muted-foreground">
             Empieza por los cuestionarios del aula virtual. Te avisaremos cuándo usar SWARD.
@@ -169,7 +168,7 @@ export function Registro() {
             autoComplete="email"
           />
           <p className="text-xs text-muted-foreground">
-            Usa un correo que revises: por ahí llega el acceso al aula virtual.
+            Es el que usarás para entrar al aula virtual.
           </p>
         </div>
 
@@ -198,8 +197,8 @@ export function Registro() {
             }
           />
           <p className="text-xs text-muted-foreground">
-            Mínimo 8 caracteres, con una mayúscula y un número. Es la de SWARD; la del aula
-            virtual llega por correo.
+            Mínimo 8 caracteres, con una mayúscula y un número. Es la misma para SWARD y
+            para el aula virtual.
           </p>
         </div>
 
