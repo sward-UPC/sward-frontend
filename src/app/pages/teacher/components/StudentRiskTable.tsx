@@ -171,7 +171,7 @@ export function StudentRiskTable({
                     <span className={`w-2 h-2 rounded-full ${seg.dot} ${activo ? 'ring-1 ring-white/60' : ''}`} />
                   )}
                   {seg.label}
-                  <span className={`tabular-nums ${activo ? 'text-primary-foreground/80' : 'text-muted-foreground/70'}`}>
+                  <span className={`tabular-nums ${activo ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
                     {seg.count}
                   </span>
                 </button>

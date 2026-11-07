@@ -83,6 +83,7 @@ export function StudentTopbar({
           <button
             onClick={onToggleSidebar}
             className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            aria-label={sidebarOpen ? "Ocultar el menú lateral" : "Mostrar el menú lateral"}
           >
             {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
@@ -138,13 +139,15 @@ export function StudentTopbar({
             <span className="text-xs font-bold">{streak}</span>
           </div>
 
-          <Button variant="ghost" size="icon" onClick={onToggleDarkMode}>
+          <Button variant="ghost" size="icon" onClick={onToggleDarkMode}
+            aria-label={darkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}>
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
 
           {/* Notifications */}
           <div className="relative" ref={notifRef}>
-            <Button variant="ghost" size="icon" onClick={onToggleNotif}>
+            <Button variant="ghost" size="icon" onClick={onToggleNotif}
+              aria-label={unreadCount > 0 ? `Notificaciones, ${unreadCount} sin leer` : "Notificaciones"}>
               <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
                 <span className="absolute top-1 right-1 w-4 h-4 bg-destructive text-white text-[9px] font-bold rounded-full flex items-center justify-center">
@@ -250,7 +253,7 @@ export function StudentTopbar({
                       <span className="text-muted-foreground">Progreso del curso</span>
                       <span className="font-medium tabular-nums">{avanceRuta}%</span>
                     </div>
-                    <Progress value={avanceRuta} className="h-1.5" />
+                    <Progress value={avanceRuta} className="h-1.5" aria-label="Progreso del curso" />
                   </div>
                 </div>
                 <div className="py-1">

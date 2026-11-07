@@ -13,7 +13,7 @@ export function AttentionInfoModal() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-6 w-6">
+        <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Cómo leer el mapa de atención">
           <Info className="h-4 w-4" />
         </Button>
       </DialogTrigger>

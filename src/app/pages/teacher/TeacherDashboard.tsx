@@ -454,10 +454,10 @@ export function TeacherDashboard() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {([
-                        { key: 'completo', icon: <FileText className="w-6 h-6 text-primary" />, title: 'Reporte de Clase (PDF)', desc: 'Documento con resumen por nivel de riesgo y detalle por estudiante.', badge: 'PDF', badgeColor: 'bg-red-500' },
-                        { key: 'riesgo', icon: <BarChart2 className="w-6 h-6 text-success" />, title: 'Análisis de Riesgo', desc: 'Estudiantes en riesgo alto/medio con su promedio, conceptos en riesgo y engagement.', badge: 'CSV', badgeColor: 'bg-green-600' },
-                        { key: 'engagement', icon: <Users className="w-6 h-6 text-warning" />, title: 'Registro de Engagement', desc: 'Engagement y promedio por estudiante, ordenado por participación.', badge: 'CSV', badgeColor: 'bg-blue-500' },
-                        { key: 'conocimiento', icon: <BookOpen className="w-6 h-6 text-purple-500" />, title: 'Mapa de Conocimiento', desc: 'Estado del grupo por estudiante, con el promedio grupal.', badge: 'CSV', badgeColor: 'bg-purple-500' },
+                        { key: 'completo', icon: <FileText className="w-6 h-6 text-primary" />, title: 'Reporte de Clase (PDF)', desc: 'Documento con resumen por nivel de riesgo y detalle por estudiante.', badge: 'PDF', badgeColor: 'bg-red-700' },
+                        { key: 'riesgo', icon: <BarChart2 className="w-6 h-6 text-success" />, title: 'Análisis de Riesgo', desc: 'Estudiantes en riesgo alto/medio con su promedio, conceptos en riesgo y engagement.', badge: 'CSV', badgeColor: 'bg-green-700' },
+                        { key: 'engagement', icon: <Users className="w-6 h-6 text-warning" />, title: 'Registro de Engagement', desc: 'Engagement y promedio por estudiante, ordenado por participación.', badge: 'CSV', badgeColor: 'bg-blue-700' },
+                        { key: 'conocimiento', icon: <BookOpen className="w-6 h-6 text-purple-500" />, title: 'Mapa de Conocimiento', desc: 'Estado del grupo por estudiante, con el promedio grupal.', badge: 'CSV', badgeColor: 'bg-purple-700' },
                       ] as const).map((r) => (
                         <Card
                           key={r.key}

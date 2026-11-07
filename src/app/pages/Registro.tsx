@@ -211,7 +211,8 @@ export function Registro() {
               desplazamiento, y el relleno inferior evita que el texto llegue al
               filo y parezca cortado. */}
           <div className="relative">
-            <div className="max-h-56 overflow-y-auto pr-1 pb-2 text-xs text-muted-foreground space-y-2 [scrollbar-width:thin]">
+            <div className="max-h-56 overflow-y-auto pr-1 pb-2 text-xs text-muted-foreground space-y-2 [scrollbar-width:thin] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              tabIndex={0} role="region" aria-label="Texto del consentimiento informado">
             <p>
               Participas en la validación de <strong>SWARD</strong>, un sistema que recomienda
               material de estudio y explica por qué lo recomienda. Es parte de un proyecto de

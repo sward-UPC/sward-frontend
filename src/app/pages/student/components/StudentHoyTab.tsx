@@ -104,7 +104,7 @@ function BarraRuta({ completados, total }: { completados: number; total: number 
           {compAnim}/{total}
         </span>
       </div>
-      <Progress value={pctAnim} />
+      <Progress value={pctAnim} aria-label="Avance de la ruta de aprendizaje" />
       <p className="text-xs text-muted-foreground">
         {faltan <= 0
           ? '¡Ruta completada, excelente!'

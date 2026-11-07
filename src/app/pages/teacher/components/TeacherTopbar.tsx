@@ -70,7 +70,7 @@ export function TeacherTopbar({
           <button
             onClick={onToggleSidebar}
             className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            aria-label="Toggle sidebar"
+            aria-label={sidebarOpen ? "Ocultar el menú lateral" : "Mostrar el menú lateral"}
           >
             {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
@@ -100,7 +100,8 @@ export function TeacherTopbar({
             </a>
           )}
 
-          <Button variant="ghost" size="icon" onClick={() => setDarkMode(!darkMode)}>
+          <Button variant="ghost" size="icon" onClick={() => setDarkMode(!darkMode)}
+            aria-label={darkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}>
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
 
@@ -110,6 +111,7 @@ export function TeacherTopbar({
               variant="ghost"
               size="icon"
               onClick={() => { setShowNotifPopup(!showNotifPopup); setShowProfilePopup(false); }}
+              aria-label={unreadCount > 0 ? `Notificaciones, ${unreadCount} sin leer` : "Notificaciones"}
             >
               <Bell className="w-4 h-4" />
               {unreadCount > 0 && (

@@ -119,10 +119,10 @@ export function DomainRadar({ data = defaultData, title = "Aciertos por tema" }:
                 style={{
                   color:
                     item.value >= 75
-                      ? "#22c55e"
+                      ? "var(--success)"
                       : item.value >= 55
-                      ? "#f59e0b"
-                      : "#ef4444",
+                      ? "var(--warning)"
+                      : "var(--destructive)",
                 }}
               >
                 {item.value}%
