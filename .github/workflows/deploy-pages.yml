@@ -35,6 +35,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Si una prueba falla, no se publica.
+      - name: Tests
+        run: pnpm test
+
       - name: Build
         env:
           VITE_API_URL: https://dt2mpuhca1dmv.cloudfront.net
