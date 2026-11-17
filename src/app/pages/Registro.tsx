@@ -12,6 +12,10 @@ const CARRERAS = ['Ingeniería Industrial', 'Ingeniería Empresarial', 'Otra car
 
 const AULA_VIRTUAL = AULA_VIRTUAL_URL;
 
+/** Campos que valida el formulario; cada valor es también el id del control. */
+type Campo = 'nombres' | 'apellidos' | 'carrera' | 'correo' | 'password' | 'acepta';
+const ID_ERROR = 'registro-error';
+
 function Spinner() {
   return (
     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
@@ -46,29 +50,45 @@ export function Registro() {
   const [verPassword, setVerPassword] = useState(false);
   const [acepta, setAcepta] = useState(false);
   const [error, setError] = useState('');
+  // Campo que no pasó la validación: se marca, queda enlazado al mensaje y recibe
+  // el foco. Antes solo aparecía el mensaje al pie (CP019, ciclo 1).
+  const [campoConError, setCampoConError] = useState<Campo | null>(null);
   const [listo, setListo] = useState(false);
 
   /** Las mismas reglas que aplica el servidor, para avisar antes de enviar. */
-  const validar = (): string => {
-    if (!nombres.trim()) return 'Ingresa tus nombres.';
-    if (!apellidos.trim()) return 'Ingresa tus apellidos.';
-    if (!carrera) return 'Selecciona tu carrera.';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return 'Ingresa un correo válido.';
-    if (password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
-    if (!/\p{Lu}/u.test(password)) return 'Incluye al menos una mayúscula.';
-    if (!/\d/.test(password)) return 'Incluye al menos un número.';
-    if (!acepta) return 'Debes aceptar el consentimiento informado para participar.';
-    return '';
+  const validar = (): { campo: Campo; mensaje: string } | null => {
+    if (!nombres.trim()) return { campo: 'nombres', mensaje: 'Ingresa tus nombres.' };
+    if (!apellidos.trim()) return { campo: 'apellidos', mensaje: 'Ingresa tus apellidos.' };
+    if (!carrera) return { campo: 'carrera', mensaje: 'Selecciona tu carrera.' };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+      return { campo: 'correo', mensaje: 'Ingresa un correo válido.' };
+    }
+    if (password.length < 8) {
+      return { campo: 'password', mensaje: 'La contraseña debe tener al menos 8 caracteres.' };
+    }
+    if (!/\p{Lu}/u.test(password)) return { campo: 'password', mensaje: 'Incluye al menos una mayúscula.' };
+    if (!/\d/.test(password)) return { campo: 'password', mensaje: 'Incluye al menos un número.' };
+    if (!acepta) {
+      return { campo: 'acepta', mensaje: 'Debes aceptar el consentimiento informado para participar.' };
+    }
+    return null;
   };
+
+  /** Atributos para que un campo muestre que tiene el error y lo anuncie. */
+  const marca = (campo: Campo) =>
+    campoConError === campo ? { invalid: true, describedBy: ID_ERROR } : {};
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
     const problema = validar();
     if (problema) {
-      setError(problema);
+      setError(problema.mensaje);
+      setCampoConError(problema.campo);
+      document.getElementById(problema.campo)?.focus();
       return;
     }
     setError('');
+    setCampoConError(null);
     try {
       await mutateAsync({
         correo: correo.trim().toLowerCase(),
@@ -133,11 +153,11 @@ export function Registro() {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <label htmlFor="nombres" className="text-sm font-medium">Nombres</label>
-            <Field id="nombres" value={nombres} onChange={setNombres} icon={User} autoComplete="given-name" />
+            <Field id="nombres" value={nombres} onChange={setNombres} icon={User} autoComplete="given-name" {...marca('nombres')} />
           </div>
           <div className="space-y-1">
             <label htmlFor="apellidos" className="text-sm font-medium">Apellidos</label>
-            <Field id="apellidos" value={apellidos} onChange={setApellidos} autoComplete="family-name" />
+            <Field id="apellidos" value={apellidos} onChange={setApellidos} autoComplete="family-name" {...marca('apellidos')} />
           </div>
         </div>
 
@@ -147,7 +167,11 @@ export function Registro() {
             id="carrera"
             value={carrera}
             onChange={(e) => setCarrera(e.target.value)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+            aria-invalid={campoConError === 'carrera' || undefined}
+            aria-describedby={campoConError === 'carrera' ? ID_ERROR : undefined}
+            className={`w-full rounded-md border bg-background px-3 py-2 text-sm ${
+              campoConError === 'carrera' ? 'border-destructive' : ''
+            }`}
           >
             <option value="">Selecciona tu carrera</option>
             {CARRERAS.map((c) => (
@@ -166,6 +190,7 @@ export function Registro() {
             icon={Mail}
             placeholder="tucorreo@mail.com"
             autoComplete="email"
+            {...marca('correo')}
           />
           <p className="text-xs text-muted-foreground">
             Es el que usarás para entrar al aula virtual.
@@ -181,6 +206,7 @@ export function Registro() {
             onChange={setPassword}
             icon={Lock}
             autoComplete="new-password"
+            {...marca('password')}
             right={
               // `FormField` pinta este nodo como un hijo más del contenedor
               // relativo: posicionarlo es tarea de quien lo pasa. Sin esto, el
@@ -247,17 +273,20 @@ export function Registro() {
           </div>
           <label className="flex items-start gap-2 text-sm">
             <input
+              id="acepta"
               type="checkbox"
               checked={acepta}
               onChange={(e) => setAcepta(e.target.checked)}
-              className="mt-0.5"
+              aria-invalid={campoConError === 'acepta' || undefined}
+              aria-describedby={campoConError === 'acepta' ? ID_ERROR : undefined}
+              className={`mt-0.5 ${campoConError === 'acepta' ? 'outline outline-2 outline-destructive' : ''}`}
             />
             <span>He leído y comprendido esta información, y acepto participar voluntariamente.</span>
           </label>
         </section>
 
         {error && (
-          <p role="alert" className="flex items-start gap-2 text-sm text-destructive">
+          <p id={ID_ERROR} role="alert" className="flex items-start gap-2 text-sm text-destructive">
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
             {error}
           </p>
