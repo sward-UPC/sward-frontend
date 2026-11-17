@@ -243,6 +243,10 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
   }
 
   const vistos = new Set(preferences?.recursos_vistos ?? []);
+  // Completados = los marcados en esta visita más los que el servidor ya tiene
+  // registrados. Antes solo existían los de esta visita y, al recargar, el recurso
+  // volvía a ofrecer «Ya lo revisé» (defecto 16, CP080).
+  const completadosEnServidor = new Set(preferences?.recursos_completados ?? []);
   const catalogo = courseResources ?? [];
   const recomendados = saktItems ?? [];
   const pasaFiltro = (tipo: string) => pasaFormato(tipo, formato);
@@ -272,6 +276,7 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
       concepto,
       tipo: tipoParaRegistro(f),
       aprobado: alimenta ? aprobado : true,
+      url: item.url,
     });
     setCompletados((prev) => new Set(prev).add(item.recurso_id));
 
@@ -356,7 +361,12 @@ export function StudentRecursosTab({ estudianteId, courseId, moodleCourseId }: S
             items={recomendadosFiltrados}
             prefs={preferences}
             filtradoVacio={recomendadosFiltrados.length === 0}
-            completados={completados}
+            completados={
+              new Set([
+                ...completados,
+                ...recomendados.filter((i) => completadosEnServidor.has(i.url)).map((i) => i.recurso_id),
+              ])
+            }
             onCompletar={completar}
           />
         ) : (

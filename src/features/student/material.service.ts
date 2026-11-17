@@ -120,12 +120,15 @@ export async function registrarMaterialCompletado(params: {
   concepto: string;
   tipo: 'practica' | 'lectura' | 'video';
   aprobado?: boolean;
+  /** Dirección del recurso: con ella el servidor recuerda cuál se completó. */
+  url?: string;
 }): Promise<void> {
   await apiClient.post(ENDPOINTS.interactions.materialCompleted, {
     curso_id: params.cursoId,
     concepto: params.concepto,
     tipo: params.tipo,
     aprobado: params.aprobado ?? true,
+    ...(params.url ? { url_modulo: params.url } : {}),
   });
 }
 

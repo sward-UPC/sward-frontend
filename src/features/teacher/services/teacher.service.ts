@@ -465,6 +465,9 @@ export interface StudentPreferences {
   formato_mas_consumido?: string;
   /** URLs de recursos que el estudiante YA vio (para no re-recomendarlos). */
   recursos_vistos?: string[];
+  /** URLs de recursos que marcó como completados en SWARD («Ya lo revisé» o
+   *  «Marcar como completado»), para seguir mostrándolos así al volver. */
+  recursos_completados?: string[];
 }
 
 export async function getStudentPreferences(
