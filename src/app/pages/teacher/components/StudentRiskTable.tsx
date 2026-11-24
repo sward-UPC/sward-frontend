@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { StudentProgress } from '@core/types';
 import { nota } from '@core/nota';
+import { colorSemaforo } from '@core/semaforo';
 
 interface StudentRiskTableProps {
   /** Lista COMPLETA de estudiantes del curso (sin filtrar). */
@@ -48,10 +49,6 @@ function getRiskColor(level: string) {
     case 'low': return 'bg-success';
     default: return 'bg-muted';
   }
-}
-
-function getMasteryColor(v: number) {
-  return v >= 80 ? 'text-success' : v >= 60 ? 'text-warning' : 'text-destructive';
 }
 
 function getMasteryBar(v: number) {
@@ -247,7 +244,7 @@ export function StudentRiskTable({
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                     <div>
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Promedio /20</p>
-                      <p className={`text-sm font-semibold tabular-nums ${getMasteryColor(student.avgMastery)}`}>{nota(student.avgMastery)}</p>
+                      <p className={`text-sm font-semibold tabular-nums ${colorSemaforo(student.avgMastery)}`}>{nota(student.avgMastery)}</p>
                       <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden mt-1">
                         <div
                           className={`h-full rounded-full ${getMasteryBar(student.avgMastery)}`}
@@ -257,7 +254,7 @@ export function StudentRiskTable({
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Engagement</p>
-                      <p className={`text-sm font-semibold ${getMasteryColor(student.engagement)}`}>{student.engagement}%</p>
+                      <p className={`text-sm font-semibold ${colorSemaforo(student.engagement)}`}>{student.engagement}%</p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">En riesgo</p>
@@ -332,7 +329,7 @@ export function StudentRiskTable({
                       <TableCell className="hidden sm:table-cell">{getRiskBadge(student.riskLevel)}</TableCell>
                       <TableCell className="text-center">
                         <div className="inline-flex flex-col items-center gap-1 min-w-[3rem]">
-                          <span className={`font-semibold text-sm tabular-nums ${getMasteryColor(student.avgMastery)}`}>
+                          <span className={`font-semibold text-sm tabular-nums ${colorSemaforo(student.avgMastery)}`}>
                             {nota(student.avgMastery)}
                           </span>
                           <div className="h-1.5 w-12 rounded-full bg-muted overflow-hidden">
@@ -353,7 +350,7 @@ export function StudentRiskTable({
                         )}
                       </TableCell>
                       <TableCell className="text-center hidden md:table-cell">
-                        <span className={`text-sm ${getMasteryColor(student.engagement)}`}>
+                        <span className={`text-sm ${colorSemaforo(student.engagement)}`}>
                           {student.engagement}%
                         </span>
                       </TableCell>
